@@ -1,10 +1,11 @@
-const CACHE = "nc03-control-center-v2";
+const CACHE = "nc03-control-center-v3";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./manifest.webmanifest",
+  "./icon.svg",
   "./src/modem/NC03Adapter.js",
   "./src/modem/MockNC03Adapter.js",
   "./src/modem/CapabilityRegistry.js",
