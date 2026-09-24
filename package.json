@@ -1,6 +1,6 @@
 {
   "name": "nc03-control-center",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,6 +13,7 @@
     "ux": "node scripts/ux.mjs",
     "security": "node scripts/security.mjs",
     "test": "npm run unit && npm run integration",
-    "verify": "npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run security"
+    "verify": "npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run offline && npm run security",
+    "offline": "node scripts/offline.mjs"
   }
 }
