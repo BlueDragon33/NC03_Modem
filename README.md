@@ -26,7 +26,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - xác nhận modem trả `device_battery_percent` dạng số nên app có thể hiện % pin chính xác;
 - thêm `NC03Firmware80042Adapter` và profile firmware;
 - write endpoints chỉ được catalogued từ vendor JavaScript và vẫn khóa tới khi WRITE VERIFIED;
-- encrypted local credential vault vẫn chờ login flow VERIFIED trước khi bật Remember Admin/Auto Login.
+- login UX được chốt theo password-only: địa chỉ modem mặc định `192.168.0.1` nhưng sửa được; sau đăng nhập thành công mới lưu mật khẩu vào encrypted local credential vault.
 
 ## Chạy local
 
@@ -50,8 +50,8 @@ Không coi release là PASS nếu một gate trong pipeline thất bại.
 
 Ưu tiên Phase 2B:
 
-1. capture login page/assets và login transaction an toàn;
-2. xác minh auth/session;
+1. map request đăng nhập password-only của firmware;
+2. nối credential vault vào kết quả đăng nhập thành công;
 3. test Direct LAN transport;
 4. nếu bị browser chặn, triển khai Local Bridge;
 5. capture từng write operation ít rủi ro để nâng từ PARTIAL → WRITE VERIFIED.
