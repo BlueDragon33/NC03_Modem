@@ -4,6 +4,7 @@ import { parseHar, summarizeCandidates } from "./src/modem/HarDiscovery.js";
 import { loadPreferences, savePreferences, SECURITY_NOTE } from "./src/modem/LocalPreferences.js";
 import { CONNECTION_STATE, connectionStateLabel } from "./src/modem/ConnectionState.js";
 import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
+import { DEFAULT_MODEM_URL, normalizeModemAddress } from "./src/modem/LoginPolicy.js";
 
 const app = document.querySelector("#app");
 const prefs = loadPreferences();
@@ -14,6 +15,7 @@ let state = {
   developerMode: prefs.developerMode,
   uiMode: prefs.uiMode,
   baseUrl: prefs.baseUrl,
+  rememberPassword: prefs.rememberPassword,
   connectionState: CONNECTION_STATE.AUTHENTICATION_REQUIRED,
   harCandidates: [],
   harEntries: [],
@@ -30,7 +32,8 @@ function persist() {
     baseUrl: state.baseUrl,
     demoMode: state.demoMode,
     developerMode: state.developerMode,
-    uiMode: state.uiMode
+    uiMode: state.uiMode,
+    rememberPassword: state.rememberPassword
   });
 }
 
@@ -76,18 +79,17 @@ function renderLogin() {
       <div class="login-brand"><div class="brand-mark">N3</div><div><small>HYBRID Wi-Fi 5G</small><strong>NC03 Control Center</strong></div></div>
       <div class="login-copy"><span class="eyebrow">LOCAL MODEM ACCESS</span><h1>Kết nối NC03</h1><p>Web-app chỉ đăng nhập trực tiếp với modem trong mạng LAN. Mật khẩu admin không được gửi tới Application Management hay cloud proxy.</p></div>
       <div class="login-form">
-        <label>Địa chỉ modem<input id="loginBaseUrl" value="${esc(state.baseUrl)}" inputmode="url" autocomplete="url" /></label>
-        <label>Mật khẩu admin<input type="password" disabled autocomplete="current-password" placeholder="Chờ Login endpoint VERIFIED" /></label>
+        <label>Địa chỉ modem<input id="loginBaseUrl" value="${esc(state.baseUrl)}" inputmode="url" autocomplete="url" placeholder="192.168.0.1" /></label>
+        <label>Mật khẩu<input id="loginPassword" type="password" disabled autocomplete="current-password" placeholder="Nhập mật khẩu Web UI của NC03" /></label>
       </div>
       <div class="login-options">
-        <label><input type="checkbox" disabled /> Ghi nhớ đăng nhập modem · vault mã hóa đã sẵn sàng, chờ AUTH VERIFIED</label>
-        <label><input type="checkbox" disabled /> Tự động đăng nhập lần sau · chỉ bật sau khi login/session VERIFIED</label>
+        <label><input id="rememberPassword" type="checkbox" ${state.rememberPassword ? "checked" : ""} /> Ghi nhớ mật khẩu trên thiết bị này</label>
       </div>
       <div class="login-actions">
         <button id="saveLoginAddress" class="secondary-action">Lưu địa chỉ modem</button>
-        <div class="locked-action"><strong>Đăng nhập thật đang khóa</strong><span>AUTH UNKNOWN</span></div>
+        <div class="locked-action"><strong>Đăng nhập</strong><span>Chờ map request AUTH thật</span></div>
       </div>
-      <div class="write-lock"><strong>Authentication chưa được xác minh.</strong><span>Login chỉ được mở sau HAR thật xác định request, session/token/CSRF, expiry, logout và retry policy.</span></div>
+      <div class="write-lock"><strong>Luồng đăng nhập đã chốt.</strong><span>Chỉ cần địa chỉ modem + mật khẩu. Mật khẩu chỉ được ghi vào vault sau khi modem trả đăng nhập thành công; không cần username và không có checkbox Auto Login riêng.</span></div>
       <div class="login-safe-actions"><button id="enterDemo">Mở Developer Demo</button></div>
     </div>
   </section>`;
@@ -167,7 +169,7 @@ function renderSettings() {
     </div>
   </section>
   <section class="panel"><div class="panel-head"><div><span>MODEM CONNECTION</span><h2>Địa chỉ NC03</h2></div>${statusPill("LOCAL ONLY")}</div>
-    <div class="form-grid"><label>Modem address<input id="baseUrl" value="${esc(state.baseUrl)}" inputmode="url" /></label><label>Admin password<input type="password" disabled placeholder="Chờ auth/session VERIFIED" /></label></div>
+    <div class="form-grid"><label>Địa chỉ modem<input id="baseUrl" value="${esc(state.baseUrl)}" inputmode="url" placeholder="192.168.0.1" /></label><label>Ghi nhớ mật khẩu<strong>${state.rememberPassword ? "Bật" : "Tắt"}</strong></label></div>
     <div class="settings-actions"><button id="saveBaseUrl">Lưu địa chỉ</button></div>
     <div class="security-note"><strong>Credential policy</strong><span>${esc(SECURITY_NOTE)}</span></div>
   </section>
@@ -203,14 +205,19 @@ function bind() {
   document.querySelector("#saveLoginAddress")?.addEventListener("click", () => {
     const input = document.querySelector("#loginBaseUrl");
     if (!input) return;
-    state.baseUrl = input.value.trim() || "http://192.168.0.1";
+    try { state.baseUrl = normalizeModemAddress(input.value); } catch { state.baseUrl = DEFAULT_MODEM_URL; }
     persist();
     page();
   });
 
+  document.querySelector("#rememberPassword")?.addEventListener("change", (event) => {
+    state.rememberPassword = event.currentTarget.checked;
+    persist();
+  });
+
   document.querySelector("#enterDemo")?.addEventListener("click", async () => {
     const input = document.querySelector("#loginBaseUrl");
-    if (input) state.baseUrl = input.value.trim() || "http://192.168.0.1";
+    if (input) { try { state.baseUrl = normalizeModemAddress(input.value); } catch { state.baseUrl = DEFAULT_MODEM_URL; } }
     state.developerMode = true;
     state.demoMode = true;
     persist();
@@ -260,7 +267,7 @@ function bind() {
   document.querySelector("#saveBaseUrl")?.addEventListener("click", () => {
     const input = document.querySelector("#baseUrl");
     if (!input) return;
-    state.baseUrl = input.value.trim() || "http://192.168.0.1";
+    try { state.baseUrl = normalizeModemAddress(input.value); } catch { state.baseUrl = DEFAULT_MODEM_URL; }
     persist();
     page();
   });
