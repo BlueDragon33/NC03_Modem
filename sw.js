@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v1";
+const CACHE = "nc03-control-center-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,8 +8,15 @@ const ASSETS = [
   "./src/modem/NC03Adapter.js",
   "./src/modem/MockNC03Adapter.js",
   "./src/modem/CapabilityRegistry.js",
+  "./src/modem/NC03Capabilities.js",
+  "./src/modem/NC03Auth.js",
+  "./src/modem/NC03Api.js",
+  "./src/modem/NC03Session.js",
+  "./src/modem/NC03Parser.js",
+  "./src/modem/ConnectionState.js",
   "./src/modem/HarDiscovery.js",
-  "./src/modem/LocalPreferences.js"
+  "./src/modem/LocalPreferences.js",
+  "./src/ui/NavigationModel.js"
 ];
 
 self.addEventListener("install", (event) => {
