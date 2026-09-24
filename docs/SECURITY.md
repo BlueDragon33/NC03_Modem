@@ -15,3 +15,10 @@ Một site HTTPS có thể không gọi được trực tiếp `http://192.168.0
 2. **Local Bridge transport** chạy cục bộ trên thiết bị người dùng, giữ credential tại máy và giao tiếp với modem trong LAN.
 
 Không dùng cloud proxy để né giới hạn trình duyệt vì việc đó sẽ đưa credential/session modem ra khỏi thiết bị người dùng.
+
+
+## Encrypted local credential vault
+
+The browser implementation may store the NC03 admin credential encrypted with AES-GCM and a non-extractable CryptoKey in IndexedDB. The password is never written to localStorage/sessionStorage and is never sent to cloud services.
+
+This protects credential data at rest, but it is not equivalent to an OS Keychain/Keystore and cannot protect against malicious code/XSS executing under the same application origin. Therefore remember-admin and auto-login remain disabled until the real NC03 authentication flow is verified and the transport is approved.

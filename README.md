@@ -14,7 +14,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không lưu password plaintext.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 1 v0.3.0
+## Phase 1 v0.4.0
 
 Phase 1 foundation đã hoàn tất phần có thể làm mà **không cần HAR thật**:
 
@@ -26,7 +26,7 @@ Phase 1 foundation đã hoàn tất phần có thể làm mà **không cần HAR
 - `NC03Adapter`, `NC03Api`, `NC03Auth`, `NC03Session`, `NC03Parser`, `NC03Capabilities`;
 - explicit connection states;
 - capability matrix mặc định `UNKNOWN`;
-- HAR Discovery local-only + credential redaction;
+- HAR Discovery local-only + credential redaction + heuristic module hints (candidate-only, không tự VERIFIED);\n- encrypted local credential vault foundation bằng AES-GCM + non-extractable CryptoKey;
 - fail-closed write operation gate: chỉ `WRITE VERIFIED` mới đăng ký write route;
 - PWA manifest, icon và offline cache shell;
 - release gates: CHECK / BUILD / TYPECHECK / LINT / UNIT / INTEGRATION / UX / OFFLINE / SECURITY.

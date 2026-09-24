@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 — Pre-HAR discovery & credential vault
+
+- Added encrypted local credential-vault foundation using AES-GCM with a non-extractable browser CryptoKey.
+- Kept remember-admin and auto-login controls locked until the real NC03 auth/session flow is VERIFIED.
+- Added heuristic HAR module hints for auth, battery, Wi-Fi, clients, mobile network, data usage, DHCP/LAN, bridge/router and system requests.
+- Candidate hints never promote an endpoint to VERIFIED or WRITE VERIFIED.
+- Added unit coverage for at-rest credential encryption and HAR hint/redaction behavior.
+
+# Changelog
+
 ## 0.3.0 — Phase 1 finalization
 
 - Separated API operation type from HTTP method so POST can be read-only and every write operation requires WRITE VERIFIED.

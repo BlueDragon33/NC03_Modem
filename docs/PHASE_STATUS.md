@@ -11,7 +11,7 @@ Completed:
 - explicit read/write operation gate independent from HTTP method;
 - fail-closed auth/session behavior;
 - credential/security architecture;
-- HAR parser with redaction;
+- HAR parser with redaction and candidate-only module hints;\n- encrypted local credential vault foundation (AES-GCM, non-extractable CryptoKey);
 - capability matrix;
 - Mock Mode with DEMO DATA label;
 - Login Screen skeleton;
@@ -23,7 +23,7 @@ Completed:
 - CHECK / BUILD / TYPECHECK / LINT / UNIT / INTEGRATION / UX / OFFLINE / SECURITY gates;
 - verified release artifact workflow.
 
-External dependency before Phase 2:
+Pre-HAR hardening v0.4.0 is complete. Remember-admin/auto-login UI remains intentionally locked until AUTH is VERIFIED.\n\nExternal dependency before Phase 2:
 - HAR captured from the real NC03 Web UI at the user's firmware version.
 
 ## Phase 2 — NC03 Web UI reverse engineering

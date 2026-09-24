@@ -1,6 +1,18 @@
 const SENSITIVE_HEADER = /authorization|cookie|set-cookie|csrf|token|password|secret|session/i;
 const SENSITIVE_QUERY = /password|passwd|pwd|token|session|sid|csrf|secret|auth/i;
 
+const CANDIDATE_RULES = Object.freeze([
+  ["auth", /login|logout|auth|signin|session|csrf|challenge/],
+  ["battery", /battery|power|charge|charging|eco/],
+  ["wifi", /wifi|wlan|ssid|wireless|wps/],
+  ["clients", /client|station|sta_list|connected.?device|device.?list/],
+  ["mobile-network", /signal|rsrp|rsrq|sinr|cell|band|network.?mode|carrier|wan|lte|5g|nr5g/],
+  ["data-usage", /traffic|usage|quota|data.?counter|statistics|statistic/],
+  ["dhcp-lan", /dhcp|lan.?ip|lease|subnet/],
+  ["bridge-router", /bridge|router.?mode|nat.?mode/],
+  ["system", /reboot|restart|firmware|software.?version|device.?info|status/]
+]);
+
 export function redactHeaders(headers = []) {
   return headers.map((header) => ({
     name: String(header?.name ?? ""),
@@ -37,6 +49,11 @@ export function sanitizeBody(text = "") {
   }
 }
 
+export function classifyHarCandidate({ url = "", path = "", requestBody = "" } = {}) {
+  const source = `${url} ${path} ${requestBody}`.toLowerCase();
+  return CANDIDATE_RULES.filter(([, pattern]) => pattern.test(source)).map(([name]) => name);
+}
+
 export function parseHar(har, { modemHost = "192.168.0.1" } = {}) {
   const entries = Array.isArray(har?.log?.entries) ? har.log.entries : [];
   return entries
@@ -47,13 +64,17 @@ export function parseHar(har, { modemHost = "192.168.0.1" } = {}) {
     .map((entry, index) => {
       const request = entry.request ?? {};
       const response = entry.response ?? {};
+      const rawUrl = request.url ?? "";
+      const rawBody = request.postData?.text ?? "";
+      const path = (() => { try { return new URL(rawUrl).pathname; } catch { return ""; } })();
       return {
         id: index + 1,
         method: String(request.method ?? "GET").toUpperCase(),
-        url: redactUrl(request.url ?? ""),
-        path: (() => { try { return new URL(request.url ?? "").pathname; } catch { return ""; } })(),
+        url: redactUrl(rawUrl),
+        path,
         requestHeaders: redactHeaders(request.headers),
-        requestBody: sanitizeBody(request.postData?.text ?? ""),
+        requestBody: sanitizeBody(rawBody),
+        hints: classifyHarCandidate({ url: rawUrl, path, requestBody: rawBody }),
         status: Number(response.status ?? 0),
         mimeType: String(response.content?.mimeType ?? ""),
         responseSize: Number(response.content?.size ?? 0),
@@ -66,9 +87,17 @@ export function summarizeCandidates(entries) {
   const grouped = new Map();
   for (const item of entries) {
     const key = `${item.method} ${item.path}`;
-    const current = grouped.get(key) ?? { method: item.method, path: item.path, count: 0, statuses: new Set(), avgMs: 0 };
+    const current = grouped.get(key) ?? {
+      method: item.method,
+      path: item.path,
+      count: 0,
+      statuses: new Set(),
+      hints: new Set(),
+      avgMs: 0
+    };
     current.count += 1;
     current.statuses.add(item.status);
+    for (const hint of item.hints ?? []) current.hints.add(hint);
     current.avgMs += item.timeMs;
     grouped.set(key, current);
   }
@@ -77,6 +106,7 @@ export function summarizeCandidates(entries) {
     path: item.path,
     count: item.count,
     statuses: [...item.statuses].sort((a, b) => a - b),
+    hints: [...item.hints].sort(),
     avgMs: Math.round(item.avgMs / Math.max(item.count, 1))
   })).sort((a, b) => b.count - a.count || a.path.localeCompare(b.path));
 }
