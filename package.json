@@ -8,11 +8,11 @@
     "check": "node scripts/check.mjs",
     "typecheck": "node scripts/typecheck.mjs",
     "lint": "node scripts/lint.mjs",
-    "unit": "node --test tests/capability.test.mjs tests/har-discovery.test.mjs tests/module-skeleton.test.mjs",
-    "integration": "node --test tests/integration.test.mjs",
+    "unit": "node --test tests/capability.test.mjs tests/har-discovery.test.mjs tests/module-skeleton.test.mjs && node -e \"console.log('UNIT PASS')\"",
+    "integration": "node --test tests/integration.test.mjs && node -e \"console.log('INTEGRATION PASS')\"",
     "ux": "node scripts/ux.mjs",
     "security": "node scripts/security.mjs",
     "test": "npm run unit && npm run integration",
-    "verify": "npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run security"
+    "verify": "npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run security"
   }
 }
