@@ -43,3 +43,10 @@ npm run verify
 ## Bước tiếp theo
 
 Cần HAR thật của Web UI NC03 để map login/session/status/battery/Wi-Fi/client/network. Không có HAR thì write API vẫn bị khóa.
+
+
+## Publish
+
+Mỗi push vào `main` luôn tạo artifact `nc03-control-center-site` sau khi `npm run verify` PASS.
+
+GitHub Pages chỉ được deploy khi repository đã bật **Settings → Pages → Build and deployment → GitHub Actions**. GitHub App dùng để phát triển repo không có quyền Administration để tự bật Pages, vì vậy pipeline sẽ cảnh báo và bỏ qua live deploy thay vì báo lỗi giả.
