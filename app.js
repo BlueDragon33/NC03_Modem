@@ -6,7 +6,7 @@ import { loadPreferences, savePreferences, SECURITY_NOTE } from "./src/modem/Loc
 const app = document.querySelector("#app");
 const prefs = loadPreferences();
 let state = {
-  view: "home",
+  view: prefs.demoMode ? "home" : "login",
   demoMode: prefs.demoMode,
   baseUrl: prefs.baseUrl,
   harCandidates: [],
@@ -48,6 +48,32 @@ function renderTopbar(title, subtitle) {
 
 function metric(label, value, note, tone="") {
   return `<article class="metric" data-tone="${tone}"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></article>`;
+}
+
+function renderLogin() {
+  return `<section class="login-shell">
+    <div class="login-card">
+      <div class="login-brand"><div class="brand-mark">N3</div><div><small>HYBRID Wi-Fi 5G</small><strong>NC03 Control Center</strong></div></div>
+      <div class="login-copy"><span class="eyebrow">LOCAL MODEM ACCESS</span><h1>Kết nối NC03</h1><p>Web-app chỉ đăng nhập trực tiếp với modem trong mạng LAN. Mật khẩu admin không được gửi tới Application Management hay bất kỳ cloud proxy nào.</p></div>
+      <div class="login-form">
+        <label>Địa chỉ modem<input id="loginBaseUrl" value="${esc(state.baseUrl)}" inputmode="url" autocomplete="url" /></label>
+        <label>Mật khẩu admin<input type="password" disabled autocomplete="current-password" placeholder="Mở khóa sau khi endpoint login VERIFIED" /></label>
+      </div>
+      <div class="login-options">
+        <label><input type="checkbox" disabled /> Ghi nhớ đăng nhập modem</label>
+        <label><input type="checkbox" disabled /> Tự động đăng nhập lần sau</label>
+      </div>
+      <div class="login-actions">
+        <button id="saveLoginAddress" class="secondary-action">Lưu địa chỉ</button>
+        <button disabled class="primary-action">Đăng nhập</button>
+      </div>
+      <div class="write-lock"><strong>Authentication chưa được xác minh.</strong><span>Login thật sẽ chỉ mở sau khi HAR xác định request, session/token/CSRF và hành vi logout/expiry của firmware NC03.</span></div>
+      <div class="login-safe-actions">
+        <button id="goDiscovery">Phân tích HAR trước</button>
+        <button id="enterDemo">Mở DEMO DATA</button>
+      </div>
+    </div>
+  </section>`;
 }
 
 function renderHome() {
@@ -117,8 +143,9 @@ function renderSettings() {
 }
 
 function page() {
-  const content = state.view === "network" ? renderNetwork() : state.view === "wifi" ? renderWifi() : state.view === "devices" ? renderDevices() : state.view === "discovery" ? renderDiscovery() : state.view === "settings" ? renderSettings() : renderHome();
-  app.innerHTML = `<div class="shell">${renderSidebar()}<main class="main">${content}</main><nav class="mobile-nav">${navItems.slice(0,5).map(([id,label])=>`<button data-nav="${id}" data-active="${state.view===id}">${label}</button>`).join("")}</nav></div>`;
+  const content = state.view === "login" ? renderLogin() : state.view === "network" ? renderNetwork() : state.view === "wifi" ? renderWifi() : state.view === "devices" ? renderDevices() : state.view === "discovery" ? renderDiscovery() : state.view === "settings" ? renderSettings() : renderHome();
+  if (state.view === "login") app.innerHTML = content;
+  else app.innerHTML = `<div class="shell">${renderSidebar()}<main class="main">${content}</main><nav class="mobile-nav">${navItems.slice(0,5).map(([id,label])=>`<button data-nav="${id}" data-active="${state.view===id}">${label}</button>`).join("")}</nav></div>`;
   bind();
 }
 
@@ -132,6 +159,29 @@ async function ensureDemo() {
 }
 
 function bind() {
+  document.querySelector("#saveLoginAddress")?.addEventListener("click", () => {
+    const input = document.querySelector("#loginBaseUrl");
+    if (!input) return;
+    state.baseUrl = input.value.trim() || "http://192.168.0.1";
+    savePreferences({ baseUrl: state.baseUrl, demoMode: state.demoMode });
+    page();
+  });
+  document.querySelector("#goDiscovery")?.addEventListener("click", () => {
+    const input = document.querySelector("#loginBaseUrl");
+    if (input) state.baseUrl = input.value.trim() || "http://192.168.0.1";
+    savePreferences({ baseUrl: state.baseUrl, demoMode: false });
+    state.view = "discovery";
+    page();
+  });
+  document.querySelector("#enterDemo")?.addEventListener("click", async () => {
+    const input = document.querySelector("#loginBaseUrl");
+    if (input) state.baseUrl = input.value.trim() || "http://192.168.0.1";
+    state.demoMode = true;
+    savePreferences({ baseUrl: state.baseUrl, demoMode: true });
+    await ensureDemo();
+    state.view = "home";
+    page();
+  });
   document.querySelectorAll("[data-nav]").forEach((button) => button.addEventListener("click", () => {
     state.view = button.dataset.nav;
     page();
