@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1 — Simplified password-only login policy
+
+- Standardized login UX to configurable modem address + password only.
+- Defaulted modem address to `http://192.168.0.1` while allowing another local address.
+- Replaced separate Remember/Admin + Auto Login options with one `Ghi nhớ mật khẩu` preference, enabled by default.
+- Enforced policy that a credential may only be persisted after successful modem authentication.
+- Added modem-address normalization tests.
+
 ## 0.5.0 — First real NC03 HAR mapping
 
 - Mapped observed read endpoints from a real NC03 firmware 8.00.42 HAR without committing the private raw capture.
