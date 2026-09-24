@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 — First real NC03 HAR mapping
+
+- Mapped observed read endpoints from a real NC03 firmware 8.00.42 HAR without committing the private raw capture.
+- Confirmed exact battery percentage is available through `device_battery_percent`.
+- Added firmware 8.00.42 route/capability profile and read-only adapter.
+- Catalogued write endpoints discovered in vendor JavaScript as PARTIAL only; no write control was enabled.
+- Added tests for exact battery parsing, status/client reads and fail-closed writes.
+- Fixed README/phase formatting artifacts from v0.4.0.
+
 ## 0.4.0 — Pre-HAR discovery & credential vault
 
 - Added encrypted local credential-vault foundation using AES-GCM with a non-extractable browser CryptoKey.
@@ -7,8 +16,6 @@
 - Added heuristic HAR module hints for auth, battery, Wi-Fi, clients, mobile network, data usage, DHCP/LAN, bridge/router and system requests.
 - Candidate hints never promote an endpoint to VERIFIED or WRITE VERIFIED.
 - Added unit coverage for at-rest credential encryption and HAR hint/redaction behavior.
-
-# Changelog
 
 ## 0.3.0 — Phase 1 finalization
 
