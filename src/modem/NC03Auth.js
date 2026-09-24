@@ -9,12 +9,15 @@ export class NC03Auth {
     return false;
   }
 
+  clearLocalSession() {
+    this.session?.clear?.();
+  }
+
   async login() {
     throw new UnsupportedCapabilityError("login");
   }
 
   async logout() {
-    this.session?.clear?.();
     throw new UnsupportedCapabilityError("logout");
   }
 }
