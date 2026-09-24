@@ -2,12 +2,14 @@
 
 ## Phase 1 — FOUNDATION + NC03 DISCOVERY
 
-Status: **READY FOR REAL HAR**
+Status: **COMPLETE — READY FOR REAL HAR**
 
 Completed:
 - project architecture;
 - NC03 Adapter interface;
 - NC03Auth / NC03Api / NC03Session / NC03Parser / NC03Capabilities boundaries;
+- explicit read/write operation gate independent from HTTP method;
+- fail-closed auth/session behavior;
 - credential/security architecture;
 - HAR parser with redaction;
 - capability matrix;
@@ -17,14 +19,16 @@ Completed:
 - Basic / Advanced Mode boundary;
 - Advanced Developer Mode boundary;
 - explicit connection-state model;
-- PWA/offline shell;
-- release gates.
+- PWA manifest/icon/offline shell;
+- CHECK / BUILD / TYPECHECK / LINT / UNIT / INTEGRATION / UX / OFFLINE / SECURITY gates;
+- verified release artifact workflow.
 
 External dependency before Phase 2:
 - HAR captured from the real NC03 Web UI at the user's firmware version.
 
 ## Phase 2 — NC03 Web UI reverse engineering
 
-Status: **BLOCKED BY MISSING REAL HAR**
+Status: **BLOCKED ONLY BY MISSING REAL HAR**
 
-Do not infer or hard-code endpoint names while this dependency is missing.
+Do not infer, invent or hard-code endpoint names while this dependency is missing.
+Do not enable production write controls until the corresponding operation is WRITE VERIFIED.

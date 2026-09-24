@@ -18,11 +18,7 @@ http://192.168.0.1
 
 ## Modules
 
-- `NC03Adapter`: ranh giới bắt buộc giữa UI và modem.
-- `MockNC03Adapter`: chỉ dùng UI development/test/screenshot và phải gắn DEMO DATA.
-- `HarDiscovery`: đọc HAR cục bộ, lọc request tới modem, redaction credential.
-- `CapabilityRegistry`: chỉ mở production feature theo trạng thái VERIFIED / WRITE VERIFIED.
-- `LocalPreferences`: chỉ lưu cấu hình không nhạy cảm như modem address và Demo Mode.
+- `NC03Adapter`: ranh giới bắt buộc giữa UI và modem.\n- `NC03Api`: registry/request boundary; phân loại `read`/`write` độc lập với HTTP method và chỉ nhận write route khi `WRITE VERIFIED`.\n- `NC03Auth`: auth boundary fail-closed; local session clear là thao tác riêng, không giả vờ logout server.\n- `NC03Session`: session state + sanitized view.\n- `NC03Parser`: parser generic, không tự gán semantics chưa xác minh.\n- `NC03Capabilities` / `CapabilityRegistry`: firmware/capability boundary, production write chỉ mở khi `WRITE VERIFIED`.\n- `MockNC03Adapter`: chỉ dùng UI development/test/screenshot và phải gắn DEMO DATA.\n- `HarDiscovery`: đọc HAR cục bộ, lọc request tới modem, redaction credential.\n- `LocalPreferences`: chỉ lưu cấu hình không nhạy cảm như modem address, UI Mode và Developer/Mock Mode.
 
 ## Authentication
 
@@ -54,4 +50,4 @@ Application Management quản lý lifecycle/capability/release của ứng dụn
 
 ## Release gate
 
-Không merge/release nếu còn fake button, unknown write endpoint, plaintext credential, console error, broken responsive layout hoặc dangerous action thiếu confirmation.
+Không merge/release nếu còn fake button, unknown write endpoint, plaintext credential, console error, broken responsive layout hoặc dangerous action thiếu confirmation. Pipeline Phase 1 còn kiểm tra offline artifact/PWA shell trước khi publish.

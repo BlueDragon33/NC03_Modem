@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — Phase 1 finalization
+
+- Separated API operation type from HTTP method so POST can be read-only and every write operation requires WRITE VERIFIED.
+- Made unsupported logout fail-closed without silently clearing local session.
+- Fixed Mock Mode connected-device count mismatch.
+- Added PWA icon, manifest id/scope and a new offline cache version.
+- Added OFFLINE PASS release gate against the verified dist artifact.
+- Refreshed Phase status, architecture and discovery documentation.
+
 ## 0.2.0 — Phase 1 spec hardening
 
 - Moved API Discovery out of primary navigation into Advanced Developer Mode.

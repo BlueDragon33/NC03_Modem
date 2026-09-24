@@ -9,6 +9,9 @@ test("mock flow supports connect/login/read for UI development only", async () =
   assert.equal((await adapter.login()).authenticated, true);
   assert.equal((await adapter.getStatus()).internet, "Connected");
   assert.equal((await adapter.getBattery()).exactPercentage, true);
+  const wifi = await adapter.getWifiStatus();
+  const clients = await adapter.getConnectedClients();
+  assert.equal(wifi.clients, clients.length);
 });
 
 test("real adapter blocks unknown write capability", async () => {

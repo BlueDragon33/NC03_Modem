@@ -13,7 +13,7 @@ Không tự bịa endpoint. Mọi endpoint modem phải đi qua chu trình:
 3. DevTools → Network → Fetch/XHR.
 4. Thực hiện đúng một tác vụ trên Web UI gốc.
 5. Export HAR with content.
-6. Import HAR vào tab **Discovery** của NC03 Control Center.
+6. Trong NC03 Control Center: **Settings → Advanced Developer Mode → API Discovery** rồi import HAR.
 
 HAR parser của dự án chạy tại trình duyệt và tự redaction cookie/token/session/password trước khi hiển thị.
 
@@ -34,4 +34,4 @@ HAR parser của dự án chạy tại trình duyệt và tự redaction cookie/
 | Bridge Mode | | | | | | UNKNOWN |
 | Firmware | | | | | | UNKNOWN |
 
-Chỉ `VERIFIED` hoặc `WRITE VERIFIED` mới được dùng trong production UI.
+Read endpoint chỉ được dùng khi capability đã được xác minh. Mọi operation ghi phải có status `WRITE VERIFIED`; không suy luận quyền ghi chỉ từ GET/POST/PUT/DELETE.

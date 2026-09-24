@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { NC03Session, sanitizeSessionValue } from "../src/modem/NC03Session.js";
 import { NC03Api } from "../src/modem/NC03Api.js";
+import { NC03Auth } from "../src/modem/NC03Auth.js";
 import { parseNC03Response } from "../src/modem/NC03Parser.js";
 import { CAPABILITY_STATUS } from "../src/modem/CapabilityRegistry.js";
 import { CONNECTION_STATE, connectionStateLabel } from "../src/modem/ConnectionState.js";
@@ -13,10 +14,27 @@ test("session never exposes sensitive values in sanitized output", () => {
   assert.deepEqual(sanitizeSessionValue({ session:"s", nested:{token:"t"}, safe:1 }), { session:"****", nested:{token:"****"}, safe:1 });
 });
 
-test("API refuses unverified routes", async () => {
-  const api = new NC03Api({ fetchImpl: async () => ({ ok:true }) });
+test("API refuses unverified routes and gates writes by operation, not HTTP method", async () => {
+  const calls = [];
+  const api = new NC03Api({ fetchImpl: async (url, init) => { calls.push({ url, init }); return { ok:true }; } });
   assert.throws(() => api.registerVerifiedRoute("bad", { path:"/x", method:"POST", status:CAPABILITY_STATUS.UNKNOWN }));
+  assert.throws(() => api.registerVerifiedRoute("unsafe-write", { path:"/write", method:"GET", operation:"write", status:CAPABILITY_STATUS.VERIFIED }));
+  api.registerVerifiedRoute("read-via-post", { path:"/status", method:"POST", operation:"read", status:CAPABILITY_STATUS.VERIFIED });
+  api.registerVerifiedRoute("verified-write", { path:"/wifi", method:"POST", operation:"write", status:CAPABILITY_STATUS.WRITE_VERIFIED });
+  await api.request("read-via-post");
+  await api.request("verified-write");
+  assert.equal(calls[0].init.method, "POST");
+  assert.equal(calls[1].init.method, "POST");
   await assert.rejects(api.request("missing"));
+});
+
+test("unsupported logout does not silently mutate local session", async () => {
+  let cleared = 0;
+  const auth = new NC03Auth({ session: { clear() { cleared += 1; } } });
+  await assert.rejects(auth.logout());
+  assert.equal(cleared, 0);
+  auth.clearLocalSession();
+  assert.equal(cleared, 1);
 });
 
 test("generic parser does not invent semantics", () => {

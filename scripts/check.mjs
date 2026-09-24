@@ -2,12 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 
 const required = [
-  "index.html", "app.js", "styles.css", "manifest.webmanifest", "sw.js",
+  "index.html", "app.js", "styles.css", "manifest.webmanifest", "sw.js", "icon.svg",
   "src/modem/NC03Adapter.js", "src/modem/MockNC03Adapter.js", "src/modem/HarDiscovery.js",
   "src/modem/NC03Auth.js", "src/modem/NC03Api.js", "src/modem/NC03Session.js",
   "src/modem/NC03Parser.js", "src/modem/NC03Capabilities.js", "src/modem/ConnectionState.js",
   "src/ui/NavigationModel.js", "docs/API_DISCOVERY.md", "docs/SECURITY.md", "docs/ARCHITECTURE.md",
-  "docs/PHASE_STATUS.md", "CHANGELOG.md"
+  "docs/PHASE_STATUS.md", "CHANGELOG.md", "scripts/offline.mjs"
 ];
 
 for (const file of required) {
