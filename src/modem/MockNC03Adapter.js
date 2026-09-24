@@ -5,7 +5,7 @@ const MOCK = Object.freeze({
   status: { internet: "Connected", network: "5G SA", carrier: "Demo Carrier" },
   battery: { exactPercentage: true, percentage: 72, charging: true, longLife: true },
   signal: { quality: "Excellent", rsrp: -82, rsrq: -10, sinr: 19 },
-  wifi: { enabled: true, ssid: "NC03-DEMO", bands: ["2.4 GHz", "5 GHz"], clients: 4 },
+  wifi: { enabled: true, ssid: "NC03-DEMO", bands: ["2.4 GHz", "5 GHz"], clients: 2 },
   clients: [
     { name: "iPhone 16 Pro", ip: "192.168.0.2", mac: "AA:BB:CC:DD:EE:01", state: "Online", band: "5 GHz" },
     { name: "Laptop", ip: "192.168.0.3", mac: "AA:BB:CC:DD:EE:02", state: "Online", band: "5 GHz" }
