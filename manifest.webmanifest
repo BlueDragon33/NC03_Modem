@@ -1,0 +1,11 @@
+{
+  "name": "NC03 Control Center",
+  "short_name": "NC03",
+  "description": "Local-first companion/control center cho modem HYBRID Wi-Fi 5G NC03.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b1117",
+  "theme_color": "#0b1117",
+  "lang": "vi",
+  "icons": []
+}
