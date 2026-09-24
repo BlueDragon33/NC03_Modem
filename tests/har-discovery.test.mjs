@@ -4,7 +4,7 @@ import { classifyHarCandidate, parseHar, redactHeaders, redactUrl, sanitizeBody,
 
 test("redacts sensitive headers and query", () => {
   assert.equal(redactHeaders([{name:"Cookie",value:"sid=123"}])[0].value, "****");
-  assert.match(redactUrl("http://192.168.0.1/api?token=abc&mode=5g"), /token=****/);
+  assert.ok(redactUrl("http://192.168.0.1/api?token=abc&mode=5g").includes("token=****"));
   assert.match(redactUrl("http://192.168.0.1/api?token=abc&mode=5g"), /mode=5g/);
 });
 
@@ -29,7 +29,7 @@ test("parses only modem host, redacts secrets and summarizes candidate hints", (
   ]}};
   const entries = parseHar(har);
   assert.equal(entries.length, 2);
-  assert.match(entries[0].url, /token=****/);
+  assert.ok(entries[0].url.includes("token=****"));
   assert.equal(JSON.parse(entries[0].requestBody).password, "****");
   assert.ok(entries[0].hints.includes("auth"));
   const candidates = summarizeCandidates(entries);
