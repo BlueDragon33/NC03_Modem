@@ -12,34 +12,31 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Read/write capability được gate độc lập với HTTP method.
 - Không gửi mật khẩu/session/token modem lên cloud.
 - Không lưu password plaintext.
+- Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 1 v0.4.0
+## Phase 2A v0.5.0
 
-Phase 1 foundation đã hoàn tất phần có thể làm mà **không cần HAR thật**:
+Đã phân tích HAR thật của firmware **NC03_8.00.42** và triển khai read-path profile:
 
-- responsive PWA shell: desktop sidebar + mobile bottom navigation;
-- 5 primary tabs: Home / Network / Wi-Fi / Devices / Settings;
-- Basic Mode mặc định và Advanced Mode;
-- Advanced Developer Mode riêng cho HAR Discovery / Mock;
-- Dashboard + Login Screen skeleton fail-closed;
-- `NC03Adapter`, `NC03Api`, `NC03Auth`, `NC03Session`, `NC03Parser`, `NC03Capabilities`;
-- explicit connection states;
-- capability matrix mặc định `UNKNOWN`;
-- HAR Discovery local-only + credential redaction + heuristic module hints (candidate-only, không tự VERIFIED);\n- encrypted local credential vault foundation bằng AES-GCM + non-extractable CryptoKey;
-- fail-closed write operation gate: chỉ `WRITE VERIFIED` mới đăng ký write route;
-- PWA manifest, icon và offline cache shell;
-- release gates: CHECK / BUILD / TYPECHECK / LINT / UNIT / INTEGRATION / UX / OFFLINE / SECURITY.
+- `/goform/get_login_info` — login status probe;
+- `/action/get_mgdb_params` — status / battery / Wi-Fi / network / usage / DHCP / firmware;
+- `/action/router_get_hosts_info` — connected clients;
+- `/action/get_device_state` — CPU/RAM/uptime;
+- xác nhận modem trả `device_battery_percent` dạng số nên app có thể hiện % pin chính xác;
+- thêm `NC03Firmware80042Adapter` và profile firmware;
+- write endpoints chỉ được catalogued từ vendor JavaScript và vẫn khóa tới khi WRITE VERIFIED;
+- encrypted local credential vault vẫn chờ login flow VERIFIED trước khi bật Remember Admin/Auto Login.
 
 ## Chạy local
-
-Dùng bất kỳ static server nào tại root repo, ví dụ:
 
 ```bash
 python -m http.server 4173
 ```
 
 Sau đó mở `http://localhost:4173`.
+
+Lưu ý: Web UI gốc chạy same-origin trên modem. Direct PWA → `192.168.0.1` còn phải xác minh CORS/Local Network Access. Local Bridge là fallback nếu browser chặn.
 
 ## Kiểm tra
 
@@ -49,25 +46,18 @@ npm run verify
 
 Không coi release là PASS nếu một gate trong pipeline thất bại.
 
-## Phase 2
+## Bước tiếp theo
 
-Dependency bắt buộc: **HAR thật của Web UI NC03 trên firmware đang sử dụng**.
+Ưu tiên Phase 2B:
 
-Cần map lần lượt:
-
-1. login / logout / session / CSRF;
-2. status / firmware;
-3. battery;
-4. mobile network;
-5. Wi-Fi;
-6. connected clients;
-7. data usage;
-8. DHCP / reboot / bridge và các write operation khác.
-
-Không có HAR thì production endpoint và write controls vẫn bị khóa.
+1. capture login page/assets và login transaction an toàn;
+2. xác minh auth/session;
+3. test Direct LAN transport;
+4. nếu bị browser chặn, triển khai Local Bridge;
+5. capture từng write operation ít rủi ro để nâng từ PARTIAL → WRITE VERIFIED.
 
 ## Publish
 
 Mỗi push vào `main` tạo verified artifact `nc03-control-center-site` sau khi `npm run verify` PASS.
 
-GitHub Pages chỉ deploy live khi repository đã bật **Settings → Pages → Build and deployment → GitHub Actions**. GitHub App hiện dùng để phát triển repo không có quyền Administration để tự bật Pages, nên workflow giữ verified artifact và skip live deploy thay vì báo release thành công giả.
+GitHub Pages chỉ deploy live khi repository đã bật **Settings → Pages → Build and deployment → GitHub Actions**.
