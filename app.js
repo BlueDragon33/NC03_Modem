@@ -80,8 +80,8 @@ function renderLogin() {
         <label>Mật khẩu admin<input type="password" disabled autocomplete="current-password" placeholder="Chờ Login endpoint VERIFIED" /></label>
       </div>
       <div class="login-options">
-        <label><input type="checkbox" disabled /> Ghi nhớ đăng nhập modem · chờ secure credential flow</label>
-        <label><input type="checkbox" disabled /> Tự động đăng nhập lần sau · chờ auth/session VERIFIED</label>
+        <label><input type="checkbox" disabled /> Ghi nhớ đăng nhập modem · vault mã hóa đã sẵn sàng, chờ AUTH VERIFIED</label>
+        <label><input type="checkbox" disabled /> Tự động đăng nhập lần sau · chỉ bật sau khi login/session VERIFIED</label>
       </div>
       <div class="login-actions">
         <button id="saveLoginAddress" class="secondary-action">Lưu địa chỉ modem</button>
@@ -147,7 +147,7 @@ function renderDiscovery() {
   <section class="panel discovery-panel"><div class="panel-head"><div><span>ADVANCED DEVELOPER MODE</span><h2>Phân tích Web UI gốc NC03</h2></div>${statusPill(`${state.harEntries.length} request`)}</div>
     <div class="import-box"><input id="harInput" type="file" accept=".har,application/json"/><div><strong>Chọn file HAR từ DevTools</strong><span>File chỉ được đọc trong trình duyệt hiện tại. Không upload ra cloud.</span></div></div>
     ${state.discoveryError ? `<div class="inline-error">${esc(state.discoveryError)}</div>` : ""}
-    ${state.harCandidates.length ? `<div class="candidate-list">${state.harCandidates.map(c=>`<article><span class="method">${esc(c.method)}</span><code>${esc(c.path)}</code><small>${c.count} lần · HTTP ${esc(c.statuses.join(", "))} · ~${c.avgMs} ms</small></article>`).join("")}</div>` : `<div class="empty">Chưa có HAR thật. Network → Fetch/XHR → Export HAR with content rồi nhập tại đây.</div>`}
+    ${state.harCandidates.length ? `<div class="candidate-list">${state.harCandidates.map(c=>`<article><span class="method">${esc(c.method)}</span><code>${esc(c.path)}</code><small>${c.count} lần · HTTP ${esc(c.statuses.join(", "))} · ~${c.avgMs} ms${c.hints?.length ? ` · gợi ý: ${esc(c.hints.join(", "))}` : ""}</small></article>`).join("")}</div>` : `<div class="empty">Chưa có HAR thật. Network → Fetch/XHR → Export HAR with content rồi nhập tại đây.</div>`}
   </section>
   <section class="panel"><div class="panel-head"><div><span>CAPABILITY MATRIX</span><h2>Trạng thái endpoint</h2></div><p>Chỉ VERIFIED / WRITE VERIFIED mới được dùng chính thức.</p></div><div class="table-wrap"><table><thead><tr><th>Module</th><th>Read</th><th>Write</th><th>Endpoint</th><th>Method</th><th>Auth</th><th>Status</th></tr></thead><tbody>${capabilityRows()}</tbody></table></div></section>`;
 }

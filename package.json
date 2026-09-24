@@ -1,6 +1,6 @@
 {
   "name": "nc03-control-center",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
     "check": "node scripts/check.mjs",
     "typecheck": "node scripts/typecheck.mjs",
     "lint": "node scripts/lint.mjs",
-    "unit": "node --test tests/capability.test.mjs tests/har-discovery.test.mjs tests/module-skeleton.test.mjs && node -e \"console.log('UNIT PASS')\"",
+    "unit": "node --test tests/capability.test.mjs tests/credential-vault.test.mjs tests/har-discovery.test.mjs tests/module-skeleton.test.mjs && node -e \"console.log('UNIT PASS')\"",
     "integration": "node --test tests/integration.test.mjs && node -e \"console.log('INTEGRATION PASS')\"",
     "ux": "node scripts/ux.mjs",
     "security": "node scripts/security.mjs",
