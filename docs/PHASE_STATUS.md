@@ -2,7 +2,7 @@
 
 ## Phase 1 — FOUNDATION + NC03 DISCOVERY
 
-Status: **COMPLETE — READY FOR REAL HAR**
+Status: **COMPLETE**
 
 Completed:
 - project architecture;
@@ -10,25 +10,35 @@ Completed:
 - NC03Auth / NC03Api / NC03Session / NC03Parser / NC03Capabilities boundaries;
 - explicit read/write operation gate independent from HTTP method;
 - fail-closed auth/session behavior;
-- credential/security architecture;
-- HAR parser with redaction and candidate-only module hints;\n- encrypted local credential vault foundation (AES-GCM, non-extractable CryptoKey);
-- capability matrix;
+- encrypted local credential vault foundation;
+- HAR parser with redaction and candidate-only module hints;
 - Mock Mode with DEMO DATA label;
-- Login Screen skeleton;
-- Dashboard skeleton;
-- Basic / Advanced Mode boundary;
-- Advanced Developer Mode boundary;
-- explicit connection-state model;
-- PWA manifest/icon/offline shell;
-- CHECK / BUILD / TYPECHECK / LINT / UNIT / INTEGRATION / UX / OFFLINE / SECURITY gates;
-- verified release artifact workflow.
+- Login Screen / Dashboard skeleton;
+- Basic / Advanced / Developer Mode boundaries;
+- PWA/offline shell;
+- CHECK / BUILD / TYPECHECK / LINT / UNIT / INTEGRATION / UX / OFFLINE / SECURITY gates.
 
-Pre-HAR hardening v0.4.0 is complete. Remember-admin/auto-login UI remains intentionally locked until AUTH is VERIFIED.\n\nExternal dependency before Phase 2:
-- HAR captured from the real NC03 Web UI at the user's firmware version.
+## Phase 2A — REAL HAR MAPPING / firmware 8.00.42
 
-## Phase 2 — NC03 Web UI reverse engineering
+Status: **READ PATH MAPPED**
 
-Status: **BLOCKED ONLY BY MISSING REAL HAR**
+Completed:
+- real HAR analyzed without committing private raw capture;
+- firmware identified as `NC03_8.00.42`;
+- verified read routes for login status, MGDB parameters, connected clients and device runtime state;
+- exact battery percentage capability confirmed;
+- read-only firmware adapter implemented;
+- vendor JavaScript write endpoints catalogued as PARTIAL only;
+- regression tests prevent discovered writes from being accidentally enabled.
 
-Do not infer, invent or hard-code endpoint names while this dependency is missing.
-Do not enable production write controls until the corresponding operation is WRITE VERIFIED.
+Still required before production control:
+- actual login transaction/auth algorithm;
+- cross-origin/direct-LAN transport validation or Local Bridge implementation;
+- write-operation capture and rollback tests;
+- detailed radio metrics capture if available.
+
+## Phase 2B — AUTH + TRANSPORT
+
+Status: **NEXT**
+
+Do not enable remember-admin, auto-login or write controls until auth/transport are VERIFIED.
