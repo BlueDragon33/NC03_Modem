@@ -7,6 +7,7 @@ import { parseNC03Response } from "../src/modem/NC03Parser.js";
 import { CAPABILITY_STATUS } from "../src/modem/CapabilityRegistry.js";
 import { CONNECTION_STATE, connectionStateLabel } from "../src/modem/ConnectionState.js";
 import { PRIMARY_NAV } from "../src/ui/NavigationModel.js";
+import { DEFAULT_MODEM_URL, LOGIN_POLICY, normalizeModemAddress } from "../src/modem/LoginPolicy.js";
 
 test("session never exposes sensitive values in sanitized output", () => {
   const session = new NC03Session().set({ token: "abc", csrf: "xyz", expiresAt: 123 });
@@ -45,4 +46,14 @@ test("generic parser does not invent semantics", () => {
 test("connection states and primary navigation match source of truth", () => {
   assert.equal(connectionStateLabel(CONNECTION_STATE.SESSION_EXPIRED), "Session expired");
   assert.deepEqual(PRIMARY_NAV.map(x=>x.label), ["Home","Network","Wi-Fi","Devices","Settings"]);
+});
+
+
+test("login policy is password-only, remembers after success and normalizes configurable modem address", () => {
+  assert.equal(LOGIN_POLICY.usernameRequired, false);
+  assert.equal(LOGIN_POLICY.rememberPasswordDefault, true);
+  assert.equal(LOGIN_POLICY.persistCredentialOnlyAfterAuthenticated, true);
+  assert.equal(normalizeModemAddress("192.168.0.1"), DEFAULT_MODEM_URL);
+  assert.equal(normalizeModemAddress("http://192.168.8.1/settings"), "http://192.168.8.1");
+  assert.throws(() => normalizeModemAddress("ftp://192.168.0.1"));
 });

@@ -22,3 +22,13 @@ Không dùng cloud proxy để né giới hạn trình duyệt vì việc đó s
 The browser implementation may store the NC03 admin credential encrypted with AES-GCM and a non-extractable CryptoKey in IndexedDB. The password is never written to localStorage/sessionStorage and is never sent to cloud services.
 
 This protects credential data at rest, but it is not equivalent to an OS Keychain/Keystore and cannot protect against malicious code/XSS executing under the same application origin. Therefore remember-admin and auto-login remain disabled until the real NC03 authentication flow is verified and the transport is approved.
+
+
+## Password-only login policy
+
+- Default modem address is `http://192.168.0.1`, but the user can change it.
+- NC03 Control Center does not ask for a username unless future firmware proves one is required.
+- The remember-password preference defaults to enabled for this single-user local companion workflow.
+- A password must never be persisted before the modem confirms a successful login.
+- Remembered credentials stay in the encrypted local credential vault and are never copied to localStorage/sessionStorage or cloud services.
+- The UI does not expose a separate Auto Login checkbox; reuse of a remembered credential is an implementation detail after AUTH is verified.
