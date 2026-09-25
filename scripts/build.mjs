@@ -9,5 +9,6 @@ for (const file of ["index.html","app.js","styles.css","manifest.webmanifest","s
   fs.copyFileSync(path.resolve(file), path.join(out, file));
 }
 fs.cpSync(path.resolve("src"), path.join(out, "src"), { recursive: true });
+fs.cpSync(path.resolve("control"), path.join(out, "control"), { recursive: true });
 
 console.log("BUILD PASS");
