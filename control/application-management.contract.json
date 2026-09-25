@@ -1,0 +1,40 @@
+{
+  "schema": "application-management.contract/v1",
+  "protocol": "nc03-local-first-v1",
+  "application": {
+    "id": "nc03-modem",
+    "name": "NC03 Control Center",
+    "shortName": "NC03 Modem",
+    "category": "Kỹ thuật",
+    "repository": "BlueDragon33/NC03_Modem",
+    "version": "0.5.1"
+  },
+  "capabilities": {
+    "webLaunch": true,
+    "deviceRegistry": false,
+    "deviceApproval": false,
+    "deviceBlock": false,
+    "deviceUnblock": false,
+    "deviceEditPermission": false,
+    "deviceIdempotentCommands": false,
+    "optimisticConcurrency": false,
+    "sessions": false,
+    "audit": false,
+    "contentReview": false,
+    "payments": false,
+    "reports": false
+  },
+  "endpoints": {},
+  "policy": {
+    "remoteAdminReady": false,
+    "localFirst": true,
+    "modemSecretsInControlPlane": false,
+    "modemCommandsFromCloud": false,
+    "writeRequiresVerifiedFirmwareMapping": true
+  },
+  "boundary": {
+    "applicationManagementOwnsModemCredentials": false,
+    "applicationManagementProxiesModemTraffic": false,
+    "applicationManagementMayInventWriteOperations": false
+  }
+}
