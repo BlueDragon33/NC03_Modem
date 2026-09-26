@@ -32,3 +32,13 @@ test("local runtime exposes live Application Management discovery and status end
   assert.match(server, /managementMode:"local-first"/);
   assert.match(server, /existsSync\(join\(distRoot, "index.html"\)\)/);
 });
+
+
+test("v0.6.2 contract advertises resilient live telemetry without changing modem credential boundary", () => {
+  assert.equal(contract.application.version, "0.6.2");
+  assert.equal(contract.policy.lastKnownGoodTelemetry, true);
+  assert.equal(contract.policy.staleTelemetryExplicitlyMarked, true);
+  assert.equal(contract.policy.uiBridgeOriginPolicyUnified, true);
+  assert.equal(contract.policy.modemSecretsInControlPlane, false);
+  assert.equal(contract.policy.modemCommandsFromCloud, false);
+});
