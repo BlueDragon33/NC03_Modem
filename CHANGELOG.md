@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.16 — AUTH probe cache/runtime compatibility
+
+- Fixed `METHOD_NOT_ALLOWED` when a stale PWA frontend still calls AUTH Source Probe with legacy GET semantics while the Local Bridge has already been upgraded.
+- `/api/nc03/auth-source-probe` now accepts the current POST transport and a read-only legacy GET compatibility path; GET falls back to the safe default RFC1918 modem origin when an older client sends no body.
+- Switched the PWA shell from stale-while-revalidate to network-first with cache fallback so `app.js`/module updates are not silently one release behind.
+- The browser explicitly asks the Service Worker registration to update after load.
+- `METHOD_NOT_ALLOWED` is now diagnosed as frontend/Local-Bridge version drift or wrong runtime instead of being shown as an unexplained raw code.
+- Authentication and every write operation remain fail-closed; this compatibility change only affects local read-only AUTH evidence tooling.
+
+
 ## 0.7.15 — Login payload-origin tracing
 
 - Extended login payload tracing from the body of `login()` to the entire `/js/login.js` source.
