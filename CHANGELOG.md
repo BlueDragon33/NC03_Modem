@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.7 — Local runtime version coherence
+
+- Fixed local runtime serving stale `dist/` assets and contract after source had been updated.
+- `serve:local` now uses `dist` only when its contract version matches `package.json`.
+- When stale `dist` is detected, runtime automatically serves current source instead of silently exposing an older app.
+- `/_local/health` now reports runtime version and asset root.
+- Startup banner includes version + active asset root and prints a stale-dist notice when applicable.
+
+
 ## 0.7.6 — AUTH Source Probe
 
 - Added a local-only source probe for modem static HTML/JavaScript.
