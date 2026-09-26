@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.8"
+    "version": "0.7.9"
   },
   "capabilities": {
     "webLaunch": true,
@@ -79,7 +79,8 @@
     "authSourceProbeLocalOnly": true,
     "authSourceCandidateNeverAutoVerified": true,
     "localRuntimeRejectsStaleDist": true,
-    "developerLabProminentInSettings": true
+    "developerLabProminentInSettings": true,
+    "localApiEnvelopeStandardized": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
