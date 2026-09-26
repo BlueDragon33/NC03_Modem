@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v28-password-dataflow";
+const CACHE = "nc03-control-center-v29-runtime-schema-gate";
 const ASSETS = [
   "./",
   "./index.html",
@@ -10,6 +10,7 @@ const ASSETS = [
   "./report.css",
   "./report.js",
   "./src/modem/NC03Adapter.js",
+  "./src/runtime/RuntimeProtocol.js",
   "./src/modem/MockNC03Adapter.js",
   "./src/modem/CapabilityRegistry.js",
   "./src/modem/NC03Capabilities.js",
