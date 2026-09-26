@@ -154,18 +154,111 @@ function stripStringLiterals(value) {
   return out;
 }
 
+
+function findMatchingParen(text, openIndex) {
+  let depth = 1;
+  let quote = null;
+  let escaped = false;
+  for (let i = openIndex + 1; i < text.length; i += 1) {
+    const ch = text[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (quote) {
+      if (ch === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if (ch === "(") depth += 1;
+    else if (ch === ")") {
+      depth -= 1;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+function collectCallTree(expression, depth = 0) {
+  const text = String(expression ?? "");
+  const calls = [];
+  let quote = null;
+  let escaped = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (quote) {
+      if (ch === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+
+    if (!/[A-Za-z_$]/.test(ch)) continue;
+    let end = i + 1;
+    while (end < text.length && /[\w$]/.test(text[end])) end += 1;
+    const name = text.slice(i, end);
+    let cursor = end;
+    while (cursor < text.length && /\s/.test(text[cursor])) cursor += 1;
+    if (text[cursor] !== "(") {
+      i = end - 1;
+      continue;
+    }
+
+    const close = findMatchingParen(text, cursor);
+    if (close < 0) {
+      i = end - 1;
+      continue;
+    }
+
+    if (!["if","for","while","switch","function"].includes(name)) {
+      const body = text.slice(cursor + 1, close);
+      const args = splitArgs(body);
+      calls.push({
+        name,
+        depth,
+        args:args.map(safeArgToken).slice(0, 8)
+      });
+      for (const arg of args) calls.push(...collectCallTree(arg, depth + 1));
+    }
+
+    i = close;
+  }
+
+  return calls;
+}
+
+function authTransforms(calls = []) {
+  return calls
+    .filter((call) => /^(?:hex_hmac_md5|hex_md5|md5)$/i.test(call.name))
+    .map((call) => ({
+      name:call.name,
+      depth:call.depth,
+      args:call.args
+    }));
+}
+
 function expressionStructure(expression) {
   const value = String(expression ?? "").trim();
   const identifierSource = stripStringLiterals(value);
-  const calls = [];
-  for (const match of value.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(([^()]*)\)/g)) {
-    const name = match[1];
-    if (["if","for","while","switch","function"].includes(name)) continue;
-    calls.push({
-      name,
-      args:splitArgs(match[2]).map(safeArgToken).slice(0, 8)
-    });
-  }
+  const calls = collectCallTree(value);
 
   const authTokens = [];
   for (const match of identifierSource.matchAll(/\b([A-Za-z_$][\w$]*)\b/g)) {
@@ -189,6 +282,7 @@ function expressionStructure(expression) {
     shape,
     objectKeys:objectKeys(value),
     calls:uniq(calls.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item)),
+    authTransforms:authTransforms(calls),
     authTokens:uniq(authTokens),
     identifiers:uniq(identifiers).slice(0, 20)
   };
