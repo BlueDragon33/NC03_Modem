@@ -386,6 +386,7 @@ function renderDiscovery() {
   const authReady = quality?.readyForAuthMapping === true;
   const writeReady = quality?.readyForWriteMapping === true;
   const sourceEvidence = state.authSourceEvidence?.evidence ?? null;
+  const sourceDiagnostics = state.authSourceEvidence?.diagnostics ?? null;
   const sourceTone = sourceEvidence?.status === "LOGIN_SOURCE_CANDIDATE_READY" ? "ok" : sourceEvidence ? "warn" : "muted";
   return `${renderTopbar("HAR Evidence Lab", "Advanced Developer Mode: phân tích HAR ngay trên thiết bị, không upload credential lên cloud.")}
   <section class="panel discovery-panel">
@@ -424,6 +425,10 @@ function renderDiscovery() {
         <div><span>Login page</span><strong>${sourceEvidence.loginPageCandidates?.length ?? 0}</strong><small>Static page candidate</small></div>
         <div><span>Password codec</span><strong>${sourceEvidence.passwordCodec?.hmacMd5 ? "HMAC-MD5" : sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "KEY FOUND" : "—"}</strong><small>${sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "Có fixed loginKey trong source" : "Chưa thấy fixed loginKey"}</small></div>
       </div>
+      ${sourceDiagnostics ? `<div class="probe-diagnostics">
+        <div><span>PROBE DIAGNOSTICS</span><strong>${sourceDiagnostics.sourceCount ?? 0} source đọc được</strong><small>${esc(Object.entries(sourceDiagnostics.summary ?? {}).map(([k,v])=>`${k}: ${v}`).join(" · ") || "Không có thống kê")}</small></div>
+        <div class="probe-diagnostic-list">${(sourceDiagnostics.items ?? []).map((item)=>`<code>${esc(item.path)} · ${esc(item.status)}${item.httpStatus ? ` ${item.httpStatus}` : ""} · ${item.durationMs ?? 0} ms</code>`).join("")}</div>
+      </div>` : ""}
       <div class="source-evidence-grid">
         <article><span>Login submit endpoint</span><code>${sourceEvidence.loginSubmitEndpoints?.length ? esc(sourceEvidence.loginSubmitEndpoints.join("\n")) : "Chưa tìm thấy"}</code></article>
         <article><span>Login page candidates</span><code>${sourceEvidence.loginPageCandidates?.length ? esc(sourceEvidence.loginPageCandidates.join("\n")) : "Chưa tìm thấy"}</code></article>
@@ -567,23 +572,48 @@ async function ensureDemo() {
   };
 }
 
+function codedError(code, message = code) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
+async function localHealth() {
+  try {
+    const response = await fetch("/_local/health", {
+      cache:"no-store",
+      signal:AbortSignal.timeout(2500)
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload.ok !== true || payload.app !== "nc03-control-center") {
+      throw codedError("LOCAL_BRIDGE_HEALTH_FAILED");
+    }
+    return payload;
+  } catch (error) {
+    if (error?.code) throw error;
+    throw codedError("LOCAL_BRIDGE_UNREACHABLE");
+  }
+}
+
 async function localRead(path) {
-  const response = await fetch(path, {
-    method: "POST",
-    cache: "no-store",
-    headers: { "content-type":"application/json" },
-    body: JSON.stringify({ baseUrl: state.baseUrl })
-  });
+  let response;
+  try {
+    response = await fetch(path, {
+      method: "POST",
+      cache: "no-store",
+      headers: { "content-type":"application/json" },
+      body: JSON.stringify({ baseUrl: state.baseUrl }),
+      signal:AbortSignal.timeout(12000)
+    });
+  } catch {
+    throw codedError("LOCAL_BRIDGE_UNREACHABLE");
+  }
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload.ok !== true) {
-    const error = new Error(payload.code || `HTTP_${response.status}`);
-    error.code = payload.code || "";
-    throw error;
+    throw codedError(payload.code || `HTTP_${response.status}`);
   }
   if (!Object.prototype.hasOwnProperty.call(payload, "payload")) {
-    const error = new Error("MALFORMED_LOCAL_RESPONSE");
-    error.code = "MALFORMED_LOCAL_RESPONSE";
-    throw error;
+    throw codedError("MALFORMED_LOCAL_RESPONSE");
   }
   return payload.payload;
 }
@@ -594,11 +624,19 @@ async function runAuthSourceProbe() {
   state.authSourceError = "";
   page();
   try {
+    await localHealth();
     state.authSourceEvidence = await localRead("/api/nc03/auth-source-probe");
     state.authSourceError = "";
   } catch (error) {
     state.authSourceEvidence = null;
-    state.authSourceError = error?.code || "Không đọc được AUTH source từ modem.";
+    const code = error?.code || "AUTH_SOURCE_PROBE_FAILED";
+    const labels = {
+      LOCAL_BRIDGE_UNREACHABLE:"LOCAL_BRIDGE_UNREACHABLE — server local không còn phản hồi.",
+      LOCAL_BRIDGE_HEALTH_FAILED:"LOCAL_BRIDGE_HEALTH_FAILED — port hiện tại không phải NC03 Control Center.",
+      MALFORMED_LOCAL_RESPONSE:"MALFORMED_LOCAL_RESPONSE — response local sai contract.",
+      AUTH_SOURCE_PROBE_FAILED:"AUTH_SOURCE_PROBE_FAILED — probe phía server gặp lỗi."
+    };
+    state.authSourceError = labels[code] || code;
   } finally {
     state.authSourceLoading = false;
     page();
