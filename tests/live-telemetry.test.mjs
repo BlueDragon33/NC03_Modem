@@ -161,7 +161,7 @@ test("local helper rejects malformed success envelopes instead of silently retur
 });
 
 test("AUTH Source Probe and Connection Doctor use the standard local API payload envelope", () => {
-  assert.match(server, /payload:\{ baseUrl, evidence \}/);
+  assert.match(server, /payload:\{\s*baseUrl,\s*evidence,\s*diagnostics:/);
   assert.match(server, /payload:buildConnectionDoctorReport/);
 });
 
@@ -179,4 +179,15 @@ test("AUTH source UI distinguishes login submit candidates from passive auth end
   assert.match(app, /Supporting AUTH endpoints/);
   assert.match(app, /Request field candidates/);
   assert.match(app, /loginSubmitEndpoints/);
+});
+
+
+test("AUTH probe exposes bridge failures and per-path diagnostics instead of a generic silent error", () => {
+  assert.match(app, /LOCAL_BRIDGE_UNREACHABLE/);
+  assert.match(app, /localHealth\(\)/);
+  assert.match(app, /PROBE DIAGNOSTICS/);
+  assert.match(server, /diagnostics:\{/);
+  assert.match(server, /Promise\.all\(paths\.map/);
+  assert.match(server, /TIMEOUT/);
+  assert.match(server, /REDIRECT/);
 });

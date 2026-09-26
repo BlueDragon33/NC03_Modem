@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.11 — AUTH probe diagnostics
+
+- Added Local Bridge health preflight before AUTH Source Probe.
+- Browser fetch/network failures now report `LOCAL_BRIDGE_UNREACHABLE` instead of a generic message.
+- Static source reads run in parallel with a shorter per-path timeout.
+- Probe returns privacy-safe per-path diagnostics: HTTP status, redirect/timeout/network status, content type, duration and byte count.
+- Raw source, credentials and session values remain excluded from diagnostics.
+
+
 ## 0.7.10 — Login-page deep AUTH probe
 
 - Added evidence-backed `/common/login.html` probing without logging the modem out.

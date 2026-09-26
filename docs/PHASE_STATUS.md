@@ -279,3 +279,15 @@ Implemented:
 
 Current gate:
 - if the login page/source exposes a submit endpoint + request fields, those remain SOURCE_CANDIDATE_ONLY until success/failure response semantics are verified.
+
+
+## Phase 2Q — AUTH PROBE DIAGNOSTICS
+
+Status: **IMPLEMENTED**
+
+Completed:
+- local runtime health preflight before AUTH probing;
+- explicit `LOCAL_BRIDGE_UNREACHABLE` / `LOCAL_BRIDGE_HEALTH_FAILED` client states;
+- parallel bounded static-source reads;
+- safe per-path status for HTTP OK, redirect, HTTP error, unsupported content, timeout and network error;
+- no raw source, credential or session values in diagnostic output.
