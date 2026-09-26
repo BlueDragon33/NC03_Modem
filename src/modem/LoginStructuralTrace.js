@@ -138,8 +138,8 @@ function expressionStructure(expression) {
   }
 
   const authTokens = [];
-  for (const match of value.matchAll(/\b([A-Za-z_$][\w$]*(?:pass|passwd|password|pwd|user|username|login|auth|token)[A-Za-z0-9_$]*)\b/gi)) {
-    authTokens.push(match[1]);
+  for (const match of value.matchAll(/\b([A-Za-z_$][\w$]*)\b/g)) {
+    if (/pass|passwd|password|pwd|user|username|login|auth|token/i.test(match[1])) authTokens.push(match[1]);
   }
 
   let shape = "expression";
