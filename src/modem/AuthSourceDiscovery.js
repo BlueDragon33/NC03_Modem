@@ -339,18 +339,23 @@ export function buildAuthSourceEvidence(sources = []) {
   const candidateRequestFields = uniq(analyses.flatMap((item) => item.candidateRequestFields));
   const endpointCallsites = analyses.flatMap((item) => item.endpointCallsites);
   const loginCallsites = endpointCallsites.filter((item) => loginSubmitEndpoints.includes(item.endpoint));
-  const loginFieldCandidates = uniq(loginCallsites.flatMap((item) => item.fields.map((field) => field.field)));
+  const loginFieldCandidates = uniq(loginCallsites.flatMap((item) => [
+    ...item.fields.map((field) => field.field),
+    ...item.directObjectKeys,
+    ...Object.values(item.objectKeys ?? {}).flat()
+  ]));
+  const hasRequestShape = (item) => item.fields.length > 0 || item.directObjectKeys.length > 0 || Object.values(item.objectKeys ?? {}).some((keys) => keys.length > 0) || item.argumentShapes.some((shape) => shape.startsWith("json-stringify:") || shape.startsWith("object:{"));
   const fixedKeys = uniq(analyses.map((item) => item.passwordCodec.fixedLoginKey).filter(Boolean));
   const hmacMd5 = analyses.some((item) => item.passwordCodec.hmacMd5);
 
   let status = "INSUFFICIENT_SOURCE_EVIDENCE";
-  if (loginCallsites.some((item) => item.fields.length && item.hasHmacMd5)) status = "LOGIN_CALLSITE_CANDIDATE_READY";
+  if (loginCallsites.some((item) => hasRequestShape(item) && item.hasHmacMd5)) status = "LOGIN_CALL_SHAPE_CANDIDATE_READY";
   else if (loginSubmitEndpoints.length && candidateRequestFields.length && hmacMd5) status = "LOGIN_SOURCE_CANDIDATE_READY";
   else if (loginSubmitEndpoints.length) status = "LOGIN_ENDPOINT_CANDIDATE_FOUND";
   else if (authEndpoints.length || hmacMd5 || fixedKeys.length) status = "AUTH_SUPPORTING_EVIDENCE_ONLY";
 
   return {
-    schema:"nc03-auth-source-evidence/v3",
+    schema:"nc03-auth-source-evidence/v4",
     status,
     sourcesAnalyzed:analyses.map((item) => item.path),
     authEndpoints,
@@ -366,7 +371,7 @@ export function buildAuthSourceEvidence(sources = []) {
       hmacMd5
     },
     discoveredScriptRefs:scriptRefs,
-    readyForRequestShapeMapping:loginCallsites.some((item) => item.fields.length > 0),
+    readyForRequestShapeMapping:loginCallsites.some(hasRequestShape),
     analyses,
     safety:{
       sourceCodeReturned:false,
