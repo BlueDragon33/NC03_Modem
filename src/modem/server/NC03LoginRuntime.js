@@ -297,8 +297,8 @@ export async function performVerifiedLogin(options) {
     return parseJsonResponse(response, "AUTH_MODEM_JSON_INVALID");
   };
 
-  const loginInfoStart = nowSeconds();
   const info = await requestJson(recipe.loginInfoEndpoint);
+  const loginInfoStart = nowSeconds();
   if (Number(info?.retcode) !== recipe.successCode || typeof info?.priKey !== "string") {
     throw new Error("AUTH_LOGIN_INFO_FAILED");
   }
