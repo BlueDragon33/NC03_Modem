@@ -245,3 +245,31 @@ test("response code map excludes unrelated source constants", () => {
   assert.equal(report.responseCodeMap["203"], undefined);
   assert.equal(report.responseCodeMap["214"], undefined);
 });
+
+
+test("nested-call trace preserves outer HMAC around password input val()", () => {
+  const source = [
+    'var loginKey="fixture";',
+    'function login(){',
+    '  var _obj=new Object();',
+    '  _obj.username=hex_hmac_md5(loginKey,"fixture-user");',
+    '  _obj.password=hex_hmac_md5(loginKey,$("#login_password").val());',
+    '  var postdata=JSON.stringify(_obj);',
+    '  saveAjaxJsonData("/goform/login",postdata,function(obj){',
+    '    if(obj.retcode===0){}',
+    '    if(obj.retcode===13){}',
+    '  });',
+    '}'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  const fields = report.loginCallsites[0].dependencyFields;
+  const username = fields.find((field) => field.field === "username");
+  const password = fields.find((field) => field.field === "password");
+  assert.ok(username?.structure.authTransforms.some((item) => item.name === "hex_hmac_md5"));
+  assert.ok(password?.structure.authTransforms.some((item) => item.name === "hex_hmac_md5"));
+  assert.ok(password?.structure.calls.some((item) => item.name === "val"));
+  assert.ok(password?.structure.calls.some((item) => item.name === "hex_hmac_md5" && item.depth === 0));
+  assert.equal(report.authDependencyMapped, true);
+  assert.equal(report.responseCodeMap["0"], "UNMAPPED");
+  assert.equal(report.responseCodeMap["13"], "UNMAPPED");
+});
