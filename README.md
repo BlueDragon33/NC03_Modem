@@ -15,18 +15,19 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2A v0.5.0
+## Phase 2 · v0.6.0 — HAR2 Live Telemetry
 
-Đã phân tích HAR thật của firmware **NC03_8.00.42** và triển khai read-path profile:
+HAR mới của firmware **NC03_8.00.42** đã mở rộng read-path thật:
 
-- `/goform/get_login_info` — login status probe;
-- `/action/get_mgdb_params` — status / battery / Wi-Fi / network / usage / DHCP / firmware;
-- `/action/router_get_hosts_info` — connected clients;
-- `/action/get_device_state` — CPU/RAM/uptime;
-- xác nhận modem trả `device_battery_percent` dạng số nên app có thể hiện % pin chính xác;
-- thêm `NC03Firmware80042Adapter` và profile firmware;
-- write endpoints chỉ được catalogued từ vendor JavaScript và vẫn khóa tới khi WRITE VERIFIED;
-- login UX được chốt theo password-only: địa chỉ modem mặc định `192.168.0.1` nhưng sửa được; sau đăng nhập thành công mới lưu mật khẩu vào encrypted local credential vault.
+- % pin chính xác luôn hiển thị trên mọi màn hình;
+- trạng thái Internet/WAN, 4G/5G, nhà mạng và chất lượng sóng định tính luôn hiển thị;
+- telemetry trên tự động cập nhật **10 giây/lần**;
+- Local Bridge `/api/nc03/snapshot` giải quyết đường đọc modem từ website local mà không đưa password lên cloud;
+- Advanced read snapshot thêm network settings, 4 Wi-Fi AP, clients, data usage, DHCP, USB/Cradle, IP Passthrough, security/filter/DMZ, NTP, power/display, firmware/FOTA;
+- PSK Wi-Fi, IMEI/serial, ICCID/EID/eSIM profile và APN profile cố ý không mirror vào dashboard;
+- HAR mới vẫn không chứa write request thực tế, vì vậy mọi write action tiếp tục fail-closed.
+
+App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session.
 
 ## Chạy local
 
