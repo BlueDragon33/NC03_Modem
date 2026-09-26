@@ -191,3 +191,12 @@ test("AUTH probe exposes bridge failures and per-path diagnostics instead of a g
   assert.match(server, /TIMEOUT/);
   assert.match(server, /REDIRECT/);
 });
+
+
+test("AUTH source UI exposes endpoint-specific login callsite mapping", () => {
+  assert.match(app, /callsite-grid/);
+  assert.match(app, /Response signals/);
+  assert.match(app, /transportHelper/);
+  assert.match(app, /payloadVariable/);
+  assert.match(app, /loginCallsites/);
+});
