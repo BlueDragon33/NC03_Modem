@@ -319,12 +319,17 @@ function renderSettings() {
   const security = d.security ?? {};
   const time = d.time ?? {};
   const firmware = d.firmware ?? {};
+  const mobileService = d.mobileService ?? {};
+  const ruleInventory = d.ruleInventory ?? {};
   const developerPanel = state.developerMode ? `
     <section class="panel"><div class="panel-head"><div><span>ADVANCED DEVELOPER MODE</span><h2>Discovery & Mock</h2></div>${statusPill("LOCAL TOOLING","warn")}</div>
       <div class="settings-actions"><button id="openDiscovery">Mở API Discovery</button><label class="demo-switch"><input id="demoToggle" type="checkbox" ${state.demoMode ? "checked" : ""}/><span>Mock Mode · DEMO DATA</span></label></div>
     </section>` : "";
 
   const advanced = state.uiMode === UI_MODE.ADVANCED ? `
+  <section class="panel"><div class="panel-head"><div><span>HAR2 · MOBILE SERVICE</span><h2>SIM / dữ liệu / Cloud SIM</h2></div>${statusPill("READ ONLY")}</div>
+    <div class="spec-grid">${settingCard("Mobile Data", onOff(mobileService.mobileData))}${settingCard("SIM PIN protect", onOff(mobileService.pinProtection))}${settingCard("PIN tries còn lại", mobileService.pinRemainingTries)}${settingCard("Cloud SIM auto-switch", onOff(mobileService.cloudSimAutoSwitch))}${settingCard("Cloud SIM notification", onOff(mobileService.cloudSimNotification))}${settingCard("No-service threshold", mobileService.cloudSimNoServiceMinutes === null || mobileService.cloudSimNoServiceMinutes === undefined ? "—" : `${mobileService.cloudSimNoServiceMinutes} phút`)}</div>
+  </section>
   <section class="panel"><div class="panel-head"><div><span>HAR2 · CONNECTIVITY</span><h2>USB / Bridge / Ethernet</h2></div>${statusPill("READ ONLY")}</div>
     <div class="spec-grid">${settingCard("IP Passthrough", onOff(usb.bridgeState))}${settingCard("USB tether", onOff(usb.tethering))}${settingCard("USB speed", usb.speed)}${settingCard("Ethernet", usb.ethernetType)}</div>
   </section>
@@ -333,6 +338,10 @@ function renderSettings() {
   </section>
   <section class="panel"><div class="panel-head"><div><span>HAR2 · SECURITY</span><h2>WPS / Filter / DMZ</h2></div>${statusPill("READ ONLY")}</div>
     <div class="spec-grid">${settingCard("WPS", onOff(security.wifi_wps_enable_state))}${settingCard("Wi-Fi MAC filter", onOff(security.wifi_macfilter_mode))}${settingCard("IP filter", onOff(security.rt_ipfilter_type))}${settingCard("DMZ", onOff(security.rt_dmz_switch))}</div>
+  </section>
+  <section class="panel"><div class="panel-head"><div><span>HAR2 · RULE INVENTORY</span><h2>Rule đã cấu hình</h2></div>${statusPill("COUNT ONLY")}</div>
+    <div class="spec-grid">${settingCard("DHCP reservations", ruleInventory.dhcpReservations)}${settingCard("Port forwarding", ruleInventory.portForwardingRules)}${settingCard("IPv4 packet filters", ruleInventory.ipv4PacketFilterRules)}${settingCard("IPv6 packet filters", ruleInventory.ipv6PacketFilterRules)}</div>
+    <div class="advanced-note"><strong>Chỉ thống kê số lượng</strong><span>App không mirror raw IP/MAC/port/filter rule từ modem sang dashboard.</span></div>
   </section>
   <section class="panel"><div class="panel-head"><div><span>HAR2 · SYSTEM</span><h2>Thời gian / Firmware</h2></div>${statusPill("READ ONLY")}</div>
     <div class="spec-grid">${settingCard("NTP", onOff(time.ntp_enable_state))}${settingCard("NTP sync", time.ntp_sync_state)}${settingCard("Firmware", firmware.firmware)}${settingCard("FOTA", firmware.fotaStatus)}</div>
