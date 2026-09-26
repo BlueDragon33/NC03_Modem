@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 — HAR2 live telemetry + extended read-only modem coverage
+
+- Added always-visible exact battery %, connection status, signal quality and 4G/5G/carrier strip.
+- Added automatic 10-second refresh for live telemetry.
+- Added safe Local Bridge endpoints `/api/nc03/snapshot` and `/api/nc03/details`.
+- Expanded verified read-only coverage for network settings, SIM/eSIM metadata, four Wi-Fi APs, USB/Cradle, IP Passthrough, firewall/security state, NTP, power/display and firmware/FOTA.
+- Kept RSRP/RSRQ/SINR absent because the new HAR does not expose those exact metrics.
+- Explicitly excluded Wi-Fi PSK, IMEI/serial, ICCID/EID/eSIM and APN profile secrets from mirrored snapshots.
+- Kept all write controls locked because this HAR contains no observed write transaction.
+
 ## 0.5.1 — Simplified password-only login policy
 
 - Standardized login UX to configurable modem address + password only.
