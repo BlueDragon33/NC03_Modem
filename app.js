@@ -386,7 +386,7 @@ function renderDiscovery() {
   const authReady = quality?.readyForAuthMapping === true;
   const writeReady = quality?.readyForWriteMapping === true;
   const sourceEvidence = state.authSourceEvidence?.evidence ?? null;
-  const sourceTone = sourceEvidence?.status === "AUTH_SOURCE_CANDIDATE_READY" ? "ok" : sourceEvidence ? "warn" : "muted";
+  const sourceTone = sourceEvidence?.status === "LOGIN_SOURCE_CANDIDATE_READY" ? "ok" : sourceEvidence ? "warn" : "muted";
   return `${renderTopbar("HAR Evidence Lab", "Advanced Developer Mode: phân tích HAR ngay trên thiết bị, không upload credential lên cloud.")}
   <section class="panel discovery-panel">
     <div class="panel-head"><div><span>LOCAL HAR ANALYZER</span><h2>Phân tích Web UI gốc NC03</h2></div>${statusPill(evidence ? `${evidence.entryCount} request` : "CHỜ HAR", evidence ? "ok" : "muted")}</div>
@@ -420,12 +420,15 @@ function renderDiscovery() {
     ${sourceEvidence ? `
       <div class="evidence-summary">
         <div><span>Source đã đọc</span><strong>${sourceEvidence.sourcesAnalyzed?.length ?? 0}</strong><small>Local modem only</small></div>
-        <div><span>AUTH endpoint</span><strong>${sourceEvidence.authEndpoints?.length ?? 0}</strong><small>Candidate only</small></div>
-        <div><span>Login function</span><strong>${sourceEvidence.loginFunctions?.length ?? 0}</strong><small>Tên hàm quan sát được</small></div>
+        <div><span>Login submit</span><strong>${sourceEvidence.loginSubmitEndpoints?.length ?? 0}</strong><small>${sourceEvidence.readyForRequestShapeMapping ? "Có request-shape candidate" : "Chưa có submit candidate"}</small></div>
+        <div><span>Login page</span><strong>${sourceEvidence.loginPageCandidates?.length ?? 0}</strong><small>Static page candidate</small></div>
         <div><span>Password codec</span><strong>${sourceEvidence.passwordCodec?.hmacMd5 ? "HMAC-MD5" : sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "KEY FOUND" : "—"}</strong><small>${sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "Có fixed loginKey trong source" : "Chưa thấy fixed loginKey"}</small></div>
       </div>
       <div class="source-evidence-grid">
-        <article><span>Endpoint candidates</span><code>${sourceEvidence.authEndpoints?.length ? esc(sourceEvidence.authEndpoints.join("\n")) : "Chưa tìm thấy"}</code></article>
+        <article><span>Login submit endpoint</span><code>${sourceEvidence.loginSubmitEndpoints?.length ? esc(sourceEvidence.loginSubmitEndpoints.join("\n")) : "Chưa tìm thấy"}</code></article>
+        <article><span>Login page candidates</span><code>${sourceEvidence.loginPageCandidates?.length ? esc(sourceEvidence.loginPageCandidates.join("\n")) : "Chưa tìm thấy"}</code></article>
+        <article><span>Request field candidates</span><code>${sourceEvidence.candidateRequestFields?.length ? esc(sourceEvidence.candidateRequestFields.join("\n")) : "Chưa tìm thấy"}</code></article>
+        <article><span>Supporting AUTH endpoints</span><code>${sourceEvidence.authEndpoints?.length ? esc(sourceEvidence.authEndpoints.join("\n")) : "Chưa tìm thấy"}</code></article>
         <article><span>Login functions</span><code>${sourceEvidence.loginFunctions?.length ? esc(sourceEvidence.loginFunctions.join("\n")) : "Chưa tìm thấy"}</code></article>
         <article><span>Codec evidence</span><code>${esc([
           sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "fixed loginKey literal" : "",

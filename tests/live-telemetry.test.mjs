@@ -164,3 +164,19 @@ test("AUTH Source Probe and Connection Doctor use the standard local API payload
   assert.match(server, /payload:\{ baseUrl, evidence \}/);
   assert.match(server, /payload:buildConnectionDoctorReport/);
 });
+
+
+test("AUTH deep probe seeds the observed firmware login page without logging the modem out", () => {
+  assert.match(server, /"\/common\/login\.html"/);
+  assert.match(server, /"\/js\/rebootreset\.js"/);
+  assert.match(server, /loginPageCandidates/);
+  assert.match(server, /discoveredScriptRefs/);
+  assert.doesNotMatch(server, /fetch\([^\n]*\/action\/logout/);
+});
+
+test("AUTH source UI distinguishes login submit candidates from passive auth endpoints", () => {
+  assert.match(app, /Login submit endpoint/);
+  assert.match(app, /Supporting AUTH endpoints/);
+  assert.match(app, /Request field candidates/);
+  assert.match(app, /loginSubmitEndpoints/);
+});

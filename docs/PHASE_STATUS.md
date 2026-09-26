@@ -259,3 +259,23 @@ Completed:
 - regression tests prevent silent `undefined` results.
 
 This fixes the observed case where clicking **Quét AUTH source trên modem** produced no visible result even though the endpoint returned successfully.
+
+
+## Phase 2P — LOGIN-PAGE DEEP AUTH PROBE
+
+Status: **IMPLEMENTED**
+
+New evidence from the previously supplied HAR:
+- vendor `rebootreset.js` explicitly redirects to `../common/login.html` after reboot;
+- the existing source probe had been classifying `/action/logout` and `/goform/get_login_info` as generic AUTH endpoints, but neither is a login-submit endpoint.
+
+Implemented:
+- direct read-only seed for `/common/login.html`;
+- evidence-backed seeds for `rebootreset.js` and `systemadmin.js`;
+- relative script-reference resolution from the login page;
+- recursive static script discovery without calling logout or other state-changing endpoints;
+- explicit `loginSubmitEndpoints`, `loginPageCandidates` and `candidateRequestFields`;
+- passive auth/status endpoints no longer make AUTH appear ready.
+
+Current gate:
+- if the login page/source exposes a submit endpoint + request fields, those remain SOURCE_CANDIDATE_ONLY until success/failure response semantics are verified.

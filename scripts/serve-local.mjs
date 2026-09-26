@@ -95,9 +95,12 @@ function modemAdapter(baseUrl) {
 const AUTH_SOURCE_SEEDS = Object.freeze([
   "/",
   "/index.html",
+  "/common/login.html",
   "/js/common.js",
   "/js/tools.js",
-  "/js/md5.js"
+  "/js/md5.js",
+  "/js/rebootreset.js",
+  "/js/systemadmin.js"
 ]);
 
 async function fetchStaticSource(baseUrl, path) {
@@ -127,10 +130,22 @@ async function authSourceProbe(req, res) {
     }
 
     const firstPass = buildAuthSourceEvidence(sources);
-    const extraRefs = firstPass.discoveredScriptRefs
+
+    const loginPages = firstPass.loginPageCandidates
+      .filter((path) => /^\/[A-Za-z0-9_./-]+\.html$/i.test(path))
+      .filter((path) => !sources.some((item) => item.path === path))
+      .slice(0, 6);
+
+    for (const path of loginPages) {
+      const item = await fetchStaticSource(baseUrl, path).catch(() => null);
+      if (item && !sources.some((current) => current.path === item.path)) sources.push(item);
+    }
+
+    const secondPass = buildAuthSourceEvidence(sources);
+    const extraRefs = secondPass.discoveredScriptRefs
       .filter((path) => /^\/(?:js|lib)\/[A-Za-z0-9_./-]+\.js$/i.test(path))
       .filter((path) => !sources.some((item) => item.path === path))
-      .slice(0, 12);
+      .slice(0, 24);
 
     for (const path of extraRefs) {
       const item = await fetchStaticSource(baseUrl, path).catch(() => null);
