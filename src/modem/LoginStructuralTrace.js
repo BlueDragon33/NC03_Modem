@@ -125,8 +125,38 @@ function objectKeys(expression) {
   return uniq(keys);
 }
 
+function stripStringLiterals(value) {
+  const text = String(value ?? "");
+  let out = "";
+  let quote = null;
+  let escaped = false;
+  for (const ch of text) {
+    if (escaped) {
+      escaped = false;
+      if (!quote) out += ch;
+      continue;
+    }
+    if (quote) {
+      if (ch === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      out += " literal ";
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 function expressionStructure(expression) {
   const value = String(expression ?? "").trim();
+  const identifierSource = stripStringLiterals(value);
   const calls = [];
   for (const match of value.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(([^()]*)\)/g)) {
     const name = match[1];
@@ -138,13 +168,13 @@ function expressionStructure(expression) {
   }
 
   const authTokens = [];
-  for (const match of value.matchAll(/\b([A-Za-z_$][\w$]*)\b/g)) {
+  for (const match of identifierSource.matchAll(/\b([A-Za-z_$][\w$]*)\b/g)) {
     if (/pass|passwd|password|pwd|user|username|login|auth|token|key/i.test(match[1])) authTokens.push(match[1]);
   }
 
   const identifiers = [];
-  for (const match of value.matchAll(/\b([A-Za-z_$][\w$]*)\b/g)) {
-    if (!["var","let","const","true","false","null","undefined","return","new","function"].includes(match[1])) identifiers.push(match[1]);
+  for (const match of identifierSource.matchAll(/\b([A-Za-z_$][\w$]*)\b/g)) {
+    if (!["var","let","const","true","false","null","undefined","return","new","function","literal"].includes(match[1])) identifiers.push(match[1]);
   }
 
   let shape = "expression";
@@ -225,10 +255,10 @@ function collectAliases(text, payloadVariable) {
   const escaped = escapeRegex(payloadVariable);
   const aliases = [];
 
-  for (const match of text.matchAll(new RegExp("\\b([A-Za-z_$][\\w$]*)\\s*=\\s*" + escaped + "\\b", "g"))) {
+  for (const match of text.matchAll(new RegExp("\\b([A-Za-z_$][\\w$]*)\\s*=\\s*" + escaped + "\\s*(?=;|\\n|$)", "g"))) {
     if (match[1] !== payloadVariable) aliases.push({ alias:match[1], relation:"from-payload", scope:scopeLabel(text, match.index ?? 0) });
   }
-  for (const match of text.matchAll(new RegExp("\\b" + escaped + "\\s*=\\s*([A-Za-z_$][\\w$]*)\\b", "g"))) {
+  for (const match of text.matchAll(new RegExp("\\b" + escaped + "\\s*=\\s*([A-Za-z_$][\\w$]*)\\s*(?=;|\\n|$)", "g"))) {
     if (match[1] !== payloadVariable) aliases.push({ alias:match[1], relation:"to-payload", scope:scopeLabel(text, match.index ?? 0) });
   }
 
