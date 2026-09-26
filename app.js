@@ -440,6 +440,18 @@ function renderDiscovery() {
           sourceEvidence.passwordCodec?.hmacMd5 ? "hex_hmac_md5(...)" : ""
         ].filter(Boolean).join("\n") || "Chưa đủ evidence")}</code></article>
       </div>
+      <div class="callsite-grid">
+        ${(sourceEvidence.loginCallsites ?? []).length ? sourceEvidence.loginCallsites.map((call)=>`<article>
+          <div class="callsite-head"><strong>${esc(call.endpoint)}</strong><span>${esc(call.sourcePath)}</span></div>
+          <dl>
+            <div><dt>Function</dt><dd>${esc(call.functionName ?? "—")}</dd></div>
+            <div><dt>Transport</dt><dd>${esc(call.transportHelper ?? "—")}</dd></div>
+            <div><dt>Payload</dt><dd>${esc(call.payloadVariable ?? "—")}</dd></div>
+          </dl>
+          <code>${call.fields?.length ? esc(call.fields.map((field)=>`${field.field} ← ${field.transform}${field.transformArgs?.length ? `(${field.transformArgs.join(", ")})` : ""}`).join("\n")) : "Chưa tách được field tại call-site"}</code>
+          <small>Response signals: ${esc(call.responseSignals?.join(", ") || "chưa thấy")}</small>
+        </article>`).join("") : `<div class="empty">Chưa có login call-site đủ rõ.</div>`}
+      </div>
     ` : `<div class="empty">Chạy probe khi máy đang kết nối NC03 để lấy evidence trực tiếp từ firmware local.</div>`}
     <div class="evidence-actions"><button id="runAuthSourceProbe" ${state.authSourceLoading ? "disabled" : ""}>${state.authSourceLoading ? "Đang quét…" : "Quét AUTH source trên modem"}</button></div>
     <div class="advanced-note"><strong>Fail-closed</strong><span>Source candidate không tự bật NC03Auth.login(). Vẫn cần request/response semantics thật trước AUTH VERIFIED.</span></div>
