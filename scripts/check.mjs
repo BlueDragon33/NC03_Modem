@@ -6,7 +6,7 @@ const required = [
   "src/modem/NC03Adapter.js", "src/modem/MockNC03Adapter.js", "src/modem/HarDiscovery.js",
   "src/modem/NC03Auth.js", "src/modem/NC03Api.js", "src/modem/NC03Session.js",
   "src/modem/NC03Parser.js", "src/modem/NC03Capabilities.js", "src/modem/ConnectionState.js",
-  "src/modem/NC03Firmware80042Profile.js", "src/modem/NC03Firmware80042Adapter.js", "src/modem/NC03Har2Profile.js", "src/modem/LoginPolicy.js",
+  "src/modem/NC03Firmware80042Profile.js", "src/modem/NC03Firmware80042Adapter.js", "src/modem/NC03Har2Profile.js", "src/modem/LocalBridgePolicy.js", "src/modem/LoginPolicy.js",
   "src/ui/NavigationModel.js", "docs/API_DISCOVERY.md", "docs/SECURITY.md", "docs/ARCHITECTURE.md",
   "docs/PHASE_STATUS.md", "CHANGELOG.md", "scripts/offline.mjs"
 ];
