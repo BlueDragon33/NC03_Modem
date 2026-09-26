@@ -161,7 +161,7 @@ test("local helper rejects malformed success envelopes instead of silently retur
 });
 
 test("AUTH Source Probe and Connection Doctor use the standard local API payload envelope", () => {
-  assert.match(server, /payload:\{\s*baseUrl,\s*evidence,\s*diagnostics:/);
+  assert.match(server, /payload:\{\s*baseUrl,\s*evidence,\s*runtime:\{[\s\S]*?diagnostics:/);
   assert.match(server, /payload:buildConnectionDoctorReport/);
 });
 
