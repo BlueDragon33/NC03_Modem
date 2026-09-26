@@ -93,3 +93,18 @@ Completed:
 - UI modem-address validation and persisted preferences now use the exact same RFC1918-only policy as the Local Bridge;
 - stale or invalid saved modem origins are automatically normalized back to the safe default;
 - PWA cache includes the shared LocalBridgePolicy module.
+
+
+## Phase 2F — FINAL READ-PATH HARDENING
+
+Status: **COMPLETE**
+
+Completed:
+- last-known-good telemetry remains visibly stale after navigation; no false green connection indicator;
+- latest successful telemetry timestamp is visible;
+- Advanced snapshot has an independent freshness/error state and explicit retry path;
+- password-memory control is disabled until real authentication is verified;
+- invalid manual modem addresses are rejected with an explicit RFC1918 validation message;
+- no new write capability was inferred or enabled.
+
+Read-path implementation is now complete for the evidence currently available. Remaining AUTH/write work is externally evidence-gated and must not be guessed.

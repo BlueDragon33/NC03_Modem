@@ -5,7 +5,7 @@ import { parseHar, summarizeCandidates } from "./src/modem/HarDiscovery.js";
 import { loadPreferences, savePreferences, SECURITY_NOTE } from "./src/modem/LocalPreferences.js";
 import { CONNECTION_STATE, connectionStateLabel } from "./src/modem/ConnectionState.js";
 import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
-import { DEFAULT_MODEM_URL, normalizeModemAddress } from "./src/modem/LoginPolicy.js";
+import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
 
 const app = document.querySelector("#app");
 const prefs = loadPreferences();
@@ -25,8 +25,11 @@ let state = {
   liveStale: false,
   lastLiveSuccessAt: null,
   details: null,
+  detailsStale: false,
+  lastDetailsSuccessAt: null,
   liveError: "",
   detailsError: "",
+  addressError: "",
   harCandidates: [],
   harEntries: [],
   discoveryError: "",
@@ -66,10 +69,25 @@ function currentConnectionLabel() {
   return connectionStateLabel(state.connectionState);
 }
 
+function formatClock(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("vi-VN", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+}
+
 function liveFreshnessLabel() {
   if (state.demoMode) return "DEMO";
-  if (state.liveStale && state.live) return "Dữ liệu gần nhất";
-  return state.live ? "Vừa cập nhật" : "Đang chờ";
+  const clock = formatClock(state.lastLiveSuccessAt);
+  if (state.liveStale && state.live) return clock ? `Gần nhất ${clock}` : "Dữ liệu gần nhất";
+  if (state.live) return clock ? `Cập nhật ${clock}` : "Vừa cập nhật";
+  return "Đang chờ";
+}
+
+function detailsFreshnessLabel() {
+  if (state.demoMode) return "DEMO DATA";
+  if (state.detailsStale && state.details) return "LAST GOOD";
+  return state.details ? "LIVE READ" : "WAITING";
 }
 
 function humanSignal(value) {
@@ -144,7 +162,7 @@ function renderSidebar() {
   return `<aside class="sidebar">
     <div class="brand"><div class="brand-mark">N3</div><div><small>HYBRID Wi-Fi 5G</small><strong>NC03 Control Center</strong></div></div>
     <div class="connection-card">
-      <div class="connection-row"><span class="dot" data-live-dot data-on="${Boolean(t?.status?.connected || state.demoMode)}"></span><div><small>Trạng thái</small><strong data-live-sidebar-connection>${esc(currentConnectionLabel())}</strong></div></div>
+      <div class="connection-row"><span class="dot" data-live-dot data-on="${Boolean((t?.status?.connected && !state.liveStale) || state.demoMode)}"></span><div><small>Trạng thái</small><strong data-live-sidebar-connection>${esc(currentConnectionLabel())}</strong></div></div>
       <div class="sidebar-live"><strong data-live-sidebar-battery>${t?.battery?.percentage ?? "—"}%</strong><span>Pin</span><strong data-live-sidebar-signal>${esc(humanSignal(t?.signal?.level ?? t?.status?.signalLevel))}</strong><span>Sóng</span></div>
       <div class="connection-address">${esc(state.baseUrl)}</div>
     </div>
@@ -210,11 +228,35 @@ function updateLiveTelemetryDom() {
 }
 
 function renderAuthNotice() {
-  if (state.demoMode || state.live) return "";
+  if (state.demoMode) return "";
+  if (state.liveStale && state.live) {
+    return `<section class="inline-live-error">
+      <div><strong>Đang kết nối lại NC03</strong><span>${esc(state.liveError || "Đang giữ dữ liệu gần nhất trong lúc thử lại.")}</span></div>
+      <button id="openStockUi">Mở Web UI gốc</button>
+      <button id="retryLive">Thử lại</button>
+    </section>`;
+  }
+  if (state.live) return "";
   return `<section class="inline-live-error">
     <div><strong>Chưa đọc được NC03</strong><span>${esc(state.liveError || "NC03 chưa phản hồi qua local bridge.")}</span></div>
     <button id="openStockUi">Mở Web UI gốc</button>
     <button id="retryLive">Thử lại</button>
+  </section>`;
+}
+
+function renderDetailsNotice() {
+  if (state.demoMode) return "";
+  if (state.detailsError && !state.details) {
+    return `<section class="inline-live-error">
+      <div><strong>Chưa tải được cấu hình chi tiết</strong><span>Telemetry pin/sóng vẫn hoạt động độc lập. Có thể thử lại snapshot cấu hình.</span></div>
+      <button id="retryDetails">Tải lại cấu hình</button>
+    </section>`;
+  }
+  if (!state.detailsStale || !state.details) return "";
+  const clock = formatClock(state.lastDetailsSuccessAt);
+  return `<section class="inline-live-error">
+    <div><strong>Dữ liệu cấu hình đang là bản gần nhất</strong><span>Không refresh được snapshot chi tiết${clock ? ` từ ${esc(clock)}` : ""}. Telemetry pin/sóng vẫn có vòng cập nhật riêng.</span></div>
+    <button id="retryDetails">Tải lại cấu hình</button>
   </section>`;
 }
 
@@ -228,7 +270,8 @@ function renderLogin() {
         <label>Địa chỉ modem<input id="loginBaseUrl" value="${esc(state.baseUrl)}" inputmode="url" autocomplete="url" placeholder="192.168.0.1" /></label>
         <label>Mật khẩu<input id="loginPassword" type="password" disabled autocomplete="current-password" placeholder="Sẽ mở sau khi AUTH request được xác minh" /></label>
       </div>
-      <div class="login-options"><label><input id="rememberPassword" type="checkbox" ${state.rememberPassword ? "checked" : ""} /> Ghi nhớ mật khẩu trên thiết bị này</label></div>
+      <div class="login-options"><label><input id="rememberPassword" type="checkbox" ${state.rememberPassword ? "checked" : ""} disabled /> Ghi nhớ mật khẩu trên thiết bị này · sẽ bật sau AUTH VERIFIED</label></div>
+      ${state.addressError ? `<div class="inline-error">${esc(state.addressError)}</div>` : ""}
       <div class="login-actions"><button id="saveLoginAddress" class="secondary-action">Lưu địa chỉ</button><button id="openStockUi">Mở Web UI gốc</button></div>
       <div class="write-lock"><strong>Read path đã hoạt động qua Local Bridge.</strong><span>Sau khi bạn đăng nhập Web UI gốc, app tự kiểm tra lại mỗi 10 giây. Write API vẫn khóa.</span></div>
       <div class="login-safe-actions"><button id="enterDemo">Mở Developer Demo</button></div>
@@ -239,7 +282,7 @@ function renderLogin() {
 function renderHome() {
   const t = currentTelemetry();
   const details = state.demoMode ? state.demo : state.details;
-  const connected = Boolean(t?.status?.connected);
+  const connected = Boolean(t?.status?.connected) && !state.liveStale;
   const signal = t?.signal?.level ?? t?.status?.signalLevel;
   const network = t?.signal?.systemMode ?? t?.status?.network;
   const clientCount = state.demoMode ? details?.wifi?.clients : details?.clients?.length;
@@ -247,11 +290,11 @@ function renderHome() {
   return `${renderTopbar("Tổng quan", "Pin, kết nối và sóng luôn hiển thị; dữ liệu live tự cập nhật mỗi 10 giây.")}
   ${renderAuthNotice()}
   <section class="hero-status">
-    <div><span class="eyebrow">INTERNET</span><div class="hero-line"><span class="big-dot" data-live-hero-dot data-on="${connected}"></span><h2 data-live-hero-connection>${connected ? "Đang kết nối" : "Chưa kết nối"}</h2></div><p data-live-hero-summary>${t ? `${esc(humanNetwork(network))} · ${esc(t.status?.carrier ?? t.signal?.carrier ?? "—")} · SIM ${esc(t.status?.simStatus ?? "—")}` : "Đang chờ dữ liệu thật từ NC03."}</p></div>
+    <div><span class="eyebrow">INTERNET</span><div class="hero-line"><span class="big-dot" data-live-hero-dot data-on="${connected}"></span><h2 data-live-hero-connection>${state.liveStale && t ? "Đang kết nối lại" : connected ? "Đang kết nối" : "Chưa kết nối"}</h2></div><p data-live-hero-summary>${t ? `${esc(humanNetwork(network))} · ${esc(t.status?.carrier ?? t.signal?.carrier ?? "—")} · SIM ${esc(t.status?.simStatus ?? "—")}` : "Đang chờ dữ liệu thật từ NC03."}</p></div>
     <span data-live-hero-signal>${renderSignalBars(signal)}</span>
   </section>
   <section class="metrics-grid">
-    <article class="metric"><span>Pin</span><strong data-live-home-battery>${t?.battery?.percentage === null || t?.battery?.percentage === undefined ? "—%" : `${esc(t.battery.percentage)}%`}</strong><small data-live-home-battery-note>${t?.battery?.charging ? "Đang sạc · % chính xác" : "Phần trăm pin chính xác"}</small></article>
+    <article class="metric"><span>Pin</span><strong data-live-home-battery>${t?.battery?.percentage === null || t?.battery?.percentage === undefined ? "—%" : `${esc(t.battery.percentage)}%`}</strong><small data-live-home-battery-note>${state.liveStale && t ? "Dữ liệu gần nhất · % đã đọc" : t?.battery?.charging ? "Đang sạc · % chính xác" : "Phần trăm pin chính xác"}</small></article>
     <article class="metric"><span>Sóng</span><strong data-live-home-signal>${esc(humanSignal(signal))}</strong><small data-live-home-network>${esc(humanNetwork(network))} · ${esc(t?.status?.carrier ?? t?.signal?.carrier ?? "—")}</small></article>
     ${metric("Dữ liệu", dataUsed ?? "—", state.demoMode ? "DEMO DATA" : "Bộ đếm modem")}
     ${metric("Thiết bị", clientCount ?? "—", clientCount === undefined ? "Chưa tải danh sách" : "Đang kết nối")}
@@ -267,7 +310,8 @@ function renderNetwork() {
   const signal = t?.signal?.level ?? t?.status?.signalLevel;
   return `${renderTopbar("Mạng", "HAR mới xác minh trạng thái 4G/5G, nhà mạng, sóng định tính, SIM và cấu hình network mode.")}
   ${renderAuthNotice()}
-  <section class="panel"><div class="panel-head"><div><span>MOBILE NETWORK</span><h2>${esc(humanNetwork(t?.signal?.systemMode ?? t?.status?.network))}</h2></div>${statusPill(t?.status?.connected ? "CONNECTED" : "OFFLINE", t?.status?.connected ? "ok" : "warn")}</div>
+  ${renderDetailsNotice()}
+  <section class="panel"><div class="panel-head"><div><span>MOBILE NETWORK</span><h2>${esc(humanNetwork(t?.signal?.systemMode ?? t?.status?.network))}</h2></div>${statusPill(state.liveStale && t ? "LAST GOOD" : t?.status?.connected ? "CONNECTED" : "OFFLINE", state.liveStale && t ? "warn" : t?.status?.connected ? "ok" : "warn")}</div>
     <div class="spec-grid">
       <div><span>Nhà mạng</span><strong>${esc(t?.status?.carrier ?? t?.signal?.carrier ?? "—")}</strong></div>
       <div><span>Chất lượng sóng</span><strong>${esc(humanSignal(signal))}</strong></div>
@@ -287,7 +331,8 @@ function renderWifi() {
   const aps = wifi?.aps ?? [];
   return `${renderTopbar("Wi-Fi", "HAR mới xác nhận tối đa 4 profile AP. PSK/mật khẩu Wi-Fi không được mirror vào dashboard.")}
   ${renderAuthNotice()}
-  <section class="panel"><div class="panel-head"><div><span>WI-FI STATUS</span><h2>${wifi?.enabled ? "Đang bật" : wifi ? "Đang tắt" : "Chưa có dữ liệu"}</h2></div>${statusPill(wifi ? "READ ONLY" : "WAITING")}</div>
+  ${renderDetailsNotice()}
+  <section class="panel"><div class="panel-head"><div><span>WI-FI STATUS</span><h2>${wifi?.enabled ? "Đang bật" : wifi ? "Đang tắt" : "Chưa có dữ liệu"}</h2></div>${statusPill(detailsFreshnessLabel(), state.detailsStale ? "warn" : "muted")}</div>
     <div class="wifi-ap-grid">${aps.length ? aps.map((ap)=>`<article class="wifi-ap-card"><div><span>AP ${ap.index + 1}</span><strong>${esc(ap.ssid || "Không tên")}</strong></div><dl><dt>Trạng thái</dt><dd>${esc(ap.state ?? "—")}</dd><dt>Tần số</dt><dd>${esc(ap.frequency ?? "—")}</dd><dt>Thiết bị</dt><dd>${esc(ap.clients ?? "—")}</dd>${state.uiMode === UI_MODE.ADVANCED ? `<dt>Kênh</dt><dd>${esc(ap.channel ?? "—")}</dd><dt>Bảo mật</dt><dd>${esc(ap.security ?? "—")}</dd><dt>Bandwidth</dt><dd>${esc(ap.bandwidth ?? "—")}</dd>` : ""}</dl></article>`).join("") : `<div class="empty">Chưa tải được cấu hình Wi-Fi từ modem.</div>`}</div>
     <div class="write-lock"><strong>Write vẫn khóa.</strong><span>HAR này chỉ xác minh read. Không gửi lệnh đổi SSID/password/channel nếu chưa có request write thật.</span></div>
   </section>`;
@@ -297,7 +342,8 @@ function renderDevices() {
   const rows = state.demoMode ? state.demo?.clients ?? [] : state.details?.clients ?? [];
   return `${renderTopbar("Thiết bị", "Danh sách client dùng endpoint thật router_get_hosts_info.")}
   ${renderAuthNotice()}
-  <section class="panel"><div class="panel-head"><div><span>CONNECTED CLIENTS</span><h2>${rows.length ? `${rows.length} thiết bị` : "Chưa có thiết bị"}</h2></div>${statusPill(state.demoMode ? "DEMO DATA" : state.details ? "LIVE READ" : "WAITING")}</div>
+  ${renderDetailsNotice()}
+  <section class="panel"><div class="panel-head"><div><span>CONNECTED CLIENTS</span><h2>${rows.length ? `${rows.length} thiết bị` : "Chưa có thiết bị"}</h2></div>${statusPill(detailsFreshnessLabel(), state.detailsStale ? "warn" : "muted")}</div>
   <div class="device-list">${rows.length ? rows.map(r=>`<article><div class="device-icon">◆</div><div><strong>${esc(r.name || "Thiết bị")}</strong><span>${esc(r.ip ?? "—")} · ${esc(r.ssid ?? r.band ?? r.type ?? "—")}</span></div><div><span>${esc(r.mac ?? "—")}</span><strong>${esc(r.onlineTime ?? r.state ?? "Online")}</strong></div></article>`).join("") : `<div class="empty">Không có client hoặc danh sách chưa tải.</div>`}</div></section>`;
 }
 
@@ -359,11 +405,13 @@ function renderSettings() {
   </section>` : "";
 
   return `${renderTopbar("Cài đặt", "Basic gọn; Advanced hiển thị các nhóm read-only mới được HAR xác minh.")}
+  ${renderDetailsNotice()}
   <section class="panel"><div class="panel-head"><div><span>INTERFACE MODE</span><h2>Chế độ giao diện</h2></div>${statusPill(state.uiMode === UI_MODE.ADVANCED ? "ADVANCED" : "BASIC")}</div>
     <div class="mode-selector"><button data-ui-mode="basic" data-active="${state.uiMode === UI_MODE.BASIC}"><strong>Basic Mode</strong><span>Pin · Internet · Sóng · Wi-Fi · Devices</span></button><button data-ui-mode="advanced" data-active="${state.uiMode === UI_MODE.ADVANCED}"><strong>Advanced Mode</strong><span>Network · USB · Bridge · Security · NTP · Power · FOTA</span></button></div>
   </section>
   <section class="panel"><div class="panel-head"><div><span>MODEM CONNECTION</span><h2>Địa chỉ NC03</h2></div>${statusPill("LOCAL ONLY")}</div>
     <div class="form-grid"><label>Địa chỉ modem<input id="baseUrl" value="${esc(state.baseUrl)}" inputmode="url" placeholder="192.168.0.1" /></label><label>Tự làm mới<strong>10 giây/lần</strong></label></div>
+    ${state.addressError ? `<div class="inline-error">${esc(state.addressError)}</div>` : ""}
     <div class="settings-actions"><button id="saveBaseUrl">Lưu địa chỉ</button><button id="refreshNow">Cập nhật ngay</button><button id="openStockUi">Mở Web UI gốc</button></div>
     <div class="security-note"><strong>Credential policy</strong><span>${esc(SECURITY_NOTE)}</span></div>
   </section>
@@ -437,8 +485,11 @@ async function refreshDetails({ render = true } = {}) {
   if (state.demoMode) return;
   try {
     state.details = await localRead("/api/nc03/details");
+    state.detailsStale = false;
+    state.lastDetailsSuccessAt = state.details?.refreshedAt ?? new Date().toISOString();
     state.detailsError = "";
   } catch (error) {
+    state.detailsStale = Boolean(state.details);
     state.detailsError = error?.code || "NC03_DETAILS_UNAVAILABLE";
   }
   if (render) page();
@@ -456,7 +507,10 @@ async function pollLiveOnce() {
       updateLiveTelemetryDom();
       if (wasStale !== state.liveStale) {
         const topStatus = document.querySelector("[data-live-top-status]");
-        if (topStatus) topStatus.textContent = state.liveStale ? "LAST GOOD" : "LIVE READ";
+        if (topStatus) {
+          topStatus.textContent = state.liveStale ? "LAST GOOD" : "LIVE READ";
+          topStatus.dataset.tone = state.liveStale ? "warn" : "ok";
+        }
       }
     }
   } finally {
@@ -479,14 +533,16 @@ function bind() {
   document.querySelector("#saveLoginAddress")?.addEventListener("click", async () => {
     const input = document.querySelector("#loginBaseUrl");
     if (!input) return;
-    try { state.baseUrl = normalizeModemAddress(input.value); } catch { state.baseUrl = DEFAULT_MODEM_URL; }
+    try {
+      state.baseUrl = normalizeModemAddress(input.value);
+      state.addressError = "";
+    } catch {
+      state.addressError = "Địa chỉ không hợp lệ. Chỉ dùng IP mạng nội bộ RFC1918, ví dụ 192.168.0.1.";
+      page();
+      return;
+    }
     persist();
     await refreshAll();
-  });
-
-  document.querySelector("#rememberPassword")?.addEventListener("change", (event) => {
-    state.rememberPassword = event.currentTarget.checked;
-    persist();
   });
 
   document.querySelector("#enterDemo")?.addEventListener("click", async () => {
@@ -543,17 +599,27 @@ function bind() {
   document.querySelector("#saveBaseUrl")?.addEventListener("click", async () => {
     const input = document.querySelector("#baseUrl");
     if (!input) return;
-    try { state.baseUrl = normalizeModemAddress(input.value); } catch { state.baseUrl = DEFAULT_MODEM_URL; }
+    try {
+      state.baseUrl = normalizeModemAddress(input.value);
+      state.addressError = "";
+    } catch {
+      state.addressError = "Địa chỉ không hợp lệ. Chỉ dùng IP mạng nội bộ RFC1918, ví dụ 192.168.0.1.";
+      page();
+      return;
+    }
     state.live = null;
     state.liveStale = false;
     state.lastLiveSuccessAt = null;
     state.details = null;
+    state.detailsStale = false;
+    state.lastDetailsSuccessAt = null;
     persist();
     await refreshAll();
   });
 
   document.querySelector("#refreshNow")?.addEventListener("click", refreshAll);
   document.querySelector("#retryLive")?.addEventListener("click", refreshAll);
+  document.querySelector("#retryDetails")?.addEventListener("click", async () => { await refreshDetails(); });
   document.querySelectorAll("#openStockUi").forEach((button)=>button.addEventListener("click", () => window.open(state.baseUrl, "_blank", "noopener,noreferrer")));
 
   document.querySelector("#harInput")?.addEventListener("change", async (event) => {

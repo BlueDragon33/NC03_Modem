@@ -88,3 +88,31 @@ test("saved modem address uses the same RFC1918 policy as the Local Bridge", () 
   assert.match(preferences, /normalizeModemBaseUrl/);
   assert.match(preferences, /safeBaseUrl/);
 });
+
+
+test("stale state survives navigation without falsely turning connection green", () => {
+  assert.match(app, /Boolean\(\(t\?\.status\?\.connected && !state\.liveStale\) \|\| state\.demoMode\)/);
+  assert.match(app, /const connected = Boolean\(t\?\.status\?\.connected\) && !state\.liveStale/);
+  assert.match(app, /state\.liveStale && t \? "LAST GOOD"/);
+});
+
+test("freshness timestamps and advanced snapshot staleness are explicit", () => {
+  assert.match(app, /function formatClock/);
+  assert.match(app, /lastLiveSuccessAt/);
+  assert.match(app, /lastDetailsSuccessAt/);
+  assert.match(app, /detailsStale/);
+  assert.match(app, /Dữ liệu cấu hình đang là bản gần nhất/);
+  assert.match(app, /Chưa tải được cấu hình chi tiết/);
+  assert.match(app, /retryDetails/);
+});
+
+test("remember-password control stays disabled until real auth is verified", () => {
+  assert.match(app, /id="rememberPassword"[^>]*disabled/);
+  assert.match(app, /sẽ bật sau AUTH VERIFIED/);
+  assert.doesNotMatch(app, /rememberPassword"\)\?\.addEventListener\("change"/);
+});
+
+test("manual modem address errors are shown instead of silently resetting the address", () => {
+  assert.match(app, /Địa chỉ không hợp lệ\. Chỉ dùng IP mạng nội bộ RFC1918/);
+  assert.match(app, /state\.addressError/);
+});
