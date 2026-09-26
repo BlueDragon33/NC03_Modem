@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0 — Professional QA + diagnostic reporting
+
+- Added a professional A4 diagnostic report with Print / Save PDF support.
+- The report is privacy-safe by construction: it selects approved read-only fields and excludes modem credentials, tokens/sessions, Wi-Fi PSK, IMEI/serial, ICCID/EID/eSIM/APN data and raw rules.
+- Home now labels stale data usage and client counts as last-known instead of implying they are current.
+- Connected-device fallback wording changed from "Online" to "Đã ghi nhận" when the modem did not provide an explicit state/time.
+- Remember-password UX no longer shows a disabled-but-checked checkbox before AUTH is verified.
+- Battery values outside 0–100 are rejected instead of displayed as valid percentages.
+- Desktop quick actions now use a balanced four-column layout; keyboard focus and 44px control targets are enforced.
+- Added dedicated report privacy/XSS tests and expanded UX release gates.
+
 ## 0.6.3 — Final read-path hardening
 
 - Keep stale/reconnecting state correct across navigation so Sidebar/Home/Network cannot falsely turn green from last-known data.
