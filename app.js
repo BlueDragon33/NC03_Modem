@@ -11,6 +11,7 @@ const app = document.querySelector("#app");
 const prefs = loadPreferences();
 const LIVE_REFRESH_MS = 10_000;
 let liveTimer = null;
+let liveRefreshInFlight = false;
 
 let state = {
   view: "home",
@@ -117,11 +118,11 @@ function renderAlwaysOnStatus() {
   const signal = t?.signal?.level ?? t?.status?.signalLevel;
   const network = t?.signal?.systemMode ?? t?.status?.network;
   return `<div class="live-strip">
-    <div class="live-chip battery-chip"><span>PIN</span><strong>${battery === null || battery === undefined ? "—%" : `${esc(battery)}%`}</strong><small>${t?.battery?.charging ? "Đang sạc" : "Pin thực"}</small></div>
-    <div class="live-chip"><span>KẾT NỐI</span><strong data-good="${connected}">${connected ? "Đã kết nối" : "Chưa kết nối"}</strong><small>${esc(t?.status?.internetMode ?? "—")}</small></div>
-    <div class="live-chip"><span>SÓNG</span><strong>${esc(humanSignal(signal))}</strong><small>${renderSignalBars(signal)}</small></div>
-    <div class="live-chip"><span>MẠNG</span><strong>${esc(humanNetwork(network))}</strong><small>${esc(t?.status?.carrier ?? t?.signal?.carrier ?? "—")}</small></div>
-    <div class="live-chip refresh-chip"><span>CẬP NHẬT</span><strong>10 giây</strong><small>${state.demoMode ? "DEMO" : state.live ? "Tự động" : "Đang chờ"}</small></div>
+    <div class="live-chip battery-chip"><span>PIN</span><strong data-live-battery>${battery === null || battery === undefined ? "—%" : `${esc(battery)}%`}</strong><small data-live-battery-note>${t?.battery?.charging ? "Đang sạc" : "Pin thực"}</small></div>
+    <div class="live-chip"><span>KẾT NỐI</span><strong data-live-connection data-good="${connected}">${connected ? "Đã kết nối" : "Chưa kết nối"}</strong><small data-live-internet-mode>${esc(t?.status?.internetMode ?? "—")}</small></div>
+    <div class="live-chip"><span>SÓNG</span><strong data-live-signal>${esc(humanSignal(signal))}</strong><small data-live-signal-bars>${renderSignalBars(signal)}</small></div>
+    <div class="live-chip"><span>MẠNG</span><strong data-live-network>${esc(humanNetwork(network))}</strong><small data-live-carrier>${esc(t?.status?.carrier ?? t?.signal?.carrier ?? "—")}</small></div>
+    <div class="live-chip refresh-chip"><span>CẬP NHẬT</span><strong>10 giây</strong><small data-live-refresh-state>${state.demoMode ? "DEMO" : state.live ? "Tự động" : "Đang chờ"}</small></div>
   </div>`;
 }
 
@@ -134,8 +135,8 @@ function renderSidebar() {
   return `<aside class="sidebar">
     <div class="brand"><div class="brand-mark">N3</div><div><small>HYBRID Wi-Fi 5G</small><strong>NC03 Control Center</strong></div></div>
     <div class="connection-card">
-      <div class="connection-row"><span class="dot" data-on="${Boolean(t?.status?.connected || state.demoMode)}"></span><div><small>Trạng thái</small><strong>${esc(currentConnectionLabel())}</strong></div></div>
-      <div class="sidebar-live"><strong>${t?.battery?.percentage ?? "—"}%</strong><span>Pin</span><strong>${esc(humanSignal(t?.signal?.level ?? t?.status?.signalLevel))}</strong><span>Sóng</span></div>
+      <div class="connection-row"><span class="dot" data-live-dot data-on="${Boolean(t?.status?.connected || state.demoMode)}"></span><div><small>Trạng thái</small><strong data-live-sidebar-connection>${esc(currentConnectionLabel())}</strong></div></div>
+      <div class="sidebar-live"><strong data-live-sidebar-battery>${t?.battery?.percentage ?? "—"}%</strong><span>Pin</span><strong data-live-sidebar-signal>${esc(humanSignal(t?.signal?.level ?? t?.status?.signalLevel))}</strong><span>Sóng</span></div>
       <div class="connection-address">${esc(state.baseUrl)}</div>
     </div>
     <nav>
@@ -156,6 +157,46 @@ function renderTopbar(title, subtitle) {
 
 function metric(label, value, note) {
   return `<article class="metric"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></article>`;
+}
+
+function setText(selector, value) {
+  document.querySelectorAll(selector).forEach((node) => { node.textContent = String(value); });
+}
+
+function updateLiveTelemetryDom() {
+  if (state.demoMode) return;
+  const t = currentTelemetry();
+  const battery = t?.battery?.percentage;
+  const connected = Boolean(t?.status?.connected);
+  const signal = t?.signal?.level ?? t?.status?.signalLevel;
+  const network = t?.signal?.systemMode ?? t?.status?.network;
+  const carrier = t?.status?.carrier ?? t?.signal?.carrier ?? "—";
+  const batteryText = battery === null || battery === undefined ? "—%" : `${battery}%`;
+  const connectionText = connected ? "Đã kết nối" : "Chưa kết nối";
+  const signalText = humanSignal(signal);
+  const networkText = humanNetwork(network);
+
+  setText("[data-live-battery]", batteryText);
+  setText("[data-live-battery-note]", t?.battery?.charging ? "Đang sạc" : "Pin thực");
+  setText("[data-live-connection]", connectionText);
+  setText("[data-live-internet-mode]", t?.status?.internetMode ?? "—");
+  setText("[data-live-signal]", signalText);
+  setText("[data-live-network]", networkText);
+  setText("[data-live-carrier]", carrier);
+  setText("[data-live-refresh-state]", t ? "Vừa cập nhật" : "Đang chờ");
+  setText("[data-live-sidebar-connection]", currentConnectionLabel());
+  setText("[data-live-sidebar-battery]", batteryText);
+  setText("[data-live-sidebar-signal]", signalText);
+  setText("[data-live-hero-connection]", connectionText);
+  setText("[data-live-hero-summary]", t ? `${networkText} · ${carrier} · SIM ${t.status?.simStatus ?? "—"}` : "Đang chờ dữ liệu thật từ NC03.");
+  setText("[data-live-home-battery]", batteryText);
+  setText("[data-live-home-battery-note]", t?.battery?.charging ? "Đang sạc · % chính xác" : "Phần trăm pin chính xác");
+  setText("[data-live-home-signal]", signalText);
+  setText("[data-live-home-network]", `${networkText} · ${carrier}`);
+
+  document.querySelectorAll("[data-live-connection]").forEach((node) => node.dataset.good = String(connected));
+  document.querySelectorAll("[data-live-dot], [data-live-hero-dot]").forEach((node) => node.dataset.on = String(connected));
+  document.querySelectorAll("[data-live-signal-bars], [data-live-hero-signal]").forEach((node) => { node.innerHTML = renderSignalBars(signal); });
 }
 
 function renderAuthNotice() {
@@ -196,12 +237,12 @@ function renderHome() {
   return `${renderTopbar("Tổng quan", "Pin, kết nối và sóng luôn hiển thị; dữ liệu live tự cập nhật mỗi 10 giây.")}
   ${renderAuthNotice()}
   <section class="hero-status">
-    <div><span class="eyebrow">INTERNET</span><div class="hero-line"><span class="big-dot" data-on="${connected}"></span><h2>${connected ? "Đang kết nối" : "Chưa kết nối"}</h2></div><p>${t ? `${esc(humanNetwork(network))} · ${esc(t.status?.carrier ?? t.signal?.carrier ?? "—")} · SIM ${esc(t.status?.simStatus ?? "—")}` : "Đang chờ dữ liệu thật từ NC03."}</p></div>
-    ${renderSignalBars(signal)}
+    <div><span class="eyebrow">INTERNET</span><div class="hero-line"><span class="big-dot" data-live-hero-dot data-on="${connected}"></span><h2 data-live-hero-connection>${connected ? "Đang kết nối" : "Chưa kết nối"}</h2></div><p data-live-hero-summary>${t ? `${esc(humanNetwork(network))} · ${esc(t.status?.carrier ?? t.signal?.carrier ?? "—")} · SIM ${esc(t.status?.simStatus ?? "—")}` : "Đang chờ dữ liệu thật từ NC03."}</p></div>
+    <span data-live-hero-signal>${renderSignalBars(signal)}</span>
   </section>
   <section class="metrics-grid">
-    ${metric("Pin", t?.battery?.percentage === null || t?.battery?.percentage === undefined ? "—%" : `${t.battery.percentage}%`, t?.battery?.charging ? "Đang sạc · % chính xác" : "Phần trăm pin chính xác")}
-    ${metric("Sóng", humanSignal(signal), `${humanNetwork(network)} · ${t?.status?.carrier ?? t?.signal?.carrier ?? "—"}`)}
+    <article class="metric"><span>Pin</span><strong data-live-home-battery>${t?.battery?.percentage === null || t?.battery?.percentage === undefined ? "—%" : `${esc(t.battery.percentage)}%`}</strong><small data-live-home-battery-note>${t?.battery?.charging ? "Đang sạc · % chính xác" : "Phần trăm pin chính xác"}</small></article>
+    <article class="metric"><span>Sóng</span><strong data-live-home-signal>${esc(humanSignal(signal))}</strong><small data-live-home-network>${esc(humanNetwork(network))} · ${esc(t?.status?.carrier ?? t?.signal?.carrier ?? "—")}</small></article>
     ${metric("Dữ liệu", dataUsed ?? "—", state.demoMode ? "DEMO DATA" : "Bộ đếm modem")}
     ${metric("Thiết bị", clientCount ?? "—", clientCount === undefined ? "Chưa tải danh sách" : "Đang kết nối")}
   </section>
@@ -378,9 +419,22 @@ async function refreshDetails({ render = true } = {}) {
   if (render) page();
 }
 
+async function pollLiveOnce() {
+  if (state.demoMode || document.hidden || liveRefreshInFlight) return;
+  liveRefreshInFlight = true;
+  const hadLive = Boolean(state.live);
+  try {
+    await refreshLive({ render:false });
+    if (hadLive !== Boolean(state.live)) page();
+    else updateLiveTelemetryDom();
+  } finally {
+    liveRefreshInFlight = false;
+  }
+}
+
 function startLivePolling() {
   if (liveTimer) clearInterval(liveTimer);
-  liveTimer = setInterval(() => { refreshLive().catch(() => {}); }, LIVE_REFRESH_MS);
+  liveTimer = setInterval(() => { pollLiveOnce().catch(() => {}); }, LIVE_REFRESH_MS);
 }
 
 async function refreshAll() {
@@ -490,3 +544,6 @@ await ensureDemo();
 if (!state.demoMode) await refreshAll();
 else page();
 startLivePolling();
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) pollLiveOnce().catch(() => {});
+});
