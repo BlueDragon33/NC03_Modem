@@ -60,3 +60,5 @@ assert.ok(app.includes("Payload aliases"), "AUTH lab must surface payload aliase
 assert.ok(app.includes("Request object dependency trace"), "AUTH lab must trace the object serialized into postdata.");
 assert.ok(app.includes("Login object fields / transforms"), "AUTH lab must show request-object field transforms.");
 assert.ok(app.includes("authDependencyMapped"), "AUTH lab must expose the request-object AUTH mapping state.");
+
+assert.ok(app.includes("Nested AUTH transform"), "AUTH lab must surface outer HMAC/MD5 transforms around nested input calls.");
