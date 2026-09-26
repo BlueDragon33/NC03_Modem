@@ -29,3 +29,7 @@ assert.ok(css.includes(".capture-quality"), "Capture-quality guidance layout is 
 
 assert.ok(app.includes("CONNECTION DOCTOR"), "Settings must expose Connection Doctor.");
 assert.ok(css.includes(".doctor-checks"), "Connection Doctor responsive layout is required.");
+
+assert.ok(app.includes("AUTH SOURCE PROBE"), "Developer Lab must expose AUTH Source Probe.");
+assert.ok(app.includes("runAuthSourceProbe"), "AUTH Source Probe action is required.");
+assert.ok(css.includes(".source-evidence-grid"), "AUTH source evidence must have responsive layout.");

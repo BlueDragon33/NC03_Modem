@@ -18,3 +18,8 @@ const reportHtml = fs.readFileSync("report.html", "utf8");
 assert.doesNotMatch(reportJs, /innerHTML\s*=\s*.*message/);
 assert.doesNotMatch(reportHtml, /onclick=|onload=|onerror=/i);
 assert.match(reportHtml, /Content-Security-Policy/);
+
+const serveLocal = fs.readFileSync("scripts/serve-local.mjs", "utf8");
+assert.match(serveLocal, /normalizeModemBaseUrl\(body\.baseUrl\)/, "AUTH source probe must stay behind RFC1918 modem-origin policy.");
+const authSourceDiscovery = fs.readFileSync("src/modem/AuthSourceDiscovery.js", "utf8");
+assert.match(authSourceDiscovery, /sourceCodeReturned:false/, "AUTH source report must explicitly avoid raw source output.");

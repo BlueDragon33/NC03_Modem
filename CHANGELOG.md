@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.6 — AUTH Source Probe
+
+- Added a local-only source probe for modem static HTML/JavaScript.
+- Seeds include evidence-backed `/js/common.js`, `/js/tools.js` and `/js/md5.js`, plus local landing HTML for script discovery.
+- Source is analyzed inside the Local Bridge and is never returned raw to the browser.
+- Extracts AUTH endpoint literals, login-function names, fixed `loginKey` literals and HMAC-MD5/MD5 usage as candidate evidence only.
+- HAR evidence from the latest capture confirms the settings-admin source contains a fixed login key and HMAC-MD5 use for the current-password verification path.
+- Production `NC03Auth.login()`, credential persistence and write controls remain fail-closed.
+
+
 ## 0.7.5 — Connection Doctor
 
 - Added a dedicated local read-only Connection Doctor endpoint and Settings panel.

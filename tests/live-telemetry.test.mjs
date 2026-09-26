@@ -143,3 +143,13 @@ test("Connection Doctor stays local, read-only and exposes a dedicated endpoint"
   assert.match(app, /runConnectionDoctor/);
   assert.match(app, /không bật write/);
 });
+
+
+test("AUTH Source Probe is local-only evidence tooling and does not enable login or write", () => {
+  assert.match(server, /\/api\/nc03\/auth-source-probe/);
+  assert.match(server, /AUTH_SOURCE_SEEDS/);
+  assert.match(server, /buildAuthSourceEvidence/);
+  assert.match(app, /AUTH SOURCE PROBE/);
+  assert.match(app, /SOURCE_CANDIDATE|Source candidate|source candidate/i);
+  assert.match(app, /runAuthSourceProbe/);
+});

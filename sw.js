@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v14-connection-doctor";
+const CACHE = "nc03-control-center-v15-auth-source-probe";
 const ASSETS = [
   "./",
   "./index.html",

@@ -38,6 +38,9 @@ let state = {
   discoveryError: "",
   doctor: null,
   doctorError: "",
+  authSourceEvidence: null,
+  authSourceError: "",
+  authSourceLoading: false,
   demo: null
 };
 
@@ -382,6 +385,8 @@ function renderDiscovery() {
   const quality = evidence?.captureQuality ?? null;
   const authReady = quality?.readyForAuthMapping === true;
   const writeReady = quality?.readyForWriteMapping === true;
+  const sourceEvidence = state.authSourceEvidence?.evidence ?? null;
+  const sourceTone = sourceEvidence?.status === "AUTH_SOURCE_CANDIDATE_READY" ? "ok" : sourceEvidence ? "warn" : "muted";
   return `${renderTopbar("HAR Evidence Lab", "Advanced Developer Mode: phân tích HAR ngay trên thiết bị, không upload credential lên cloud.")}
   <section class="panel discovery-panel">
     <div class="panel-head"><div><span>LOCAL HAR ANALYZER</span><h2>Phân tích Web UI gốc NC03</h2></div>${statusPill(evidence ? `${evidence.entryCount} request` : "CHỜ HAR", evidence ? "ok" : "muted")}</div>
@@ -406,6 +411,30 @@ function renderDiscovery() {
       </div>
       <div class="evidence-actions"><button id="downloadHarEvidence">Xuất evidence.json</button><button id="clearHarEvidence" class="secondary-action">Xóa phiên phân tích</button></div>
     ` : ""}
+  </section>
+
+  <section class="panel evidence-panel auth-source-panel">
+    <div class="panel-head"><div><span>AUTH SOURCE PROBE</span><h2>Đọc dấu vết đăng nhập từ JS của modem</h2></div>${statusPill(sourceEvidence?.status ?? (state.authSourceLoading ? "ĐANG QUÉT" : "CHƯA CHẠY"), sourceTone)}</div>
+    <p class="body-copy">Probe chỉ đọc các tài nguyên tĩnh local đã được HAR chứng minh tồn tại hoặc được chính HTML modem tham chiếu. Raw source không rời Local Bridge; UI chỉ nhận evidence đã rút gọn.</p>
+    ${state.authSourceError ? `<div class="inline-error">${esc(state.authSourceError)}</div>` : ""}
+    ${sourceEvidence ? `
+      <div class="evidence-summary">
+        <div><span>Source đã đọc</span><strong>${sourceEvidence.sourcesAnalyzed?.length ?? 0}</strong><small>Local modem only</small></div>
+        <div><span>AUTH endpoint</span><strong>${sourceEvidence.authEndpoints?.length ?? 0}</strong><small>Candidate only</small></div>
+        <div><span>Login function</span><strong>${sourceEvidence.loginFunctions?.length ?? 0}</strong><small>Tên hàm quan sát được</small></div>
+        <div><span>Password codec</span><strong>${sourceEvidence.passwordCodec?.hmacMd5 ? "HMAC-MD5" : sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "KEY FOUND" : "—"}</strong><small>${sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "Có fixed loginKey trong source" : "Chưa thấy fixed loginKey"}</small></div>
+      </div>
+      <div class="source-evidence-grid">
+        <article><span>Endpoint candidates</span><code>${sourceEvidence.authEndpoints?.length ? esc(sourceEvidence.authEndpoints.join("\n")) : "Chưa tìm thấy"}</code></article>
+        <article><span>Login functions</span><code>${sourceEvidence.loginFunctions?.length ? esc(sourceEvidence.loginFunctions.join("\n")) : "Chưa tìm thấy"}</code></article>
+        <article><span>Codec evidence</span><code>${esc([
+          sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "fixed loginKey literal" : "",
+          sourceEvidence.passwordCodec?.hmacMd5 ? "hex_hmac_md5(...)" : ""
+        ].filter(Boolean).join("\n") || "Chưa đủ evidence")}</code></article>
+      </div>
+    ` : `<div class="empty">Chạy probe khi máy đang kết nối NC03 để lấy evidence trực tiếp từ firmware local.</div>`}
+    <div class="evidence-actions"><button id="runAuthSourceProbe" ${state.authSourceLoading ? "disabled" : ""}>${state.authSourceLoading ? "Đang quét…" : "Quét AUTH source trên modem"}</button></div>
+    <div class="advanced-note"><strong>Fail-closed</strong><span>Source candidate không tự bật NC03Auth.login(). Vẫn cần request/response semantics thật trước AUTH VERIFIED.</span></div>
   </section>
 
   ${evidence ? `
@@ -545,6 +574,23 @@ async function localRead(path) {
     throw error;
   }
   return payload.payload;
+}
+
+async function runAuthSourceProbe() {
+  if (!state.developerMode || state.authSourceLoading) return;
+  state.authSourceLoading = true;
+  state.authSourceError = "";
+  page();
+  try {
+    state.authSourceEvidence = await localRead("/api/nc03/auth-source-probe");
+    state.authSourceError = "";
+  } catch (error) {
+    state.authSourceEvidence = null;
+    state.authSourceError = error?.code || "Không đọc được AUTH source từ modem.";
+  } finally {
+    state.authSourceLoading = false;
+    page();
+  }
 }
 
 async function runConnectionDoctor() {
@@ -715,6 +761,9 @@ function bind() {
       state.harEvidence = null;
       state.harFileName = "";
       state.discoveryError = "";
+      state.authSourceEvidence = null;
+      state.authSourceError = "";
+      state.authSourceLoading = false;
       await ensureDemo();
       await refreshAll();
     }
@@ -758,6 +807,7 @@ function bind() {
     await refreshAll();
   });
 
+  document.querySelector("#runAuthSourceProbe")?.addEventListener("click", runAuthSourceProbe);
   document.querySelector("#runConnectionDoctor")?.addEventListener("click", runConnectionDoctor);
   document.querySelector("#openDiagnosticReport")?.addEventListener("click", openDiagnosticReport);
   document.querySelector("#refreshNow")?.addEventListener("click", refreshAll);
