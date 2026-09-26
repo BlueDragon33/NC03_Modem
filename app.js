@@ -1,7 +1,7 @@
 import { MockNC03Adapter } from "./src/modem/MockNC03Adapter.js";
 import { NC03_80042_CAPABILITIES } from "./src/modem/NC03Firmware80042Profile.js";
 import { HAR2_CAPABILITY_OVERRIDES } from "./src/modem/NC03Har2Profile.js";
-import { parseHar, summarizeCandidates } from "./src/modem/HarDiscovery.js";
+import { buildHarEvidenceReport, parseHar, summarizeCandidates } from "./src/modem/HarDiscovery.js";
 import { loadPreferences, savePreferences, SECURITY_NOTE } from "./src/modem/LocalPreferences.js";
 import { CONNECTION_STATE, connectionStateLabel } from "./src/modem/ConnectionState.js";
 import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
@@ -33,6 +33,8 @@ let state = {
   addressError: "",
   harCandidates: [],
   harEntries: [],
+  harEvidence: null,
+  harFileName: "",
   discoveryError: "",
   demo: null
 };
@@ -355,15 +357,58 @@ function capabilityRows() {
   return [...merged.values()].map(row => `<tr><td>${esc(row.module)}</td><td>${row.read ? "✓" : "—"}</td><td>${row.write ? "✓" : "—"}</td><td><code>${esc(row.endpoint)}</code></td><td>${esc(row.method)}</td><td>${esc(row.auth)}</td><td><span class="table-status">${esc(row.status)}</span></td></tr>`).join("");
 }
 
+function renderEvidenceList(items, emptyText, tone = "muted") {
+  if (!items?.length) return `<div class="evidence-empty">${esc(emptyText)}</div>`;
+  return `<div class="evidence-list">${items.map((item) => `
+    <article>
+      <div class="evidence-route"><span class="method">${esc(item.method)}</span><code>${esc(item.path)}</code><span class="pill" data-tone="${tone}">${esc(item.statusLabel ?? "CANDIDATE_ONLY")}</span></div>
+      <div class="evidence-meta">
+        <span>HTTP ${esc(item.status ?? "—")}</span>
+        <span>${esc(item.requestBodyKind ?? "empty")}</span>
+        ${item.requestFields?.length ? `<span>${esc(item.requestFields.slice(0, 8).join(", "))}${item.requestFields.length > 8 ? "…" : ""}</span>` : ""}
+      </div>
+      ${item.evidence?.length ? `<small>${esc(item.evidence.join(" · "))}</small>` : ""}
+    </article>`).join("")}</div>`;
+}
+
 function renderDiscovery() {
   if (!state.developerMode) return renderSettings();
-  return `${renderTopbar("API Discovery", "Developer Mode: HAR chỉ xử lý cục bộ và credential phải được che.")}
-  <section class="panel discovery-panel"><div class="panel-head"><div><span>ADVANCED DEVELOPER MODE</span><h2>Phân tích Web UI gốc NC03</h2></div>${statusPill(`${state.harEntries.length} request`)}</div>
-    <div class="import-box"><input id="harInput" type="file" accept=".har,application/json"/><div><strong>Chọn file HAR từ DevTools</strong><span>File chỉ đọc trong trình duyệt hiện tại. Không upload ra cloud.</span></div></div>
+  const evidence = state.harEvidence;
+  const authCandidates = evidence?.authCandidates ?? [];
+  const writeCandidates = evidence?.writeCandidates ?? [];
+  return `${renderTopbar("HAR Evidence Lab", "Advanced Developer Mode: phân tích HAR ngay trên thiết bị, không upload credential lên cloud.")}
+  <section class="panel discovery-panel">
+    <div class="panel-head"><div><span>LOCAL HAR ANALYZER</span><h2>Phân tích Web UI gốc NC03</h2></div>${statusPill(evidence ? `${evidence.entryCount} request` : "CHỜ HAR", evidence ? "ok" : "muted")}</div>
+    <div class="har-privacy-banner"><strong>Riêng tư theo mặc định</strong><span>HAR được đọc trong trình duyệt hiện tại. Evidence report chỉ giữ cấu trúc request/response, tên field và dấu hiệu xác thực; không giữ mật khẩu, token, cookie hay session value.</span></div>
+    <div class="import-box"><input id="harInput" type="file" accept=".har,application/json"/><div><strong>Chọn file HAR từ DevTools</strong><span>${state.harFileName ? `Đang phân tích: ${esc(state.harFileName)}` : "Ưu tiên capture riêng một lần đăng nhập để xác minh AUTH."}</span></div></div>
     ${state.discoveryError ? `<div class="inline-error">${esc(state.discoveryError)}</div>` : ""}
-    ${state.harCandidates.length ? `<div class="candidate-list">${state.harCandidates.map(c=>`<article><span class="method">${esc(c.method)}</span><code>${esc(c.path)}</code><small>${c.count} lần · HTTP ${esc(c.statuses.join(", "))} · ~${c.avgMs} ms${c.hints?.length ? ` · gợi ý: ${esc(c.hints.join(", "))}` : ""}</small></article>`).join("")}</div>` : `<div class="empty">Chưa nhập HAR vào Developer Mode.</div>`}
+    ${evidence ? `
+      <div class="evidence-summary">
+        <div><span>Request modem</span><strong>${evidence.entryCount}</strong><small>Đúng host ${esc(evidence.modemHost)}</small></div>
+        <div><span>AUTH candidates</span><strong>${authCandidates.length}</strong><small>Chưa tự xác minh</small></div>
+        <div><span>WRITE candidates</span><strong>${writeCandidates.length}</strong><small>Chưa tự mở write</small></div>
+        <div><span>Safety gate</span><strong>LOCKED</strong><small>Không tự bật control</small></div>
+      </div>
+      <div class="evidence-actions"><button id="downloadHarEvidence">Xuất evidence.json</button><button id="clearHarEvidence" class="secondary-action">Xóa phiên phân tích</button></div>
+    ` : ""}
   </section>
-  <section class="panel"><div class="panel-head"><div><span>CAPABILITY MATRIX</span><h2>HAR mới đã mở rộng read-only</h2></div><p>Write chỉ bật khi WRITE VERIFIED.</p></div><div class="table-wrap"><table><thead><tr><th>Module</th><th>Read</th><th>Write</th><th>Endpoint</th><th>Method</th><th>Auth</th><th>Status</th></tr></thead><tbody>${capabilityRows()}</tbody></table></div></section>`;
+
+  ${evidence ? `
+  <section class="panel evidence-panel"><div class="panel-head"><div><span>AUTH EVIDENCE</span><h2>Ứng viên đăng nhập / session</h2></div>${statusPill(authCandidates.length ? "CANDIDATE ONLY" : "NO CANDIDATE", authCandidates.length ? "warn" : "muted")}</div>
+    <p class="body-copy">Các dòng dưới chỉ là bằng chứng cấu trúc. Chỉ khi đối chiếu request thật + response success/failure mới được nâng AUTH lên VERIFIED.</p>
+    ${renderEvidenceList(authCandidates, "HAR này chưa có dấu hiệu login/session đủ rõ.", "warn")}
+  </section>
+
+  <section class="panel evidence-panel"><div class="panel-head"><div><span>WRITE EVIDENCE</span><h2>Ứng viên thao tác ghi</h2></div>${statusPill(writeCandidates.length ? "CANDIDATE ONLY" : "NO WRITE", writeCandidates.length ? "warn" : "muted")}</div>
+    <p class="body-copy">POST không đồng nghĩa với write. Chỉ endpoint có dấu hiệu thao tác ghi mới được liệt kê, và vẫn cần rollback + post-condition trước WRITE VERIFIED.</p>
+    ${renderEvidenceList(writeCandidates, "HAR này chưa chứa write-like transaction.", "warn")}
+  </section>
+
+  <section class="panel"><div class="panel-head"><div><span>REQUEST MAP</span><h2>Nhóm endpoint quan sát được</h2></div><p>Đã redaction trước khi hiển thị.</p></div>
+    ${state.harCandidates.length ? `<div class="candidate-list">${state.harCandidates.map(c=>`<article><span class="method">${esc(c.method)}</span><code>${esc(c.path)}</code><small>${c.count} lần · HTTP ${esc(c.statuses.join(", "))} · ~${c.avgMs} ms${c.hints?.length ? ` · gợi ý: ${esc(c.hints.join(", "))}` : ""}</small></article>`).join("")}</div>` : `<div class="empty">Không có endpoint phù hợp host modem.</div>`}
+  </section>` : `<section class="panel"><div class="empty">Chọn một file HAR để bắt đầu. File không rời khỏi trình duyệt.</div></section>`}
+
+  <section class="panel"><div class="panel-head"><div><span>CAPABILITY MATRIX</span><h2>Firmware 8.00.42</h2></div><p>Write chỉ bật khi WRITE VERIFIED.</p></div><div class="table-wrap"><table><thead><tr><th>Module</th><th>Read</th><th>Write</th><th>Endpoint</th><th>Method</th><th>Auth</th><th>Status</th></tr></thead><tbody>${capabilityRows()}</tbody></table></div></section>`;
 }
 
 function settingCard(label, value) {
@@ -614,6 +659,8 @@ function bind() {
       state.demoMode = false;
       state.harCandidates = [];
       state.harEntries = [];
+      state.harEvidence = null;
+      state.harFileName = "";
       state.discoveryError = "";
       await ensureDemo();
       await refreshAll();
@@ -669,14 +716,41 @@ function bind() {
     if (!file || !state.developerMode) return;
     try {
       const har = JSON.parse(await file.text());
-      state.harEntries = parseHar(har, { modemHost: new URL(state.baseUrl).hostname });
+      const modemHost = new URL(state.baseUrl).hostname;
+      state.harEntries = parseHar(har, { modemHost });
       state.harCandidates = summarizeCandidates(state.harEntries);
+      state.harEvidence = buildHarEvidenceReport(har, { modemHost });
+      state.harFileName = file.name;
       state.discoveryError = "";
     } catch (error) {
       state.harEntries = [];
       state.harCandidates = [];
+      state.harEvidence = null;
+      state.harFileName = "";
       state.discoveryError = `Không đọc được HAR: ${error instanceof Error ? error.message : "Dữ liệu không hợp lệ"}`;
     }
+    page();
+  });
+
+  document.querySelector("#downloadHarEvidence")?.addEventListener("click", () => {
+    if (!state.harEvidence || !state.developerMode) return;
+    const blob = new Blob([JSON.stringify(state.harEvidence, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "nc03-evidence.json";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  document.querySelector("#clearHarEvidence")?.addEventListener("click", () => {
+    state.harEntries = [];
+    state.harCandidates = [];
+    state.harEvidence = null;
+    state.harFileName = "";
+    state.discoveryError = "";
     page();
   });
 }
