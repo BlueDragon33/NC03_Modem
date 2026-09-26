@@ -106,11 +106,14 @@ test("freshness timestamps and advanced snapshot staleness are explicit", () => 
   assert.match(app, /retryDetails/);
 });
 
-test("remember-password UX cannot look enabled before real auth is verified", () => {
+test("real login is enabled while password persistence remains locked until live PASS", () => {
+  assert.match(app, /id="loginPassword"/);
+  assert.doesNotMatch(app, /id="loginPassword" type="password" disabled/);
+  assert.match(app, /id="loginUsername"/);
+  assert.match(app, /id="loginSubmit"/);
   assert.match(app, /Ghi nhớ mật khẩu/);
-  assert.match(app, /Chưa hoạt động · sẽ bật mặc định sau khi AUTH VERIFIED/);
+  assert.match(app, /Chưa lưu ở lượt đầu tiên/);
   assert.doesNotMatch(app, /id="rememberPassword"/);
-  assert.doesNotMatch(app, /rememberPassword"\)\?\.addEventListener\("change"/);
 });
 
 test("manual modem address errors are shown instead of silently resetting the address", () => {
@@ -145,13 +148,16 @@ test("Connection Doctor stays local, read-only and exposes a dedicated endpoint"
 });
 
 
-test("AUTH Source Probe is local-only evidence tooling and does not enable login or write", () => {
+test("AUTH Source Probe remains read-only evidence while verified login uses a separate local endpoint", () => {
   assert.match(server, /\/api\/nc03\/auth-source-probe/);
+  assert.match(server, /\/api\/nc03\/login/);
+  assert.match(server, /performVerifiedLogin/);
+  assert.match(server, /collectLoginRuntimeSources/);
   assert.match(server, /AUTH_SOURCE_SEEDS/);
   assert.match(server, /buildAuthSourceEvidence/);
   assert.match(app, /AUTH SOURCE PROBE/);
-  assert.match(app, /SOURCE_CANDIDATE|Source candidate|source candidate/i);
   assert.match(app, /runAuthSourceProbe/);
+  assert.match(app, /submitNc03Login/);
 });
 
 
@@ -268,4 +274,21 @@ test("frontend refuses AUTH probe when Local Bridge runtime protocol/schema is s
   assert.match(app, /LOCAL_BRIDGE_RESTART_REQUIRED/);
   assert.match(app, /payload\.runtimeProtocol !== NC03_RUNTIME_PROTOCOL\.id/);
   assert.match(app, /probe\?\.evidence\?\.schema !== NC03_RUNTIME_PROTOCOL\.authEvidenceSchema/);
+});
+
+
+test("verified login keeps modem credentials out of Application Management and cloud paths", () => {
+  assert.match(server, /modemSessions = new Map\(\)/);
+  assert.match(server, /saveSession\(baseUrl/);
+  assert.match(server, /csrfToken/);
+  assert.doesNotMatch(server, /application-management[^\n]{0,120}password/i);
+  assert.match(app, /không gửi password\/token lên App Management hoặc cloud/);
+});
+
+test("AUTH login route validates recipe from live modem sources before sending credentials", () => {
+  assert.match(server, /collectLoginRuntimeSources/);
+  assert.match(server, /"\/js\/login\.js"/);
+  assert.match(server, /"\/js\/tools\.js"/);
+  assert.match(server, /"\/js\/encryption\.js"/);
+  assert.match(server, /performVerifiedLogin/);
 });
