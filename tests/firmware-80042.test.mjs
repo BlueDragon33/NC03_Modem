@@ -45,7 +45,17 @@ function makeFetch() {
         mnet_operator_name:"Carrier",
         mnet_sig_level:"great",
         mnet_sim_status:"ready",
-        wifi_work_status:"open"
+        wifi_work_status:"open",
+        dialup_dataswitch:"on",
+        mnet_sim_pin_protect:"disable",
+        mnet_sim_pin_rtimes:"2",
+        mnet_uc_switch_enable:"disable",
+        mnet_uc_switch_notification:"enable",
+        mnet_uc_switch_nosrv_time:"5",
+        rt_ip_mac_bind_0:"device,AA:BB:CC:DD:EE:FF,192.168.0.2",
+        rt_port_forward_0:"0,web,8080,192.168.0.2",
+        rt_obj_value_info_v4_lan_0:"rule-v4",
+        rt_obj_value_info_v6_lan_0:"rule-v6"
       };
       for (const key of body.keys) if (key in values) data[key] = values[key];
       return response({ retcode:0, data });
