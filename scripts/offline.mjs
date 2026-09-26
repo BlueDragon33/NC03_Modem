@@ -32,7 +32,9 @@ for (const asset of ["./index.html","./app.js","./styles.css","./manifest.webman
 }
 assert.match(sw, /caches\.open\(CACHE\)/);
 assert.match(sw, /caches\.match\(event\.request\)/);
-assert.match(sw, /cached \|\| fetch\(event\.request\)/);
+assert.match(sw, /event\.waitUntil\(network\)/);
+assert.match(sw, /cache\.put\(event\.request, copy\)/);
+assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);
 
 const app = fs.readFileSync("app.js", "utf8");
 assert.match(app, /serviceWorker\.register\("\.\/sw\.js"\)/);
