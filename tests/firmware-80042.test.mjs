@@ -72,6 +72,19 @@ test("firmware adapter reads exact battery percentage without inventing values",
   assert.equal(battery.percentDisplay, "false");
 });
 
+test("firmware adapter exposes one-request live telemetry for 10 second polling", async () => {
+  const { fetchImpl, calls } = makeFetch();
+  const adapter = new NC03Firmware80042Adapter({ fetchImpl });
+  const before = calls.length;
+  const snapshot = await adapter.getLiveSnapshot();
+  assert.equal(calls.length - before, 1);
+  assert.equal(snapshot.refreshIntervalSeconds, 10);
+  assert.equal(snapshot.battery.percentage, 39);
+  assert.equal(snapshot.status.connected, true);
+  assert.equal(snapshot.signal.level, "great");
+  assert.equal(snapshot.signal.exactRadioMetrics, false);
+});
+
 test("firmware adapter reads status, device info and client list", async () => {
   const { fetchImpl, calls } = makeFetch();
   const adapter = new NC03Firmware80042Adapter({ fetchImpl });
