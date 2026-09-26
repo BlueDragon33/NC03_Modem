@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v16-runtime-coherence";
+const CACHE = "nc03-control-center-v17-developer-lab";
 const ASSETS = [
   "./",
   "./index.html",
