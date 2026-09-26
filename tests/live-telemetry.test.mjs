@@ -249,3 +249,12 @@ test("AUTH lab can display nested auth transforms from request-object fields", (
   assert.match(app, /authTransforms/);
   assert.match(app, /Nested AUTH transform/);
 });
+
+
+test("AUTH lab shows password dataflow and recipe status", () => {
+  assert.match(app, /Password field dataflow/);
+  assert.match(app, /Password recipe status/);
+  assert.match(app, /passwordHmacConfirmed/);
+  assert.match(app, /loginSuccessZeroObserved/);
+  assert.match(app, /structure\.skeleton/);
+});
