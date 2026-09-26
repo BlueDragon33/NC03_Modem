@@ -97,3 +97,52 @@ Capture tiếp theo ưu tiên:
 - login transaction với credential dùng tạm thời hoặc đã redaction;
 - một thao tác write ít rủi ro như đổi Long Life Charging rồi đổi lại;
 - trang Mobile Network có RSRP/RSRQ/SINR nếu firmware hiển thị.
+
+
+## HAR2 — expanded real capture
+
+Capture mới của cùng firmware `NC03_8.00.42` có 234 request và xác nhận lại read transport:
+
+- `POST /action/get_mgdb_params` xuất hiện lặp lại cho telemetry và hầu hết trang cấu hình;
+- `POST /action/router_get_hosts_info` dùng cho connected clients;
+- `POST /action/get_device_state` dùng cho runtime CPU/RAM/uptime.
+
+### Telemetry nền
+
+Nhóm field lặp lại nhiều lần gồm:
+
+- `device_battery_percent`, `device_battery_charge_status`, `device_battery_level`;
+- `dialup_dial_status`, `rt_wwan_conn_info`, `rt_internet_mode`;
+- `mnet_sig_level`, `mnet_operator_name`, `mnet_sysmode`, `mnet_sim_status`;
+- `wifi_work_status`.
+
+Vì đây là nhóm đọc lặp theo nền của Web UI gốc, NC03 Control Center dùng một snapshot gọn để poll mỗi **10 giây**.
+
+`mnet_sig_level` là mức chất lượng định tính. HAR2 không có `RSRP`, `RSRQ`, `SINR` hoặc `RSSI`, vì vậy app không dựng số dBm/dB giả.
+
+### Nhóm read-only mới đã xác minh
+
+- Network mode / scan / 5G config / band-lock state;
+- SIM slot/status và eSIM capability metadata;
+- DHCP + static binding inventory;
+- USB tethering/speed, cradle/Ethernet, IP Passthrough;
+- tối đa bốn Wi-Fi AP, channel/security/bandwidth/client counters;
+- WPS, Wi-Fi MAC filter, router MAC/IP filter, DMZ và packet-filter state;
+- SNTP/NITZ/timezone/sync state;
+- firmware/FOTA;
+- power, charging, auto-sleep/display settings;
+- monthly/daily data usage settings.
+
+### Secret boundary
+
+HAR có một số trường nhạy cảm nhưng production snapshot **không mirror**:
+
+- Wi-Fi PSK;
+- IMEI/MEID/serial;
+- SIM ICCID/MSISDN;
+- eSIM EID/profile;
+- APN/profile records.
+
+### Write evidence
+
+HAR2 không chứa request write thực tế tới modem. Các endpoint write chỉ thấy trong vendor JavaScript vẫn giữ `PARTIAL`, không nâng lên `WRITE VERIFIED`.

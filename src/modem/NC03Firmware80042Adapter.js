@@ -6,9 +6,18 @@ import {
   DHCP_KEYS,
   NC03_FIRMWARE_80042,
   STATUS_KEYS,
-  WIFI_KEYS,
   registerNC0380042ReadRoutes
 } from "./NC03Firmware80042Profile.js";
+import {
+  CONNECTIVITY_KEYS,
+  FIRMWARE_STATUS_KEYS,
+  LIVE_TELEMETRY_KEYS,
+  NETWORK_SETTINGS_KEYS,
+  POWER_SETTINGS_KEYS,
+  SAFE_WIFI_KEYS,
+  SECURITY_STATUS_KEYS,
+  TIME_SETTINGS_KEYS
+} from "./NC03Har2Profile.js";
 
 const JSON_HEADERS = Object.freeze({
   Accept: "application/json",
@@ -23,6 +32,57 @@ function successful(payload) {
 function numeric(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+function connectionState(value) {
+  return typeof value === "string" && value ? value.split(",")[0] : null;
+}
+
+function batteryFrom(data) {
+  const percentage = numeric(data.device_battery_percent);
+  return {
+    exactPercentage: percentage !== null,
+    percentage,
+    level: numeric(data.device_battery_level),
+    charging: data.device_battery_charge_status === "charging",
+    chargeStatus: data.device_battery_charge_status ?? null,
+    percentDisplay: data.device_battery_percent_display ?? null,
+    safeCharge: data.device_bat_safe_charge_switch ?? null,
+    longLife: data.device_charge_long_life ?? null,
+    powerMode: data.device_power_saving_mode ?? null
+  };
+}
+
+function statusFrom(data) {
+  const wanState = connectionState(data.rt_wwan_conn_info);
+  const ethernetState = connectionState(data.rt_eth_conn_info);
+  return {
+    connected: data.dialup_dial_status === "connected" || wanState === "connected",
+    internet: data.dialup_dial_status ?? null,
+    internetMode: data.rt_internet_mode ?? null,
+    network: data.mnet_sysmode ?? null,
+    carrier: data.mnet_operator_name ?? null,
+    signalLevel: data.mnet_sig_level ?? null,
+    simStatus: data.mnet_sim_status ?? null,
+    simSlot: data.mnet_sim_slot ?? null,
+    communicationMode: data.mnet_com_mode ?? null,
+    uqState: data.mnet_uq_state ?? null,
+    roaming: data.mnet_roam_status ?? null,
+    roamingSwitch: data.dialup_roamswitch ?? null,
+    wifi: data.wifi_work_status ?? null,
+    wanState,
+    ethernetState,
+    firmwareUpdate: data.fota_curr_istatus ?? null
+  };
+}
+
+function signalFrom(data) {
+  return {
+    level: data.mnet_sig_level ?? null,
+    systemMode: data.mnet_sysmode ?? null,
+    carrier: data.mnet_operator_name ?? null,
+    exactRadioMetrics: false
+  };
 }
 
 export class NC03Firmware80042Adapter extends NC03Adapter {
@@ -57,73 +117,72 @@ export class NC03Firmware80042Adapter extends NC03Adapter {
     };
   }
 
+  async getLiveSnapshot() {
+    const data = await this.getParams(LIVE_TELEMETRY_KEYS);
+    return {
+      refreshedAt: new Date().toISOString(),
+      refreshIntervalSeconds: 10,
+      status: statusFrom(data),
+      battery: batteryFrom(data),
+      signal: signalFrom(data)
+    };
+  }
+
   async getDeviceInfo() {
-    const data = await this.getParams(["device_product_name", "device_software_version"]);
+    const data = await this.getParams(FIRMWARE_STATUS_KEYS);
     return {
       model: data.device_product_name ?? null,
       firmware: data.device_software_version ?? null,
+      hardware: data.device_hardware_version ?? null,
+      manufacturer: data.device_manufacturer ?? null,
+      fotaStatus: data.fota_curr_istatus ?? null,
       profile: data.device_software_version === NC03_FIRMWARE_80042 ? NC03_FIRMWARE_80042 : "unverified-firmware"
     };
   }
 
   async getStatus() {
-    const data = await this.getParams(STATUS_KEYS);
-    return {
-      internet: data.dialup_dial_status ?? null,
-      internetMode: data.rt_internet_mode ?? null,
-      network: data.mnet_sysmode ?? null,
-      carrier: data.mnet_operator_name ?? null,
-      signalLevel: data.mnet_sig_level ?? null,
-      simStatus: data.mnet_sim_status ?? null,
-      roaming: data.mnet_roam_status ?? null,
-      wifi: data.wifi_work_status ?? null
-    };
+    return statusFrom(await this.getParams(STATUS_KEYS));
   }
 
   async getBattery() {
-    const data = await this.getParams(BATTERY_KEYS);
-    const percentage = numeric(data.device_battery_percent);
-    return {
-      exactPercentage: percentage !== null,
-      percentage,
-      level: numeric(data.device_battery_level),
-      charging: data.device_battery_charge_status === "charging",
-      chargeStatus: data.device_battery_charge_status ?? null,
-      percentDisplay: data.device_battery_percent_display ?? null,
-      safeCharge: data.device_bat_safe_charge_switch ?? null,
-      longLife: data.device_charge_long_life ?? null,
-      powerMode: data.device_power_saving_mode ?? null
-    };
+    return batteryFrom(await this.getParams(BATTERY_KEYS));
   }
 
   async getSignal() {
-    const data = await this.getParams(["mnet_sig_level", "mnet_sysmode", "mnet_operator_name"]);
-    return {
-      level: data.mnet_sig_level ?? null,
-      systemMode: data.mnet_sysmode ?? null,
-      carrier: data.mnet_operator_name ?? null,
-      exactRadioMetrics: false
-    };
+    return signalFrom(await this.getParams(["mnet_sig_level", "mnet_sysmode", "mnet_operator_name"]));
   }
 
   async getNetworkInfo() {
     return this.getStatus();
   }
 
+  async getNetworkSettings() {
+    return { ...(await this.getParams(NETWORK_SETTINGS_KEYS)) };
+  }
+
   async getWifiStatus() {
-    const data = await this.getParams(WIFI_KEYS);
-    const aps = [0, 1].map((index) => ({
+    const data = await this.getParams(SAFE_WIFI_KEYS);
+    const aps = [0, 1, 2, 3].map((index) => ({
       index,
       ssid: data[`wifi_ssid_${index}`] ?? null,
+      security: data[`wifi_security_${index}`] ?? null,
+      broadcast: data[`wifi_broadcast_ssid_${index}`] ?? null,
       frequency: data[`wifi_freq_${index}`] ?? null,
       mode: data[`wifi_mode_${index}`] ?? null,
+      channel: data[`wifi_channel_${index}`] ?? null,
+      standard: data[`wifi_80211_mode_${index}`] ?? null,
       state: data[`wifi_state_${index}`] ?? null,
-      clients: numeric(data[`wifi_client_${index}`])
+      clients: numeric(data[`wifi_client_${index}`]),
+      bandwidth: data[`wifi_bandwidth_${index}`] ?? null,
+      maxClients: numeric(data[`wifi_max_client_${index}`])
     })).filter((ap) => ap.ssid || ap.state);
     return {
       enabled: data.wifi_work_status === "open",
       workStatus: data.wifi_work_status ?? null,
       workBand: data.wifi_work_band ?? null,
+      supports6G: data.wifi_if_6g_supported ?? null,
+      sub5G: data.wifi_5g_sub_freq ?? null,
+      totalSwitch: data.wifi_total_switch ?? null,
       aps
     };
   }
@@ -152,6 +211,43 @@ export class NC03Firmware80042Adapter extends NC03Adapter {
     return { ...(await this.getParams(DHCP_KEYS)) };
   }
 
+  async getBridgeStatus() {
+    const data = await this.getParams(["rt_ip_passthrough_switch", "rt_ip_passthrough_lan_type"]);
+    return {
+      enabled: data.rt_ip_passthrough_switch === "enable",
+      state: data.rt_ip_passthrough_switch ?? null,
+      lanType: data.rt_ip_passthrough_lan_type ?? null
+    };
+  }
+
+  async getUsbStatus() {
+    const data = await this.getParams(CONNECTIVITY_KEYS);
+    return {
+      tethering: data.device_usb_tethering_status ?? null,
+      speed: data.device_usb_speed_type ?? null,
+      ethernetType: data.rt_eth_type ?? null,
+      bridgeState: data.rt_ip_passthrough_switch ?? null,
+      bridgeLanType: data.rt_ip_passthrough_lan_type ?? null,
+      cradleScreenSaver: data.lcd_plinth_screen_saver_sw ?? null
+    };
+  }
+
+  async getPowerSettings() {
+    return { ...(await this.getParams(POWER_SETTINGS_KEYS)) };
+  }
+
+  async getSecurityStatus() {
+    return { ...(await this.getParams(SECURITY_STATUS_KEYS)) };
+  }
+
+  async getTimeSettings() {
+    return { ...(await this.getParams(TIME_SETTINGS_KEYS)) };
+  }
+
+  async getFirmwareStatus() {
+    return this.getDeviceInfo();
+  }
+
   async getDeviceState() {
     const payload = await this.requestJson("deviceState");
     return {
@@ -161,6 +257,30 @@ export class NC03Firmware80042Adapter extends NC03Adapter {
       freeRam: numeric(payload.freeram),
       cpuUsage: numeric(payload.cpuusage),
       processes: numeric(payload.procs)
+    };
+  }
+
+  async getAdvancedSnapshot() {
+    const [
+      networkSettings, wifi, clients, dataUsage, dhcp, usb,
+      power, security, time, firmware, deviceState
+    ] = await Promise.all([
+      this.getNetworkSettings(),
+      this.getWifiStatus(),
+      this.getConnectedClients(),
+      this.getDataUsage(),
+      this.getDhcpSettings(),
+      this.getUsbStatus(),
+      this.getPowerSettings(),
+      this.getSecurityStatus(),
+      this.getTimeSettings(),
+      this.getFirmwareStatus(),
+      this.getDeviceState()
+    ]);
+    return {
+      refreshedAt: new Date().toISOString(),
+      networkSettings, wifi, clients, dataUsage, dhcp, usb,
+      power, security, time, firmware, deviceState
     };
   }
 }

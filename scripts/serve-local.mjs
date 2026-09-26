@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join, normalize, resolve } from "node:path";
+import { NC03Firmware80042Adapter } from "../src/modem/NC03Firmware80042Adapter.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
@@ -56,8 +57,65 @@ function contract() {
   return JSON.parse(readFileSync(contractPath, "utf8"));
 }
 
-const server = createServer((req, res) => {
-  if (!req.url || !["GET","HEAD"].includes(req.method || "GET")) {
+function isPrivateIpv4(hostname) {
+  const parts = hostname.split(".").map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  if (parts[0] === 10 || parts[0] === 127) return true;
+  if (parts[0] === 192 && parts[1] === 168) return true;
+  return parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31;
+}
+
+function normalizeModemBaseUrl(value) {
+  const raw = typeof value === "string" && value.trim() ? value.trim() : "http://192.168.0.1";
+  const url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `http://${raw}`);
+  const safeHost = url.hostname === "localhost" || url.hostname === "::1" || isPrivateIpv4(url.hostname);
+  if (!safeHost || !["http:","https:"].includes(url.protocol)) throw new Error("MODEM_ORIGIN_NOT_PRIVATE");
+  if (url.username || url.password || url.search || url.hash || (url.pathname && url.pathname !== "/")) throw new Error("MODEM_ORIGIN_INVALID");
+  if (url.port && !["80","443"].includes(url.port)) throw new Error("MODEM_PORT_NOT_ALLOWED");
+  return url.origin;
+}
+
+async function readJsonBody(req, maxBytes = 4096) {
+  let raw = "";
+  for await (const chunk of req) {
+    raw += chunk;
+    if (Buffer.byteLength(raw) > maxBytes) throw new Error("REQUEST_TOO_LARGE");
+  }
+  return raw ? JSON.parse(raw) : {};
+}
+
+function modemAdapter(baseUrl) {
+  const fetchImpl = (url, init = {}) => fetch(url, {
+    ...init,
+    redirect: "manual",
+    signal: AbortSignal.timeout(3500)
+  });
+  return new NC03Firmware80042Adapter({ baseUrl, fetchImpl });
+}
+
+async function modemRead(req, res, operation) {
+  try {
+    const body = await readJsonBody(req);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl);
+    const adapter = modemAdapter(baseUrl);
+    const login = await adapter.connect();
+    if (!login.authenticated) {
+      json(res, 401, { ok:false, authenticated:false, code:"AUTHENTICATION_REQUIRED" });
+      return;
+    }
+    const payload = operation === "details"
+      ? await adapter.getAdvancedSnapshot()
+      : await adapter.getLiveSnapshot();
+    json(res, 200, { ok:true, authenticated:true, baseUrl, payload });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "NC03_READ_FAILED";
+    const safeCode = /^[A-Z0-9_]+$/.test(code) ? code : "NC03_READ_FAILED";
+    json(res, 502, { ok:false, code:safeCode });
+  }
+}
+
+const server = createServer(async (req, res) => {
+  if (!req.url || !["GET","HEAD","POST"].includes(req.method || "GET")) {
     res.writeHead(405, { "content-type":"text/plain; charset=utf-8" });
     res.end("Method Not Allowed");
     return;
@@ -65,6 +123,20 @@ const server = createServer((req, res) => {
 
   const headOnly = req.method === "HEAD";
   const pathname = new URL(req.url, "http://127.0.0.1").pathname;
+
+  if (pathname === "/api/nc03/snapshot" || pathname === "/api/nc03/details") {
+    if (req.method !== "POST") {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await modemRead(req, res, pathname.endsWith("/details") ? "details" : "snapshot");
+    return;
+  }
+
+  if (req.method === "POST") {
+    json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" });
+    return;
+  }
 
   if (pathname === "/_local/health") {
     json(res, 200, {
