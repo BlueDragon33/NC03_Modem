@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.1 — Stable 10-second telemetry UX + safe inventory
+
+- Stopped the 10-second telemetry loop from re-rendering the whole page; only live fields update in place.
+- Polling pauses while the tab is hidden, avoids overlapping requests, and refreshes immediately when the tab becomes visible.
+- Local Bridge now accepts RFC1918 IPv4 modem origins only and rejects loopback/public/hostname targets.
+- Added read-only Mobile Data, SIM PIN protection, Cloud SIM auto-switch status.
+- Added count-only DHCP reservation, port-forwarding, IPv4 packet-filter and IPv6 packet-filter inventory without mirroring raw IP/MAC/rule data.
+- Changed PWA cache to stale-while-revalidate so published app updates replace stale cached assets.
+- Corrected runtime/transport documentation and local launch instructions.
+
 ## 0.6.0 — HAR2 live telemetry + extended read-only modem coverage
 
 - Added always-visible exact battery %, connection status, signal quality and 4G/5G/carrier strip.
