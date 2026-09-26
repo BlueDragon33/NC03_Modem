@@ -49,3 +49,7 @@ assert.ok(css.includes(".callsite-grid"), "Login callsite evidence needs respons
 assert.ok(app.includes("Argument shape"), "Login call evidence must expose sanitized argument shape.");
 assert.ok(app.includes("Transforms quanh call"), "Login call evidence must expose codec transforms.");
 assert.ok(css.includes(".call-shape-block"), "Call-shape evidence needs readable structure.");
+
+assert.ok(app.includes("Payload structural trace"), "AUTH lab must show payload structural trace.");
+assert.ok(app.includes("RESPONSE CODE MAP"), "AUTH lab must show response-code symbol mapping when available.");
+assert.ok(css.includes(".response-code-map"), "Response-code evidence needs readable layout.");

@@ -121,3 +121,38 @@ test("call shape never returns raw literal values", () => {
   assert.doesNotMatch(JSON.stringify(report), new RegExp(secret));
   assert.equal(report.safety.sourceCodeReturned, false);
 });
+
+
+test("structural trace follows payload construction inside the real login function", () => {
+  const source = [
+    'var g_loginPasswordError = 13;',
+    'function login(){',
+    '  var passwd = getValue();',
+    '  var postdata = buildLoginPayload(passwd);',
+    '  saveAjaxJsonData("/goform/login", postdata, function(obj){',
+    '    if(obj.retcode===13){}',
+    '    if(obj.retcode===g_resultSuccess){}',
+    '  });',
+    '}'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  const call = report.loginCallsites[0];
+  assert.equal(call.functionName, "login");
+  assert.ok(call.structuralTrace.some((entry) => entry.kind === "payload-assign" && entry.target === "postdata"));
+  const assign = call.structuralTrace.find((entry) => entry.kind === "payload-assign");
+  assert.ok(assign.structure.calls.some((item) => item.name === "buildLoginPayload"));
+  assert.ok(assign.structure.authTokens.includes("passwd"));
+  assert.equal(report.responseCodeMap["13"], "g_loginPasswordError");
+});
+
+test("structural trace never exposes string literal values", () => {
+  const secret = "DO_NOT_LEAK_THIS";
+  const source = [
+    'function login(){',
+    '  var postdata = makePayload("' + secret + '");',
+    '  saveAjaxJsonData("/goform/login",postdata,function(){});',
+    '}'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  assert.doesNotMatch(JSON.stringify(report), new RegExp(secret));
+});

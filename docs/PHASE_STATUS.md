@@ -335,3 +335,29 @@ Implemented:
 - callback response-symbol extraction remains available.
 
 No raw source or literal values are returned to the UI.
+
+
+## Phase 2T — LOGIN STRUCTURAL TRACE
+
+Status: **IMPLEMENTED**
+
+Live observation from v0.7.13:
+- login endpoint: `/goform/login`;
+- source: `/js/login.js`;
+- containing function: `login`;
+- transport helper: `saveAjaxJsonData`;
+- payload variable: `postdata`;
+- response signals include numeric `13` and `g_resultSuccess`;
+- call/object assignment shape still needed deeper tracing.
+
+Implemented:
+- dedicated structural tracing of the containing login function;
+- payload construction tracing without raw source/literal values;
+- payload assignment / field assignment / payload-call summaries;
+- AUTH-related symbol extraction from expressions;
+- numeric AUTH constant discovery and response-code-to-symbol mapping;
+- clearer endpoint-found / shape-pending status.
+
+Next gate:
+- run AUTH Source Probe again and inspect **Payload structural trace** plus **Response code map**.
+- if `postdata` construction and the meaning of response code `13` are resolved, build the first candidate `NC03Auth.login()` behind an explicit verification gate.

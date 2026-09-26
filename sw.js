@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v22-login-call-shape";
+const CACHE = "nc03-control-center-v23-login-structural-trace";
 const ASSETS = [
   "./",
   "./index.html",

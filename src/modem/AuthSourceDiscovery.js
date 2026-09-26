@@ -1,3 +1,5 @@
+import { extractAuthNumericConstants, traceLoginStructure } from "./LoginStructuralTrace.js";
+
 const ENDPOINT_RE = /["'](\/(?:action|goform)\/[A-Za-z0-9_./-]+)["']/g;
 const SCRIPT_LITERAL_RE = /["']([^"'<>\s]+\.js(?:\?[^"']*)?)["']/g;
 const SCRIPT_SRC_RE = /<script\b[^>]*\bsrc\s*=\s*["']([^"']+\.js(?:\?[^"']*)?)["'][^>]*>/gi;
@@ -227,6 +229,8 @@ function endpointCallsite(text, path, endpoint, index) {
     });
   }
 
+  const structural = traceLoginStructure({ source:text, endpointIndex:index, payloadVariable });
+
   const responseSignals = [];
   for (const match of around.matchAll(/(?:retcode|code|status)\s*(?:===|==)\s*([A-Za-z_$][\w$]*|-?\d+)/g)) {
     responseSignals.push(match[1]);
@@ -235,7 +239,8 @@ function endpointCallsite(text, path, endpoint, index) {
   return {
     sourcePath:path,
     endpoint,
-    functionName:functionContext(text, index),
+    functionName:structural.functionName ?? functionContext(text, index),
+    functionParams:structural.functionParams,
     transportHelper,
     payloadVariable,
     payloadVariables,
@@ -244,6 +249,7 @@ function endpointCallsite(text, path, endpoint, index) {
     directObjectKeys,
     fields,
     transforms:uniq(transforms.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item)),
+    structuralTrace:structural.payloadTrace,
     responseSignals:uniq(responseSignals),
     hasHmacMd5:/hex_hmac_md5\s*\(/i.test(around),
     statusLabel:"SOURCE_CALLSITE_CANDIDATE"
@@ -296,6 +302,7 @@ export function analyzeAuthVendorSource({ path = "", source = "" } = {}) {
   const hmacMd5 = /hex_hmac_md5\s*\(/i.test(text);
   const md5 = /\bhex_md5\s*\(|\bmd5\s*\(/i.test(text);
   const passwordModify = endpoints.includes("/action/modify_password");
+  const numericAuthConstants = extractAuthNumericConstants(text);
   const endpointCallsites = collectEndpointCallsites(text, path);
 
   const authEndpoints = uniq(endpoints.filter((endpoint) => /login|logout|password|passwd|auth|session/i.test(endpoint)));
@@ -321,6 +328,7 @@ export function analyzeAuthVendorSource({ path = "", source = "" } = {}) {
     loginFunctions:uniq(loginFunctions),
     candidateRequestFields:uniq(candidateRequestFields),
     endpointCallsites,
+    numericAuthConstants,
     passwordCodec:{
       fixedLoginKeyPresent:Boolean(fixedKey),
       fixedLoginKey:fixedKey,
@@ -342,6 +350,7 @@ export function buildAuthSourceEvidence(sources = []) {
   const loginFunctions = uniq(analyses.flatMap((item) => item.loginFunctions));
   const candidateRequestFields = uniq(analyses.flatMap((item) => item.candidateRequestFields));
   const endpointCallsites = analyses.flatMap((item) => item.endpointCallsites);
+  const numericAuthConstants = uniq(analyses.flatMap((item) => item.numericAuthConstants).map((item) => JSON.stringify(item))).map((item) => JSON.parse(item));
   const loginCallsites = endpointCallsites.filter((item) => loginSubmitEndpoints.includes(item.endpoint));
   const loginFieldCandidates = uniq(loginCallsites.flatMap((item) => [
     ...item.fields.map((field) => field.field),
@@ -349,6 +358,7 @@ export function buildAuthSourceEvidence(sources = []) {
     ...Object.values(item.objectKeys ?? {}).flat()
   ]));
   const hasRequestShape = (item) => item.fields.length > 0 || item.directObjectKeys.length > 0 || Object.values(item.objectKeys ?? {}).some((keys) => keys.length > 0) || item.argumentShapes.some((shape) => shape.startsWith("json-stringify:") || shape.startsWith("object:{"));
+  const responseCodeMap = Object.fromEntries(numericAuthConstants.map((item) => [String(item.value), item.name]));
   const fixedKeys = uniq(analyses.map((item) => item.passwordCodec.fixedLoginKey).filter(Boolean));
   const hmacMd5 = analyses.some((item) => item.passwordCodec.hmacMd5);
 
@@ -359,7 +369,7 @@ export function buildAuthSourceEvidence(sources = []) {
   else if (authEndpoints.length || hmacMd5 || fixedKeys.length) status = "AUTH_SUPPORTING_EVIDENCE_ONLY";
 
   return {
-    schema:"nc03-auth-source-evidence/v4",
+    schema:"nc03-auth-source-evidence/v5",
     status,
     sourcesAnalyzed:analyses.map((item) => item.path),
     authEndpoints,
@@ -369,6 +379,8 @@ export function buildAuthSourceEvidence(sources = []) {
     candidateRequestFields,
     loginFieldCandidates,
     loginCallsites,
+    numericAuthConstants,
+    responseCodeMap,
     passwordCodec:{
       fixedLoginKeyPresent:fixedKeys.length > 0,
       fixedLoginKeys:fixedKeys,
