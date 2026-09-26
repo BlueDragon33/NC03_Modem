@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.15 — Login Payload-Origin Trace
+## Phase 2 · v0.7.16 — AUTH Probe Runtime Compatibility
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -42,6 +42,8 @@ Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng
 - **AUTH probe diagnostics** kiểm tra Local Bridge trước khi quét và hiển thị trạng thái từng đường dẫn mà không lộ raw source;
 - **login callsite mapping** cô lập `/goform/login` trong `/js/login.js`, tách helper/payload/field/codec/response symbols theo đúng call-site.
 - **Developer Tools luôn hiện rõ trong Settings**, HAR Evidence Lab không còn bị giấu ở cuối trang.
+- **AUTH Source Probe tương thích runtime/PWA lệch phiên bản**: current UI dùng POST, Local Bridge vẫn chấp nhận GET legacy read-only để không còn `METHOD_NOT_ALLOWED` sau cập nhật.
+- **PWA shell dùng network-first + cache fallback**, nên khi Local Bridge đã lên bản mới thì `app.js`/module cũng ưu tiên lấy bản mới thay vì trả cache cũ trước.
 
 App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. Trước AUTH VERIFIED, giao diện chỉ hiển thị `Ghi nhớ mật khẩu` như một policy đang khóa — không dùng checkbox có dấu tích gây hiểu nhầm rằng credential đã được lưu.
 
