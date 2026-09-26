@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v6-site-identity";
+const CACHE = "nc03-control-center-v7-resilient-live";
 const ASSETS = [
   "./",
   "./index.html",
@@ -18,6 +18,7 @@ const ASSETS = [
   "./src/modem/HarDiscovery.js",
   "./src/modem/LocalPreferences.js",
   "./src/modem/LoginPolicy.js",
+  "./src/modem/LocalBridgePolicy.js",
   "./src/modem/NC03Firmware80042Profile.js",
   "./src/modem/NC03Har2Profile.js",
   "./src/ui/NavigationModel.js"

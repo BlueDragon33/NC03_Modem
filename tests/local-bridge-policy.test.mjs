@@ -22,3 +22,12 @@ test("local bridge rejects loopback, public, hostname and unexpected URL compone
     assert.throws(() => normalizeModemBaseUrl(value), undefined, value);
   }
 });
+
+
+test("UI login normalization shares the Local Bridge private-LAN policy", async () => {
+  const { normalizeModemAddress } = await import("../src/modem/LoginPolicy.js");
+  assert.equal(normalizeModemAddress("192.168.8.1"), "http://192.168.8.1");
+  for (const value of ["8.8.8.8", "localhost", "http://192.168.0.1:8080"]) {
+    assert.throws(() => normalizeModemAddress(value), undefined, value);
+  }
+});

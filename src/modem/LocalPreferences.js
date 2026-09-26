@@ -1,12 +1,22 @@
+import { DEFAULT_NC03_ORIGIN, normalizeModemBaseUrl } from "./LocalBridgePolicy.js";
+
 const KEY = "nc03-control-center:preferences:v2";
 
 const DEFAULTS = Object.freeze({
-  baseUrl: "http://192.168.0.1",
+  baseUrl: DEFAULT_NC03_ORIGIN,
   demoMode: false,
   developerMode: false,
   uiMode: "basic",
   rememberPassword: true
 });
+
+function safeBaseUrl(value) {
+  try {
+    return normalizeModemBaseUrl(value);
+  } catch {
+    return DEFAULTS.baseUrl;
+  }
+}
 
 export function loadPreferences(storage = globalThis.localStorage) {
   try {
@@ -14,7 +24,7 @@ export function loadPreferences(storage = globalThis.localStorage) {
     if (!raw) return { ...DEFAULTS };
     const parsed = JSON.parse(raw);
     return {
-      baseUrl: typeof parsed.baseUrl === "string" ? parsed.baseUrl : DEFAULTS.baseUrl,
+      baseUrl: safeBaseUrl(parsed.baseUrl),
       demoMode: parsed.demoMode === true,
       developerMode: parsed.developerMode === true,
       uiMode: parsed.uiMode === "advanced" ? "advanced" : "basic",
@@ -27,7 +37,7 @@ export function loadPreferences(storage = globalThis.localStorage) {
 
 export function savePreferences(preferences, storage = globalThis.localStorage) {
   const safe = {
-    baseUrl: typeof preferences.baseUrl === "string" ? preferences.baseUrl : DEFAULTS.baseUrl,
+    baseUrl: safeBaseUrl(preferences.baseUrl),
     demoMode: preferences.demoMode === true,
     developerMode: preferences.developerMode === true,
     uiMode: preferences.uiMode === "advanced" ? "advanced" : "basic",

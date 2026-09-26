@@ -80,3 +80,16 @@ Completed:
 - count-only DHCP reservation / port-forward / IPv4+IPv6 packet-filter inventory;
 - Local Bridge blocks loopback/public/hostname targets;
 - PWA stale-while-revalidate cache prevents stale published UI.
+
+
+## Phase 2E — RESILIENT LIVE TELEMETRY
+
+Status: **IMPLEMENTED**
+
+Completed:
+- transient 10-second poll failures keep the last-known-good battery/signal/network values visible instead of replacing them with dashes;
+- stale telemetry is explicitly marked as reconnecting / last-known data;
+- a successful poll clears stale state immediately;
+- UI modem-address validation and persisted preferences now use the exact same RFC1918-only policy as the Local Bridge;
+- stale or invalid saved modem origins are automatically normalized back to the safe default;
+- PWA cache includes the shared LocalBridgePolicy module.

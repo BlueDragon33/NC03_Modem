@@ -8,3 +8,7 @@
 .wifi-ap-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.wifi-ap-card{border:1px solid var(--line);background:#0c141b;border-radius:16px;padding:16px}.wifi-ap-card>div span,.wifi-ap-card>div strong{display:block}.wifi-ap-card>div span{font-size:9px;color:var(--accent);letter-spacing:.12em}.wifi-ap-card>div strong{margin-top:5px;font-size:17px}.wifi-ap-card dl{display:grid;grid-template-columns:1fr auto;gap:7px 12px;margin:14px 0 0}.wifi-ap-card dt{color:var(--muted);font-size:11px}.wifi-ap-card dd{margin:0;font-size:11px;text-align:right}
 @media(max-width:1050px){.live-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){.live-strip{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0}.refresh-chip{display:none}.wifi-ap-grid{grid-template-columns:1fr}.inline-live-error{align-items:stretch;flex-wrap:wrap}.inline-live-error>div{flex-basis:100%}}
+
+.live-strip[data-stale=true] .live-chip{border-color:#ffc86733;background:linear-gradient(180deg,#1d1a12,#111315)}
+.live-strip[data-stale=true] .battery-chip strong,.live-strip[data-stale=true] [data-live-signal],.live-strip[data-stale=true] [data-live-network]{color:#ffe0a3}
+.live-strip[data-stale=true] [data-live-refresh-state]{color:var(--warn)}

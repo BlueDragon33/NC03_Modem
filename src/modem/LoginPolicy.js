@@ -1,4 +1,6 @@
-export const DEFAULT_MODEM_URL = "http://192.168.0.1";
+import { DEFAULT_NC03_ORIGIN, normalizeModemBaseUrl } from "./LocalBridgePolicy.js";
+
+export const DEFAULT_MODEM_URL = DEFAULT_NC03_ORIGIN;
 
 export const LOGIN_POLICY = Object.freeze({
   usernameRequired: false,
@@ -8,12 +10,5 @@ export const LOGIN_POLICY = Object.freeze({
 });
 
 export function normalizeModemAddress(value) {
-  const raw = String(value ?? "").trim();
-  const candidate = raw || DEFAULT_MODEM_URL;
-  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(candidate) ? candidate : `http://${candidate}`;
-  const url = new URL(withScheme);
-  if (!["http:", "https:"].includes(url.protocol)) {
-    throw new Error("Địa chỉ modem chỉ hỗ trợ HTTP/HTTPS.");
-  }
-  return url.origin;
+  return normalizeModemBaseUrl(value);
 }
