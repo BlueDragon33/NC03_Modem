@@ -385,3 +385,28 @@ Implemented:
 Next gate:
 - run AUTH Source Probe again and inspect **Payload origin trace · toàn file login.js**, **Payload aliases**, and **Response code map**.
 - if the payload origin resolves to a helper or alias chain, trace that helper/alias one level deeper before implementing `NC03Auth.login()`.
+
+
+## Phase 2V — LOGIN REQUEST-OBJECT DEPENDENCY TRACE
+
+Status: **IMPLEMENTED**
+
+Live evidence from v0.7.16 confirms:
+- `/goform/login`;
+- `login()`;
+- `saveAjaxJsonData`;
+- `postdata = JSON.stringify(_obj)`;
+- response signals `13` and `g_resultSuccess`.
+
+Implemented:
+- dependency tracing from `postdata` into the serialized request object;
+- object/property assignment tracing up to two dependency levels;
+- per-field transform/auth-token summaries;
+- request-object mapping state distinct from endpoint/payload discovery;
+- response-code map restricted to observed login-response signals;
+- literal/credential redaction remains enforced.
+
+Next gate:
+- run AUTH Source Probe again on firmware 8.00.42;
+- inspect **Request object dependency trace** and **Login object fields / transforms**;
+- when the password field + HMAC inputs and success/failure response semantics are coherent, implement the first real `NC03Auth.login()` candidate and then unlock the password input behind the verified gate.
