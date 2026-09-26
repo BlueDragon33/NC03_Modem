@@ -7,12 +7,9 @@
 - Discovery UI phải redaction cookie, authorization, CSRF, token, password và session.
 - Manager app chỉ quản trị lifecycle/capability/release của ứng dụng NC03; không đóng vai trò proxy tới modem.
 
-## Web/PWA constraint
+## Local Bridge boundary
 
-Một site HTTPS có thể không gọi được trực tiếp `http://192.168.0.1` do mixed-content và CORS. Sau khi có HAR/firmware thật, dự án sẽ xác minh một trong hai transport:
-
-1. **Direct LAN transport** nếu browser/firmware cho phép.
-2. **Local Bridge transport** chạy cục bộ trên thiết bị người dùng, giữ credential tại máy và giao tiếp với modem trong LAN.
+Production read transport dùng Local Bridge chạy trên thiết bị người dùng. Bridge chỉ chấp nhận modem origin là IPv4 RFC1918 (`10/8`, `172.16/12`, `192.168/16`), protocol HTTP/HTTPS và port mặc định 80/443. Loopback, localhost, public IP, hostname, credential-in-URL, query/hash/path bất thường và port khác đều bị từ chối.
 
 Không dùng cloud proxy để né giới hạn trình duyệt vì việc đó sẽ đưa credential/session modem ra khỏi thiết bị người dùng.
 
@@ -32,3 +29,8 @@ This protects credential data at rest, but it is not equivalent to an OS Keychai
 - A password must never be persisted before the modem confirms a successful login.
 - Remembered credentials stay in the encrypted local credential vault and are never copied to localStorage/sessionStorage or cloud services.
 - The UI does not expose a separate Auto Login checkbox; reuse of a remembered credential is an implementation detail after AUTH is verified.
+
+
+## Data minimization
+
+Advanced snapshot không mirror Wi-Fi PSK, IMEI/MEID/serial, ICCID/MSISDN, eSIM EID/profile, APN profile, WPS PIN, DMZ IP hoặc raw forwarding/filter/MAC-binding rules. Với rule inventory chỉ trả count.
