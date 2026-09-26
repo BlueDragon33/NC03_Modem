@@ -36,6 +36,8 @@ let state = {
   harEvidence: null,
   harFileName: "",
   discoveryError: "",
+  doctor: null,
+  doctorError: "",
   demo: null
 };
 
@@ -428,6 +430,20 @@ function settingCard(label, value) {
   return `<div><span>${esc(label)}</span><strong>${esc(value ?? "—")}</strong></div>`;
 }
 
+
+function renderConnectionDoctor() {
+  const report = state.doctor;
+  const tone = report?.status === "OK" ? "ok" : report ? "warn" : "muted";
+  return `<section class="panel doctor-panel"><div class="panel-head"><div><span>CONNECTION DOCTOR</span><h2>Chẩn đoán kết nối NC03</h2></div>${statusPill(report?.status ?? "CHƯA KIỂM TRA", tone)}</div>
+    <p class="body-copy">Kiểm tra Local Bridge → modem → phiên đăng nhập → firmware/profile → live read mà không gửi credential hoặc session lên cloud.</p>
+    ${report ? `<div class="doctor-summary"><strong>${esc(report.message)}</strong><small>${esc(formatClock(report.checkedAt) || "—")} · ${esc(report.baseUrl ?? state.baseUrl)}</small></div>
+      <div class="doctor-checks">${(report.checks ?? []).map((check)=>`<article data-ok="${check.ok}"><span>${check.ok ? "✓" : "!"}</span><div><strong>${esc(check.label)}</strong><small>${esc(check.detail)}</small></div></article>`).join("")}</div>` : `<div class="empty">Chưa có kết quả chẩn đoán.</div>`}
+    ${state.doctorError ? `<div class="inline-error">${esc(state.doctorError)}</div>` : ""}
+    <div class="settings-actions"><button id="runConnectionDoctor">Chạy chẩn đoán</button>${report?.status === "AUTH_REQUIRED" ? `<button id="openStockUi">Mở Web UI gốc để đăng nhập</button>` : ""}</div>
+    <div class="advanced-note"><strong>Read-only safety</strong><span>Connection Doctor không bật write, không lưu mật khẩu và không xuất token/cookie/session.</span></div>
+  </section>`;
+}
+
 function renderSettings() {
   const d = state.details ?? {};
   const usb = d.usb ?? {};
@@ -476,6 +492,7 @@ function renderSettings() {
     <div class="security-note"><strong>Credential policy</strong><span>${esc(SECURITY_NOTE)}</span></div>
   </section>
   ${advanced}
+  ${renderConnectionDoctor()}
   <section class="panel report-panel"><div class="panel-head"><div><span>DIAGNOSTIC REPORT</span><h2>Báo cáo chẩn đoán an toàn</h2></div>${statusPill(state.live || state.details ? "READY" : "WAITING", state.live || state.details ? "ok" : "muted")}</div>
     <p class="body-copy">Tạo bản báo cáo A4 gọn, chuyên nghiệp từ snapshot read-only hiện có. Báo cáo không chứa password, token/session, IMEI/serial, ICCID/EID/eSIM profile, APN profile hoặc raw rule.</p>
     <div class="report-preview-grid">
@@ -528,6 +545,29 @@ async function localRead(path) {
     throw error;
   }
   return payload.payload;
+}
+
+async function runConnectionDoctor() {
+  if (state.demoMode) {
+    state.doctor = {
+      status:"OK",
+      message:"Mock Mode đang hoạt động; đây không phải kết quả từ modem thật.",
+      checkedAt:new Date().toISOString(),
+      baseUrl:state.baseUrl,
+      checks:[{id:"demo",label:"Mock Mode",ok:true,detail:"DEMO DATA"}]
+    };
+    state.doctorError = "";
+    page();
+    return;
+  }
+  try {
+    state.doctor = await localRead("/api/nc03/doctor");
+    state.doctorError = "";
+  } catch (error) {
+    state.doctor = null;
+    state.doctorError = error?.code || "Không chạy được Connection Doctor.";
+  }
+  page();
 }
 
 async function refreshLive({ render = true } = {}) {
@@ -718,6 +758,7 @@ function bind() {
     await refreshAll();
   });
 
+  document.querySelector("#runConnectionDoctor")?.addEventListener("click", runConnectionDoctor);
   document.querySelector("#openDiagnosticReport")?.addEventListener("click", openDiagnosticReport);
   document.querySelector("#refreshNow")?.addEventListener("click", refreshAll);
   document.querySelector("#retryLive")?.addEventListener("click", refreshAll);
