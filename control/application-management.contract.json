@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.0"
+    "version": "0.7.1"
   },
   "capabilities": {
     "webLaunch": true,
@@ -55,7 +55,10 @@
     "invalidManualModemAddressRejected": true,
     "diagnosticReportSensitiveFieldsExcluded": true,
     "invalidBatteryPercentageRejected": true,
-    "staleAdvancedDataExplicitOnHome": true
+    "staleAdvancedDataExplicitOnHome": true,
+    "reportMissingDataNeverCoercedToZero": true,
+    "reportLiveAndAdvancedFreshnessExplicit": true,
+    "reportBatteryPercentageValidated": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
