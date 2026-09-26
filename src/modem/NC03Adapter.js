@@ -21,6 +21,8 @@ export class NC03Adapter {
   async getSignal() { throw new UnsupportedCapabilityError("getSignal"); }
   async getNetworkInfo() { throw new UnsupportedCapabilityError("getNetworkInfo"); }
   async getNetworkSettings() { throw new UnsupportedCapabilityError("getNetworkSettings"); }
+  async getMobileServiceStatus() { throw new UnsupportedCapabilityError("getMobileServiceStatus"); }
+  async getRuleInventory() { throw new UnsupportedCapabilityError("getRuleInventory"); }
   async getWifiStatus() { throw new UnsupportedCapabilityError("getWifiStatus"); }
   async getConnectedClients() { throw new UnsupportedCapabilityError("getConnectedClients"); }
   async getDataUsage() { throw new UnsupportedCapabilityError("getDataUsage"); }

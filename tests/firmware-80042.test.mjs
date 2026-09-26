@@ -45,7 +45,17 @@ function makeFetch() {
         mnet_operator_name:"Carrier",
         mnet_sig_level:"great",
         mnet_sim_status:"ready",
-        wifi_work_status:"open"
+        wifi_work_status:"open",
+        dialup_dataswitch:"on",
+        mnet_sim_pin_protect:"disable",
+        mnet_sim_pin_rtimes:"2",
+        mnet_uc_switch_enable:"disable",
+        mnet_uc_switch_notification:"enable",
+        mnet_uc_switch_nosrv_time:"5",
+        rt_ip_mac_bind_0:"device,AA:BB:CC:DD:EE:FF,192.168.0.2",
+        rt_port_forward_0:"0,web,8080,192.168.0.2",
+        rt_obj_value_info_v4_lan_0:"rule-v4",
+        rt_obj_value_info_v6_lan_0:"rule-v6"
       };
       for (const key of body.keys) if (key in values) data[key] = values[key];
       return response({ retcode:0, data });
@@ -100,4 +110,23 @@ test("write methods remain fail-closed despite vendor JS discovery", async () =>
   const adapter = new NC03Firmware80042Adapter({ fetchImpl });
   await assert.rejects(adapter.setWifiPassword("new-value"));
   await assert.rejects(adapter.reboot());
+});
+
+
+test("HAR2 mobile-service and rule inventory return safe summaries only", async () => {
+  const { fetchImpl } = makeFetch();
+  const adapter = new NC03Firmware80042Adapter({ fetchImpl });
+  const mobile = await adapter.getMobileServiceStatus();
+  const rules = await adapter.getRuleInventory();
+  assert.equal(mobile.mobileData, "on");
+  assert.equal(mobile.pinProtection, "disable");
+  assert.equal(mobile.pinRemainingTries, 2);
+  assert.equal(mobile.cloudSimAutoSwitch, "disable");
+  assert.deepEqual(rules, {
+    dhcpReservations: 1,
+    portForwardingRules: 1,
+    ipv4PacketFilterRules: 1,
+    ipv6PacketFilterRules: 1
+  });
+  assert.equal("raw" in rules, false);
 });

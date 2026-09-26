@@ -5,49 +5,56 @@
 NC03 Control Center là companion/control center local-first cho modem HYBRID Wi-Fi 5G NC03. Ứng dụng không sửa firmware và không đưa credential modem lên cloud.
 
 ```text
-NC03 Control Center UI
-        ↓
-NC03Adapter
-        ↓
-Auth / Session / CSRF
-        ↓
-Verified NC03 Internal API
-        ↓
-http://192.168.0.1
+Browser UI
+   ↓ same-origin
+NC03 Local Bridge (127.0.0.1:3006 / 3010)
+   ↓
+NC03Firmware80042Adapter
+   ↓
+NC03Api verified read routes
+   ↓
+Private RFC1918 modem origin (default http://192.168.0.1)
 ```
+
+Application Management chỉ quản lý lifecycle/contract và mở runtime NC03. Nó không nhận password, token, session hay raw modem configuration.
 
 ## Modules
 
-- `NC03Adapter`: ranh giới bắt buộc giữa UI và modem.\n- `NC03Api`: registry/request boundary; phân loại `read`/`write` độc lập với HTTP method và chỉ nhận write route khi `WRITE VERIFIED`.\n- `NC03Auth`: auth boundary fail-closed; local session clear là thao tác riêng, không giả vờ logout server.\n- `NC03Session`: session state + sanitized view.\n- `NC03Parser`: parser generic, không tự gán semantics chưa xác minh.\n- `NC03Capabilities` / `CapabilityRegistry`: firmware/capability boundary, production write chỉ mở khi `WRITE VERIFIED`.\n- `MockNC03Adapter`: chỉ dùng UI development/test/screenshot và phải gắn DEMO DATA.\n- `HarDiscovery`: đọc HAR cục bộ, lọc request tới modem, redaction credential.\n- `LocalPreferences`: chỉ lưu cấu hình không nhạy cảm như modem address, UI Mode và Developer/Mock Mode.
+- `NC03Adapter`: boundary bắt buộc giữa UI và modem.
+- `NC03Api`: route registry; tách `read`/`write` khỏi HTTP method; write chỉ chạy khi `WRITE VERIFIED`.
+- `NC03Firmware80042Adapter`: mapping firmware 8.00.42 đã được HAR xác minh.
+- `LocalBridgePolicy`: chỉ cho phép modem origin IPv4 RFC1918, không cho loopback/public hostname.
+- `SecureCredentialVault`: nền tảng lưu credential mã hóa cục bộ, chưa nối vào auth production khi login flow chưa VERIFIED.
+- `HarDiscovery`: đọc HAR cục bộ và redaction secret.
+- `MockNC03Adapter`: chỉ cho development/test và luôn mang nhãn DEMO DATA.
+
+## Read transport
+
+Production read-path dùng Local Bridge:
+
+- `POST /api/nc03/snapshot`: snapshot gọn cho Pin/Kết nối/Sóng/Mạng, poll 10 giây;
+- `POST /api/nc03/details`: snapshot Advanced chỉ tải khi cần;
+- `GET /_local/health`: runtime health;
+- `GET /api/application-management/contract`: contract cho App-Management.
+
+UI không gửi raw endpoint modem trực tiếp.
 
 ## Authentication
 
-Phase 1 chỉ dựng Login Screen skeleton. Password, Remember Login và Auto Login vẫn bị khóa cho tới khi HAR thật xác minh:
+HAR hiện có chỉ chứng minh trạng thái phiên đã đăng nhập, chưa có request nhập password. Vì vậy:
 
-1. request đăng nhập;
-2. token/cookie/session/CSRF;
-3. expiry;
-4. logout;
-5. retry/backoff;
-6. firmware compatibility.
+- không tự bịa login algorithm;
+- không tự bật Remember Password/Auto Login production;
+- khi modem yêu cầu auth, người dùng mở Web UI gốc để đăng nhập và Local Bridge tự thử lại.
 
-Không lưu password trong localStorage/sessionStorage.
+## Security/data minimization
 
-## Web transport
+Không mirror vào dashboard: Wi-Fi PSK, IMEI/MEID/serial, ICCID/MSISDN, eSIM EID/profile, APN profile và raw rule inventory. Rule inventory chỉ trả số lượng.
 
-GitHub Pages/ChatGPT Site là HTTPS trong khi NC03 Web UI thường là HTTP LAN. Browser có thể chặn mixed-content hoặc CORS.
+## Polling
 
-Phase 2 phải xác minh transport thật:
-
-- Direct LAN transport nếu firmware/browser cho phép; hoặc
-- Local Bridge transport chạy trên chính thiết bị người dùng.
-
-Application Management không được làm cloud proxy cho credential/session modem.
-
-## Manager integration
-
-Application Management quản lý lifecycle/capability/release của ứng dụng NC03. Nó không sở hữu password, token, session hay modem configuration.
+Live telemetry chạy mỗi 10 giây nhưng chỉ cập nhật các node live trong DOM. Không render lại toàn trang trừ khi trạng thái availability đổi. Polling dừng khi tab bị ẩn và không cho request chồng nhau.
 
 ## Release gate
 
-Không merge/release nếu còn fake button, unknown write endpoint, plaintext credential, console error, broken responsive layout hoặc dangerous action thiếu confirmation. Pipeline Phase 1 còn kiểm tra offline artifact/PWA shell trước khi publish.
+Không merge/release nếu còn fake button, unknown write endpoint, plaintext credential, console error, broken responsive layout, stale PWA cache hoặc dangerous action thiếu confirmation.
