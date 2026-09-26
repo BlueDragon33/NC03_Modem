@@ -232,3 +232,17 @@ Completed:
 - startup banner makes the active version/root explicit.
 
 This prevents an old built artifact such as 0.6.1 from masking current source such as 0.7.6+ during local development.
+
+
+## Phase 2N — DEVELOPER LAB DISCOVERABILITY
+
+Status: **IMPLEMENTED**
+
+Completed:
+- Developer Tools moved near the top of Settings;
+- HAR Evidence Lab entry remains visible even when Developer Mode is disabled;
+- disabled state explains the required action instead of hiding the feature;
+- enabling Developer Mode immediately exposes the active Lab action and sidebar shortcut;
+- UX gate protects this discoverability order.
+
+No AUTH/write safety boundary changed.
