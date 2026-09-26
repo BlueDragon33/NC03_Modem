@@ -141,3 +141,24 @@ External evidence still required:
 - one low-risk write transaction with rollback after AUTH is mapped.
 
 No production login or write control is enabled by this phase.
+
+
+## Phase 2I — IN-APP HAR EVIDENCE LAB
+
+Status: **IMPLEMENTED**
+
+Completed:
+- Advanced Developer Mode now contains a dedicated local HAR Evidence Lab;
+- HAR selection and analysis stay inside the current browser session;
+- AUTH candidates and WRITE candidates are presented in separate evidence surfaces;
+- candidate status remains explicitly `CANDIDATE_ONLY`;
+- sanitized evidence JSON can be exported without raw password/token/cookie/session values;
+- current analysis state can be cleared without affecting modem runtime state;
+- responsive UX covers desktop, tablet and mobile;
+- UX release gates protect privacy messaging, evidence split and export controls.
+
+Still externally evidence-gated:
+- real login transaction capture;
+- real low-risk write transaction with rollback.
+
+No AUTH or WRITE capability is promoted by this UI.
