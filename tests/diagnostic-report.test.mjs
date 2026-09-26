@@ -56,7 +56,7 @@ test("diagnostic report marks stale snapshots and renders a professional printab
   const html = renderDiagnosticReportMarkup(report);
   const css = fs.readFileSync(new URL("../report.css", import.meta.url), "utf8");
   const page = fs.readFileSync(new URL("../report.html", import.meta.url), "utf8");
-  assert.match(html, /Báo cáo chẩn đoán modem/);
+  assert.match(html, /Báo cáo chẩn đoán NC03/);
   assert.match(css, /@page\{size:A4/);
   assert.match(page, /In \/ Lưu PDF/);
   assert.match(html, /Snapshot read-only/);
