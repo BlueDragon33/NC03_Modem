@@ -5,7 +5,14 @@ const printButton = document.querySelector("#printReport");
 const closeButton = document.querySelector("#closeReport");
 
 function fail(message) {
-  root.innerHTML = `<div class="error"><strong>Không thể dựng báo cáo</strong><p>${String(message)}</p></div>`;
+  const box = document.createElement("div");
+  box.className = "error";
+  const title = document.createElement("strong");
+  title.textContent = "Không thể dựng báo cáo";
+  const body = document.createElement("p");
+  body.textContent = String(message);
+  box.append(title, body);
+  root.replaceChildren(box);
   printButton.disabled = true;
 }
 
