@@ -6,6 +6,7 @@ import { loadPreferences, savePreferences, SECURITY_NOTE } from "./src/modem/Loc
 import { CONNECTION_STATE, connectionStateLabel } from "./src/modem/ConnectionState.js";
 import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
 import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
+import { buildDiagnosticReport } from "./src/ui/DiagnosticReport.js";
 
 const app = document.querySelector("#app");
 const prefs = loadPreferences();
@@ -270,7 +271,7 @@ function renderLogin() {
         <label>Địa chỉ modem<input id="loginBaseUrl" value="${esc(state.baseUrl)}" inputmode="url" autocomplete="url" placeholder="192.168.0.1" /></label>
         <label>Mật khẩu<input id="loginPassword" type="password" disabled autocomplete="current-password" placeholder="Sẽ mở sau khi AUTH request được xác minh" /></label>
       </div>
-      <div class="login-options"><label><input id="rememberPassword" type="checkbox" ${state.rememberPassword ? "checked" : ""} disabled /> Ghi nhớ mật khẩu trên thiết bị này · sẽ bật sau AUTH VERIFIED</label></div>
+      <div class="login-options"><div class="locked-option"><strong>Ghi nhớ mật khẩu</strong><span>Chưa hoạt động · sẽ bật mặc định sau khi AUTH VERIFIED.</span></div></div>
       ${state.addressError ? `<div class="inline-error">${esc(state.addressError)}</div>` : ""}
       <div class="login-actions"><button id="saveLoginAddress" class="secondary-action">Lưu địa chỉ</button><button id="openStockUi">Mở Web UI gốc</button></div>
       <div class="write-lock"><strong>Read path đã hoạt động qua Local Bridge.</strong><span>Sau khi bạn đăng nhập Web UI gốc, app tự kiểm tra lại mỗi 10 giây. Write API vẫn khóa.</span></div>
@@ -289,6 +290,7 @@ function renderHome() {
   const dataUsed = state.demoMode ? details?.data?.current : formatBytes(details?.dataUsage?.statistics_data_used);
   return `${renderTopbar("Tổng quan", "Pin, kết nối và sóng luôn hiển thị; dữ liệu live tự cập nhật mỗi 10 giây.")}
   ${renderAuthNotice()}
+  ${renderDetailsNotice()}
   <section class="hero-status">
     <div><span class="eyebrow">INTERNET</span><div class="hero-line"><span class="big-dot" data-live-hero-dot data-on="${connected}"></span><h2 data-live-hero-connection>${state.liveStale && t ? "Đang kết nối lại" : connected ? "Đang kết nối" : "Chưa kết nối"}</h2></div><p data-live-hero-summary>${t ? `${esc(humanNetwork(network))} · ${esc(t.status?.carrier ?? t.signal?.carrier ?? "—")} · SIM ${esc(t.status?.simStatus ?? "—")}` : "Đang chờ dữ liệu thật từ NC03."}</p></div>
     <span data-live-hero-signal>${renderSignalBars(signal)}</span>
@@ -296,8 +298,8 @@ function renderHome() {
   <section class="metrics-grid">
     <article class="metric"><span>Pin</span><strong data-live-home-battery>${t?.battery?.percentage === null || t?.battery?.percentage === undefined ? "—%" : `${esc(t.battery.percentage)}%`}</strong><small data-live-home-battery-note>${state.liveStale && t ? "Dữ liệu gần nhất · % đã đọc" : t?.battery?.charging ? "Đang sạc · % chính xác" : "Phần trăm pin chính xác"}</small></article>
     <article class="metric"><span>Sóng</span><strong data-live-home-signal>${esc(humanSignal(signal))}</strong><small data-live-home-network>${esc(humanNetwork(network))} · ${esc(t?.status?.carrier ?? t?.signal?.carrier ?? "—")}</small></article>
-    ${metric("Dữ liệu", dataUsed ?? "—", state.demoMode ? "DEMO DATA" : "Bộ đếm modem")}
-    ${metric("Thiết bị", clientCount ?? "—", clientCount === undefined ? "Chưa tải danh sách" : "Đang kết nối")}
+    ${metric("Dữ liệu", dataUsed ?? "—", state.demoMode ? "DEMO DATA" : state.detailsStale && details ? "Dữ liệu gần nhất" : "Bộ đếm modem")}
+    ${metric("Thiết bị", clientCount ?? "—", clientCount === undefined ? "Chưa tải danh sách" : state.detailsStale && details ? "Danh sách gần nhất" : "Snapshot hiện tại")}
   </section>
   <section class="panel"><div class="panel-head"><div><span>QUICK ACTIONS</span><h2>Đi tới khu vực</h2></div><p>Read path đã nối thật; thao tác ghi vẫn fail-closed cho tới khi WRITE VERIFIED.</p></div>
     <div class="quick-grid">${[["network","Mạng di động"],["wifi","Wi-Fi"],["devices","Thiết bị"],["settings","Cài đặt"]].map(([id,label])=>`<button data-nav="${id}"><strong>${label}</strong><span>Mở khu vực</span></button>`).join("")}</div>
@@ -344,7 +346,7 @@ function renderDevices() {
   ${renderAuthNotice()}
   ${renderDetailsNotice()}
   <section class="panel"><div class="panel-head"><div><span>CONNECTED CLIENTS</span><h2>${rows.length ? `${rows.length} thiết bị` : "Chưa có thiết bị"}</h2></div>${statusPill(detailsFreshnessLabel(), state.detailsStale ? "warn" : "muted")}</div>
-  <div class="device-list">${rows.length ? rows.map(r=>`<article><div class="device-icon">◆</div><div><strong>${esc(r.name || "Thiết bị")}</strong><span>${esc(r.ip ?? "—")} · ${esc(r.ssid ?? r.band ?? r.type ?? "—")}</span></div><div><span>${esc(r.mac ?? "—")}</span><strong>${esc(r.onlineTime ?? r.state ?? "Online")}</strong></div></article>`).join("") : `<div class="empty">Không có client hoặc danh sách chưa tải.</div>`}</div></section>`;
+  <div class="device-list">${rows.length ? rows.map(r=>`<article><div class="device-icon">◆</div><div><strong>${esc(r.name || "Thiết bị")}</strong><span>${esc(r.ip ?? "—")} · ${esc(r.ssid ?? r.band ?? r.type ?? "—")}</span></div><div><span>${esc(r.mac ?? "—")}</span><strong>${esc(r.onlineTime ?? r.state ?? "Đã ghi nhận")}</strong></div></article>`).join("") : `<div class="empty">Không có client hoặc danh sách chưa tải.</div>`}</div></section>`;
 }
 
 function capabilityRows() {
@@ -416,6 +418,17 @@ function renderSettings() {
     <div class="security-note"><strong>Credential policy</strong><span>${esc(SECURITY_NOTE)}</span></div>
   </section>
   ${advanced}
+  <section class="panel report-panel"><div class="panel-head"><div><span>DIAGNOSTIC REPORT</span><h2>Báo cáo chẩn đoán an toàn</h2></div>${statusPill(state.live || state.details ? "READY" : "WAITING", state.live || state.details ? "ok" : "muted")}</div>
+    <p class="body-copy">Tạo bản báo cáo A4 gọn, chuyên nghiệp từ snapshot read-only hiện có. Báo cáo không chứa password, token/session, IMEI/serial, ICCID/EID/eSIM profile, APN profile hoặc raw rule.</p>
+    <div class="report-preview-grid">
+      <div><span>Live telemetry</span><strong>${esc(state.demoMode ? "DEMO DATA" : state.liveStale && state.live ? "LAST GOOD" : state.live ? "LIVE READ" : "UNAVAILABLE")}</strong></div>
+      <div><span>Advanced snapshot</span><strong>${esc(detailsFreshnessLabel())}</strong></div>
+      <div><span>Live gần nhất</span><strong>${esc(formatClock(state.lastLiveSuccessAt) || "—")}</strong></div>
+      <div><span>Advanced gần nhất</span><strong>${esc(formatClock(state.lastDetailsSuccessAt) || "—")}</strong></div>
+    </div>
+    <div class="settings-actions"><button id="openDiagnosticReport" ${state.demoMode || state.live || state.details ? "" : "disabled"}>Mở báo cáo · In / Lưu PDF</button></div>
+    <div class="advanced-note"><strong>Privacy-first</strong><span>Chỉ xuất trường đã chọn rõ ràng. Không spread toàn bộ payload modem vào báo cáo.</span></div>
+  </section>
   <section class="panel"><div class="panel-head"><div><span>DEVELOPER</span><h2>Advanced Developer Mode</h2></div>${statusPill(state.developerMode ? "ENABLED" : "OFF")}</div>
     <label class="developer-toggle"><input id="developerToggle" type="checkbox" ${state.developerMode ? "checked" : ""}/><span><strong>Bật công cụ reverse-engineering</strong><small>Hiện API Discovery và Mock Mode. Không bật API ghi.</small></span></label>
   </section>
@@ -529,6 +542,34 @@ async function refreshAll() {
   page();
 }
 
+function openDiagnosticReport() {
+  const live = currentTelemetry();
+  const details = state.demoMode ? {
+    wifi: state.demo?.wifi ?? null,
+    clients: state.demo?.clients ?? [],
+    dataUsage: {
+      statistics_data_used: state.demo?.data?.current ?? null,
+      statistics_day_data_used: state.demo?.data?.today ?? null
+    }
+  } : state.details;
+
+  const report = buildDiagnosticReport({
+    baseUrl: state.baseUrl,
+    live,
+    details,
+    liveStale: state.demoMode ? false : state.liveStale,
+    detailsStale: state.demoMode ? false : state.detailsStale,
+    lastLiveSuccessAt: state.demoMode ? null : state.lastLiveSuccessAt,
+    lastDetailsSuccessAt: state.demoMode ? null : state.lastDetailsSuccessAt
+  });
+  const encoded = encodeURIComponent(JSON.stringify(report));
+  const reportWindow = window.open(`./report.html#${encoded}`, "_blank", "noopener,noreferrer");
+  if (!reportWindow) {
+    state.detailsError = "Trình duyệt đang chặn cửa sổ báo cáo. Hãy cho phép popup cho NC03 Control Center.";
+    page();
+  }
+}
+
 function bind() {
   document.querySelector("#saveLoginAddress")?.addEventListener("click", async () => {
     const input = document.querySelector("#loginBaseUrl");
@@ -617,6 +658,7 @@ function bind() {
     await refreshAll();
   });
 
+  document.querySelector("#openDiagnosticReport")?.addEventListener("click", openDiagnosticReport);
   document.querySelector("#refreshNow")?.addEventListener("click", refreshAll);
   document.querySelector("#retryLive")?.addEventListener("click", refreshAll);
   document.querySelector("#retryDetails")?.addEventListener("click", async () => { await refreshDetails(); });

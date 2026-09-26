@@ -2,7 +2,7 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 import { redactHeaders, redactUrl, sanitizeBody } from "../src/modem/HarDiscovery.js";
 
-const runtime = ["app.js", ...fs.readdirSync("src/modem").filter((f)=>f.endsWith(".js")).map((f)=>`src/modem/${f}`)];
+const runtime = ["app.js", "report.js", "src/ui/DiagnosticReport.js", ...fs.readdirSync("src/modem").filter((f)=>f.endsWith(".js")).map((f)=>`src/modem/${f}`)];
 for (const file of runtime) {
   const content = fs.readFileSync(file, "utf8");
   assert.ok(!/(?:localStorage|sessionStorage)\.(?:setItem|getItem)\([^\n)]*(?:password|token|session)/i.test(content), `Sensitive storage API pattern in ${file}`);
@@ -12,3 +12,9 @@ assert.equal(redactHeaders([{name:"Authorization",value:"Bearer abc"}])[0].value
 assert.match(redactUrl("http://192.168.0.1/?token=secret"), /token=\*\*\*\*/);
 assert.equal(JSON.parse(sanitizeBody('{"password":"secret"}')).password, "****");
 console.log("SECURITY PASS");
+
+const reportJs = fs.readFileSync("report.js", "utf8");
+const reportHtml = fs.readFileSync("report.html", "utf8");
+assert.doesNotMatch(reportJs, /innerHTML\s*=\s*.*message/);
+assert.doesNotMatch(reportHtml, /onclick=|onload=|onerror=/i);
+assert.match(reportHtml, /Content-Security-Policy/);

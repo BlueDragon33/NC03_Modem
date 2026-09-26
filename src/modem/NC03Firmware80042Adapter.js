@@ -40,8 +40,13 @@ function connectionState(value) {
   return typeof value === "string" && value ? value.split(",")[0] : null;
 }
 
+function batteryPercentage(value) {
+  const percentage = numeric(value);
+  return percentage !== null && percentage >= 0 && percentage <= 100 ? percentage : null;
+}
+
 function batteryFrom(data) {
-  const percentage = numeric(data.device_battery_percent);
+  const percentage = batteryPercentage(data.device_battery_percent);
   return {
     exactPercentage: percentage !== null,
     percentage,
