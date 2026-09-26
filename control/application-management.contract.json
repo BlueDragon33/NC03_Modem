@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.20"
+    "version": "0.7.21"
   },
   "capabilities": {
     "webLaunch": true,
@@ -58,14 +58,19 @@
     "passwordExpressionSkeleton": true,
     "passwordFieldDataflow": true,
     "runtimeProtocolSchemaGate": true,
-    "runtimeBootIdentity": true
+    "runtimeBootIdentity": true,
+    "localPasswordLogin": true,
+    "sourceVerifiedLoginRecipe": true,
+    "csrfSessionRuntime": true,
+    "postLoginStatusVerification": true
   },
   "endpoints": {
     "status": "/api/control/status",
     "liveTelemetry": "/api/nc03/snapshot",
     "advancedRead": "/api/nc03/details",
     "connectionDoctor": "/api/nc03/doctor",
-    "authSourceProbe": "/api/nc03/auth-source-probe"
+    "authSourceProbe": "/api/nc03/auth-source-probe",
+    "authLogin": "/api/nc03/login"
   },
   "policy": {
     "remoteAdminReady": false,
@@ -118,7 +123,11 @@
     "responseCodeMapObservedSignalsOnly": true,
     "loginNestedCallNoLiteralValues": true,
     "passwordExpressionLiteralRedaction": true,
-    "authProbeRequiresMatchingRuntimeSchema": true
+    "authProbeRequiresMatchingRuntimeSchema": true,
+    "authLoginLocalOnly": true,
+    "authRecipeRevalidatedPerLogin": true,
+    "passwordPersistenceAfterFirstLivePass": false,
+    "csrfSessionProcessMemoryOnly": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
