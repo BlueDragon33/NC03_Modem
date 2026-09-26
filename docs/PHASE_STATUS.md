@@ -38,7 +38,7 @@ Still required before production **write** control:
 
 ## Phase 2B — AUTH + TRANSPORT
 
-Status: **TRANSPORT COMPLETE / AUTH PENDING**
+Status: **TRANSPORT COMPLETE / AUTH EVIDENCE PENDING**
 
 Completed:
 - Local Bridge read transport is implemented and integrated with Application Management;
@@ -49,7 +49,6 @@ Pending:
 - actual password login request/session semantics.
 
 Do not enable remember-admin, auto-login or write controls until AUTH is VERIFIED.
-
 
 ## Phase 2C — HAR2 LIVE TELEMETRY
 
@@ -68,7 +67,6 @@ Completed:
 
 Next write milestone still requires an actual write HAR capture with rollback.
 
-
 ## Phase 2D — LIVE UX + SAFE INVENTORY
 
 Status: **COMPLETE**
@@ -81,7 +79,6 @@ Completed:
 - Local Bridge blocks loopback/public/hostname targets;
 - PWA stale-while-revalidate cache prevents stale published UI.
 
-
 ## Phase 2E — RESILIENT LIVE TELEMETRY
 
 Status: **IMPLEMENTED**
@@ -93,7 +90,6 @@ Completed:
 - UI modem-address validation and persisted preferences now use the exact same RFC1918-only policy as the Local Bridge;
 - stale or invalid saved modem origins are automatically normalized back to the safe default;
 - PWA cache includes the shared LocalBridgePolicy module.
-
 
 ## Phase 2F — FINAL READ-PATH HARDENING
 
@@ -109,10 +105,9 @@ Completed:
 
 Read-path implementation is now complete for the evidence currently available. Remaining AUTH/write work is externally evidence-gated and must not be guessed.
 
-
 ## Phase 2G — PROFESSIONAL QA + DIAGNOSTIC REPORT
 
-Status: **IMPLEMENTED**
+Status: **COMPLETE**
 
 Completed:
 - professional tester pass over stale/fresh semantics, navigation persistence, invalid input and device-status wording;
@@ -125,3 +120,24 @@ Completed:
 - report output is allow-list based and covered against secret leakage and HTML injection.
 
 No modem write capability was enabled. AUTH/write remain externally evidence-gated.
+
+## Phase 2H — AUTH/WRITE EVIDENCE DISCOVERY TOOLING
+
+Status: **TOOLING COMPLETE / REAL AUTH CAPTURE REQUIRED**
+
+Completed:
+- local-only HAR analyzer CLI;
+- JSON and form-urlencoded body shape detection;
+- request/response field-name extraction without retaining secret values;
+- Authorization/Cookie/Set-Cookie/redirect evidence flags without retaining header values;
+- auth candidates remain `CANDIDATE_ONLY`;
+- write-like candidates remain `CANDIDATE_ONLY`;
+- POST read routes are not promoted to write based on method alone;
+- regression tests prevent credential/session leakage into evidence reports;
+- capture and rollback workflow documented.
+
+External evidence still required:
+- one clean login transaction HAR;
+- one low-risk write transaction with rollback after AUTH is mapped.
+
+No production login or write control is enabled by this phase.
