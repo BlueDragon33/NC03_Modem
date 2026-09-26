@@ -243,3 +243,9 @@ test("AUTH lab exposes request object dependency evidence before real login", ()
   assert.match(app, /dependencyFields/);
   assert.match(app, /authDependencyMapped/);
 });
+
+
+test("AUTH lab can display nested auth transforms from request-object fields", () => {
+  assert.match(app, /authTransforms/);
+  assert.match(app, /Nested AUTH transform/);
+});

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.18 — Nested login transform tracing
+
+- Replaced the flat login-expression regex with a balanced nested-call parser.
+- Preserves outer transforms such as `hex_hmac_md5(loginKey, $(...).val())` instead of reporting only the inner `val()`.
+- Adds call depth and dedicated **Nested AUTH transform** evidence for each login request-object field.
+- Keeps literal values redacted while preserving structural argument types.
+- This release is intended to confirm the exact transform applied to the real `_obj.password` field before production password login is enabled.
+- Production `NC03Auth.login()` remains fail-closed until the live probe confirms the password transform and response semantics.
+
+
 ## 0.7.17 — Login request-object dependency tracing
 
 - Follows the confirmed `postdata = JSON.stringify(_obj)` chain back into the request object serialized by the real firmware login flow.

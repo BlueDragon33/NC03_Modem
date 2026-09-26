@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.17"
+    "version": "0.7.18"
   },
   "capabilities": {
     "webLaunch": true,
@@ -52,7 +52,9 @@
     "authResultConstantExpansion": true,
     "authProbeLegacyGetCompatibility": true,
     "loginRequestObjectDependencyTrace": true,
-    "loginObjectFieldTransformMapping": true
+    "loginObjectFieldTransformMapping": true,
+    "loginNestedCallTrace": true,
+    "loginNestedAuthTransformTrace": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -109,7 +111,8 @@
     "pwaShellNetworkFirst": true,
     "authProbeLegacyGetCompatibility": true,
     "loginDependencyTraceNoLiteralValues": true,
-    "responseCodeMapObservedSignalsOnly": true
+    "responseCodeMapObservedSignalsOnly": true,
+    "loginNestedCallNoLiteralValues": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
