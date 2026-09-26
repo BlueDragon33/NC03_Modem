@@ -6,9 +6,18 @@ import {
   DHCP_KEYS,
   NC03_FIRMWARE_80042,
   STATUS_KEYS,
-  WIFI_KEYS,
   registerNC0380042ReadRoutes
 } from "./NC03Firmware80042Profile.js";
+import {
+  CONNECTIVITY_KEYS,
+  FIRMWARE_STATUS_KEYS,
+  LIVE_TELEMETRY_KEYS,
+  NETWORK_SETTINGS_KEYS,
+  POWER_SETTINGS_KEYS,
+  SAFE_WIFI_KEYS,
+  SECURITY_STATUS_KEYS,
+  TIME_SETTINGS_KEYS
+} from "./NC03Har2Profile.js";
 
 const JSON_HEADERS = Object.freeze({
   Accept: "application/json",
@@ -23,6 +32,57 @@ function successful(payload) {
 function numeric(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+function connectionState(value) {
+  return typeof value === "string" && value ? value.split(",")[0] : null;
+}
+
+function batteryFrom(data) {
+  const percentage = numeric(data.device_battery_percent);
+  return {
+    exactPercentage: percentage !== null,
+    percentage,
+    level: numeric(data.device_battery_level),
+    charging: data.device_battery_charge_status === "charging",
+    chargeStatus: data.device_battery_charge_status ?? null,
+    percentDisplay: data.device_battery_percent_display ?? null,
+    safeCharge: data.device_bat_safe_charge_switch ?? null,
+    longLife: data.device_charge_long_life ?? null,
+    powerMode: data.device_power_saving_mode ?? null
+  };
+}
+
+function statusFrom(data) {
+  const wanState = connectionState(data.rt_wwan_conn_info);
+  const ethernetState = connectionState(data.rt_eth_conn_info);
+  return {
+    connected: data.dialup_dial_status === "connected" || wanState === "connected",
+    internet: data.dialup_dial_status ?? null,
+    internetMode: data.rt_internet_mode ?? null,
+    network: data.mnet_sysmode ?? null,
+    carrier: data.mnet_operator_name ?? null,
+    signalLevel: data.mnet_sig_level ?? null,
+    simStatus: data.mnet_sim_status ?? null,
+    simSlot: data.mnet_sim_slot ?? null,
+    communicationMode: data.mnet_com_mode ?? null,
+    uqState: data.mnet_uq_state ?? null,
+    roaming: data.mnet_roam_status ?? null,
+    roamingSwitch: data.dialup_roamswitch ?? null,
+    wifi: data.wifi_work_status ?? null,
+    wanState,
+    ethernetState,
+    firmwareUpdate: data.fota_curr_istatus ?? null
+  };
+}
+
+function signalFrom(data) {
+  return {
+    level: data.mnet_sig_level ?? null,
+    systemMode: data.mnet_sysmode ?? null,
+    carrier: data.mnet_operator_name ?? null,
+    exactRadioMetrics: false
+  };
 }
 
 export class NC03Firmware80042Adapter extends NC03Adapter {
@@ -57,53 +117,39 @@ export class NC03Firmware80042Adapter extends NC03Adapter {
     };
   }
 
+  async getLiveSnapshot() {
+    const data = await this.getParams(LIVE_TELEMETRY_KEYS);
+    return {
+      refreshedAt: new Date().toISOString(),
+      refreshIntervalSeconds: 10,
+      status: statusFrom(data),
+      battery: batteryFrom(data),
+      signal: signalFrom(data)
+    };
+  }
+
   async getDeviceInfo() {
-    const data = await this.getParams(["device_product_name", "device_software_version"]);
+    const data = await this.getParams(FIRMWARE_STATUS_KEYS);
     return {
       model: data.device_product_name ?? null,
       firmware: data.device_software_version ?? null,
+      hardware: data.device_hardware_version ?? null,
+      manufacturer: data.device_manufacturer ?? null,
+      fotaStatus: data.fota_curr_istatus ?? null,
       profile: data.device_software_version === NC03_FIRMWARE_80042 ? NC03_FIRMWARE_80042 : "unverified-firmware"
     };
   }
 
   async getStatus() {
-    const data = await this.getParams(STATUS_KEYS);
-    return {
-      internet: data.dialup_dial_status ?? null,
-      internetMode: data.rt_internet_mode ?? null,
-      network: data.mnet_sysmode ?? null,
-      carrier: data.mnet_operator_name ?? null,
-      signalLevel: data.mnet_sig_level ?? null,
-      simStatus: data.mnet_sim_status ?? null,
-      roaming: data.mnet_roam_status ?? null,
-      wifi: data.wifi_work_status ?? null
-    };
+    return statusFrom(await this.getParams(STATUS_KEYS));
   }
 
   async getBattery() {
-    const data = await this.getParams(BATTERY_KEYS);
-    const percentage = numeric(data.device_battery_percent);
-    return {
-      exactPercentage: percentage !== null,
-      percentage,
-      level: numeric(data.device_battery_level),
-      charging: data.device_battery_charge_status === "charging",
-      chargeStatus: data.device_battery_charge_status ?? null,
-      percentDisplay: data.device_battery_percent_display ?? null,
-      safeCharge: data.device_bat_safe_charge_switch ?? null,
-      longLife: data.device_charge_long_life ?? null,
-      powerMode: data.device_power_saving_mode ?? null
-    };
+    return batteryFrom(await this.getParams(BATTERY_KEYS));
   }
 
   async getSignal() {
-    const data = await this.getParams(["mnet_sig_level", "mnet_sysmode", "mnet_operator_name"]);
-    return {
-      level: data.mnet_sig_level ?? null,
-      systemMode: data.mnet_sysmode ?? null,
-      carrier: data.mnet_operator_name ?? null,
-      exactRadioMetrics: false
-    };
+    return signalFrom(await this.getParams(["mnet_sig_level", "mnet_sysmode", "mnet_operator_name"]));
   }
 
   async getNetworkInfo() {
