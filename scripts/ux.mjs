@@ -62,3 +62,6 @@ assert.ok(app.includes("Login object fields / transforms"), "AUTH lab must show 
 assert.ok(app.includes("authDependencyMapped"), "AUTH lab must expose the request-object AUTH mapping state.");
 
 assert.ok(app.includes("Nested AUTH transform"), "AUTH lab must surface outer HMAC/MD5 transforms around nested input calls.");
+
+assert.ok(app.includes("Password field dataflow"), "AUTH lab must surface password field dataflow.");
+assert.ok(app.includes("Password recipe status"), "AUTH lab must show password recipe readiness.");
