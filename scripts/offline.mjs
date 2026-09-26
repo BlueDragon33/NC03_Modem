@@ -54,3 +54,5 @@ assert.match(index, /rel="manifest"/);
 assert.match(index, /rel="icon"/);
 
 console.log("OFFLINE PASS");
+
+assert.match(sw, /src\/runtime\/RuntimeProtocol\.js/);

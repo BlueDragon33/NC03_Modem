@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.20 — Runtime schema gate
+
+- Added a shared immutable runtime protocol descriptor used by both browser UI and Local Bridge.
+- `/_local/health` now reports runtime protocol, AUTH evidence schema, probe transport and process boot timestamp from the code loaded at process start.
+- AUTH Source Probe responses include the same runtime identity metadata.
+- The UI blocks AUTH probing with `LOCAL_BRIDGE_RESTART_REQUIRED` when a new frontend is being served by an older in-memory Local Bridge.
+- Prevents misleading default evidence such as `field evidence: 0` caused by frontend/backend schema drift.
+- Production login/write remain fail-closed.
+
+
 ## 0.7.19 — Password field dataflow
 
 - Adds redacted expression skeletons for login request fields so operators/call structure remain visible while literals are removed.

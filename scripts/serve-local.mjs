@@ -5,12 +5,14 @@ import { NC03Firmware80042Adapter } from "../src/modem/NC03Firmware80042Adapter.
 import { normalizeModemBaseUrl } from "../src/modem/LocalBridgePolicy.js";
 import { buildConnectionDoctorReport } from "../src/modem/ConnectionDoctor.js";
 import { buildAuthSourceEvidence } from "../src/modem/AuthSourceDiscovery.js";
+import { NC03_RUNTIME_PROTOCOL } from "../src/runtime/RuntimeProtocol.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
 const packagePath = join(sourceRoot, "package.json");
 const sourceContractPath = join(sourceRoot, "control", "application-management.contract.json");
 const sourceVersion = JSON.parse(readFileSync(packagePath, "utf8")).version;
+const runtimeBootedAt = new Date().toISOString();
 const distContractPath = join(distRoot, "control", "application-management.contract.json");
 
 function distVersionMatchesSource() {
@@ -196,6 +198,13 @@ async function authSourceProbe(req, res) {
       payload:{
         baseUrl,
         evidence,
+        runtime:{
+          protocolId:NC03_RUNTIME_PROTOCOL.id,
+          authEvidenceSchema:NC03_RUNTIME_PROTOCOL.authEvidenceSchema,
+          authProbeTransport:NC03_RUNTIME_PROTOCOL.authProbeTransport,
+          sourceVersion,
+          bootedAt:runtimeBootedAt
+        },
         diagnostics:{
           summary,
           items:diagnostics,
@@ -330,6 +339,10 @@ const server = createServer(async (req, res) => {
       mode:"local",
       port,
       version:sourceVersion,
+      runtimeProtocol:NC03_RUNTIME_PROTOCOL.id,
+      authEvidenceSchema:NC03_RUNTIME_PROTOCOL.authEvidenceSchema,
+      authProbeTransport:NC03_RUNTIME_PROTOCOL.authProbeTransport,
+      bootedAt:runtimeBootedAt,
       assetRoot:usingDist ? "dist" : "source",
       contractEndpoint:"/api/application-management/contract"
     }, headOnly);

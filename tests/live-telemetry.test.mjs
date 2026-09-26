@@ -161,7 +161,7 @@ test("local helper rejects malformed success envelopes instead of silently retur
 });
 
 test("AUTH Source Probe and Connection Doctor use the standard local API payload envelope", () => {
-  assert.match(server, /payload:\{\s*baseUrl,\s*evidence,\s*diagnostics:/);
+  assert.match(server, /payload:\{\s*baseUrl,\s*evidence,\s*runtime:\{[\s\S]*?diagnostics:/);
   assert.match(server, /payload:buildConnectionDoctorReport/);
 });
 
@@ -257,4 +257,15 @@ test("AUTH lab shows password dataflow and recipe status", () => {
   assert.match(app, /passwordHmacConfirmed/);
   assert.match(app, /loginSuccessZeroObserved/);
   assert.match(app, /structure\.skeleton/);
+});
+
+
+test("frontend refuses AUTH probe when Local Bridge runtime protocol/schema is stale", () => {
+  assert.match(server, /NC03_RUNTIME_PROTOCOL/);
+  assert.match(server, /runtimeProtocol:NC03_RUNTIME_PROTOCOL\.id/);
+  assert.match(server, /authEvidenceSchema:NC03_RUNTIME_PROTOCOL\.authEvidenceSchema/);
+  assert.match(server, /bootedAt:runtimeBootedAt/);
+  assert.match(app, /LOCAL_BRIDGE_RESTART_REQUIRED/);
+  assert.match(app, /payload\.runtimeProtocol !== NC03_RUNTIME_PROTOCOL\.id/);
+  assert.match(app, /probe\?\.evidence\?\.schema !== NC03_RUNTIME_PROTOCOL\.authEvidenceSchema/);
 });

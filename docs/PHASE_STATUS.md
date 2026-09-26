@@ -442,3 +442,20 @@ Status: **IMPLEMENTED**
 
 v0.7.18 live evidence shows username HMAC-MD5 is confirmed while password still appears as an input `val()` expression with `loginKey` present. v0.7.19 therefore traces the exact redacted expression skeleton and every subsequent reference to the password field before enabling real login.
 
+
+
+## Phase 2Y — RUNTIME SCHEMA GATE
+
+Status: **IMPLEMENTED**
+
+Observed integration failure:
+- static frontend files can update on disk while a previously started Node Local Bridge keeps old imported analyzer modules in memory;
+- the old process can therefore serve a newer UI while returning an older AUTH evidence schema.
+
+Implemented:
+- shared runtime protocol descriptor;
+- health reports process-loaded protocol/schema plus boot timestamp;
+- AUTH probe response carries the same runtime identity;
+- frontend blocks mismatched protocol/schema with `LOCAL_BRIDGE_RESTART_REQUIRED`;
+- misleading zero/default password-recipe results are no longer accepted as valid evidence.
+
