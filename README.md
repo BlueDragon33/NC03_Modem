@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.19 — Password Field Dataflow
+## Phase 2 · v0.7.20 — Runtime Schema Gate
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -44,6 +44,7 @@ Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng
 - **Developer Tools luôn hiện rõ trong Settings**, HAR Evidence Lab không còn bị giấu ở cuối trang.
 - **AUTH Source Probe tương thích runtime/PWA lệch phiên bản**: current UI dùng POST, Local Bridge vẫn chấp nhận GET legacy read-only để không còn `METHOD_NOT_ALLOWED` sau cập nhật.
 - **PWA shell dùng network-first + cache fallback**, nên khi Local Bridge đã lên bản mới thì `app.js`/module cũng ưu tiên lấy bản mới thay vì trả cache cũ trước.
+- **runtime protocol/schema gate** chặn AUTH probe nếu frontend mới đang nói chuyện với Local Bridge cũ còn nằm trong RAM; UI yêu cầu restart thay vì hiển thị evidence mặc định sai.
 - **Request object dependency trace** lần ngược `postdata = JSON.stringify(_obj)` sang chính `_obj`, field assignments và codec của từng field mà không trả literal/password.
 - **Nested AUTH transform** giữ được outer call như `hex_hmac_md5(loginKey, $(...).val())`, tránh nhầm password chỉ là `val()`.
 - **Response code map** chỉ giữ mã/symbol thực sự xuất hiện trong nhánh response của login, loại các constant không liên quan trong cùng `login.js`.
