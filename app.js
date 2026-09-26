@@ -158,7 +158,7 @@ function renderAlwaysOnStatus() {
 
 function renderSidebar() {
   const developerItem = state.developerMode
-    ? `<span class="nav-divider">DEVELOPER</span><button data-nav="discovery" data-active="${state.view === "discovery"}"><span>API Discovery</span><small>Advanced Developer Mode</small></button>`
+    ? `<span class="nav-divider">DEVELOPER</span><button data-nav="discovery" data-active="${state.view === "discovery"}"><span>HAR Evidence Lab</span><small>Advanced Developer Mode</small></button>`
     : "";
 
   const t = currentTelemetry();
@@ -426,7 +426,7 @@ function renderSettings() {
   const ruleInventory = d.ruleInventory ?? {};
   const developerPanel = state.developerMode ? `
     <section class="panel"><div class="panel-head"><div><span>ADVANCED DEVELOPER MODE</span><h2>Discovery & Mock</h2></div>${statusPill("LOCAL TOOLING","warn")}</div>
-      <div class="settings-actions"><button id="openDiscovery">Mở API Discovery</button><label class="demo-switch"><input id="demoToggle" type="checkbox" ${state.demoMode ? "checked" : ""}/><span>Mock Mode · DEMO DATA</span></label></div>
+      <div class="settings-actions"><button id="openDiscovery">Mở HAR Evidence Lab</button><label class="demo-switch"><input id="demoToggle" type="checkbox" ${state.demoMode ? "checked" : ""}/><span>Mock Mode · DEMO DATA</span></label></div>
     </section>` : "";
 
   const advanced = state.uiMode === UI_MODE.ADVANCED ? `
