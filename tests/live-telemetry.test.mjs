@@ -106,13 +106,31 @@ test("freshness timestamps and advanced snapshot staleness are explicit", () => 
   assert.match(app, /retryDetails/);
 });
 
-test("remember-password control stays disabled until real auth is verified", () => {
-  assert.match(app, /id="rememberPassword"[^>]*disabled/);
-  assert.match(app, /sẽ bật sau AUTH VERIFIED/);
+test("remember-password UX cannot look enabled before real auth is verified", () => {
+  assert.match(app, /Ghi nhớ mật khẩu/);
+  assert.match(app, /Chưa hoạt động · sẽ bật mặc định sau khi AUTH VERIFIED/);
+  assert.doesNotMatch(app, /id="rememberPassword"/);
   assert.doesNotMatch(app, /rememberPassword"\)\?\.addEventListener\("change"/);
 });
 
 test("manual modem address errors are shown instead of silently resetting the address", () => {
   assert.match(app, /Địa chỉ không hợp lệ\. Chỉ dùng IP mạng nội bộ RFC1918/);
   assert.match(app, /state\.addressError/);
+});
+
+
+test("home makes stale Advanced data explicit instead of implying current clients or usage", () => {
+  assert.match(app, /renderAuthNotice\(\)\}\s*\$\{renderDetailsNotice\(\)\}/);
+  assert.match(app, /state\.detailsStale && details \? "Dữ liệu gần nhất"/);
+  assert.match(app, /state\.detailsStale && details \? "Danh sách gần nhất"/);
+  assert.match(app, /Snapshot hiện tại/);
+  assert.doesNotMatch(app, /r\.onlineTime \?\? r\.state \?\? "Online"/);
+});
+
+test("settings exposes only privacy-safe local diagnostic reporting", () => {
+  assert.match(app, /buildDiagnosticReport/);
+  assert.match(app, /renderDiagnosticReportHtml/);
+  assert.match(app, /openDiagnosticReport/);
+  assert.match(app, /In \/ Lưu PDF/);
+  assert.match(app, /Không spread toàn bộ payload modem/);
 });
