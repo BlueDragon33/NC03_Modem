@@ -57,3 +57,33 @@ test("finds login page references observed in firmware source", () => {
   });
   assert.deepEqual(result.loginPageCandidates, ["/common/login.html"]);
 });
+
+
+test("get_login_limit stays passive while /goform/login gets its own callsite mapping", () => {
+  const source = [
+    'var loginKey="0123456789";',
+    'function doLogin(){',
+    '  var postdata={};',
+    '  postdata.password=hex_hmac_md5(loginKey,password);',
+    '  saveAjaxJsonData("/goform/login", JSON.stringify(postdata), function(obj){',
+    '    if(obj.retcode===g_resultSuccess){}',
+    '    else if(obj.retcode===g_loginPasswordError){}',
+    '  });',
+    '}',
+    'getAjaxJsonData("/goform/get_login_limit", function(obj){});'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  assert.deepEqual(report.loginSubmitEndpoints, ["/goform/login"]);
+  assert.deepEqual(report.loginFieldCandidates, ["password"]);
+  assert.equal(report.loginCallsites.length, 1);
+  assert.equal(report.loginCallsites[0].sourcePath, "/js/login.js");
+  assert.equal(report.loginCallsites[0].functionName, "doLogin");
+  assert.equal(report.loginCallsites[0].transportHelper, "saveAjaxJsonData");
+  assert.equal(report.loginCallsites[0].payloadVariable, "postdata");
+  assert.equal(report.loginCallsites[0].fields[0].transform, "hex_hmac_md5");
+  assert.deepEqual(report.loginCallsites[0].fields[0].transformArgs, ["loginKey","password"]);
+  assert.ok(report.loginCallsites[0].responseSignals.includes("g_resultSuccess"));
+  assert.ok(report.loginCallsites[0].responseSignals.includes("g_loginPasswordError"));
+  assert.equal(report.status, "LOGIN_CALLSITE_CANDIDATE_READY");
+  assert.equal(report.readyForRequestShapeMapping, true);
+});
