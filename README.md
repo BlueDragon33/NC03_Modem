@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.6.3 — Final Read-Path Hardening
+## Phase 2 · v0.7.0 — Professional QA + Diagnostic Reporting
 
 HAR mới của firmware **NC03_8.00.42** đã mở rộng read-path thật:
 
@@ -28,9 +28,12 @@ HAR mới của firmware **NC03_8.00.42** đã mở rộng read-path thật:
 - Local Bridge `/api/nc03/snapshot` giải quyết đường đọc modem từ website local mà không đưa password lên cloud;
 - Advanced read snapshot thêm network settings, Mobile Data, SIM PIN state, Cloud SIM auto-switch, 4 Wi-Fi AP, clients, data usage, DHCP, USB/Cradle, IP Passthrough, security/filter/DMZ, NTP, power/display, firmware/FOTA và **chỉ số lượng** DHCP reservation/port-forward/packet-filter rule;
 - PSK Wi-Fi, IMEI/serial, ICCID/EID/eSIM profile và APN profile cố ý không mirror vào dashboard;
-- HAR mới vẫn không chứa write request thực tế, vì vậy mọi write action tiếp tục fail-closed.
+- HAR mới vẫn không chứa write request thực tế, vì vậy mọi write action tiếp tục fail-closed;
+- Home không còn gọi client/data cũ là dữ liệu hiện tại khi Advanced snapshot đã stale;
+- giá trị pin ngoài miền 0–100 bị từ chối thay vì hiển thị như phần trăm hợp lệ;
+- Settings có **Báo cáo chẩn đoán an toàn** dạng A4, có thể In/Lưu PDF, chỉ xuất các trường read-only được chọn rõ ràng và loại trừ credential/secret/identifier nhạy cảm.
 
-App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. Điều khiển `Ghi nhớ mật khẩu` vẫn bị khóa trong production UI cho tới khi request đăng nhập thật được AUTH VERIFIED; app không giả vờ đã lưu credential khi chưa có auth mapping.
+App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. Trước AUTH VERIFIED, giao diện chỉ hiển thị `Ghi nhớ mật khẩu` như một policy đang khóa — không dùng checkbox có dấu tích gây hiểu nhầm rằng credential đã được lưu.
 
 ## Chạy local
 
