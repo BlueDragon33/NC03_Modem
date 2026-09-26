@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.15 — Login payload-origin tracing
+
+- Extended login payload tracing from the body of `login()` to the entire `/js/login.js` source.
+- Finds global/local assignments, `+=` appends, property mutations and calls that reference the identified `postdata` payload variable.
+- Adds sanitized payload-alias tracing so indirection such as `other = postdata` or `postdata = other` becomes visible without exposing literal values.
+- Expands numeric AUTH/result constant extraction to include `g_result*`, `g_error*`, success/failure and related symbols.
+- AUTH Lab now shows **Payload origin trace · toàn file login.js** and **Payload aliases**.
+- Distinguishes “payload origin found” from a fully mapped request shape.
+- Production authentication remains fail-closed until the exact request construction and response semantics are verified.
+
+
 ## 0.7.14 — Login structural trace
 
 - Added a dedicated privacy-safe structural tracer for the real `login()` function.
