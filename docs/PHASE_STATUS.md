@@ -197,3 +197,24 @@ Completed:
 - responsive and regression-tested diagnostic UX.
 
 AUTH and write remain evidence-gated.
+
+
+## Phase 2L — AUTH SOURCE PROBE
+
+Status: **IMPLEMENTED**
+
+Observed from the latest modem HAR:
+- capture contains 234 post-navigation requests from the settings UI;
+- no Cookie, Authorization or Set-Cookie is present in the captured settings traffic;
+- `/js/systemadmin.js` contains a fixed `loginKey` literal and calls `hex_hmac_md5(loginKey, currentPassword)` before `/action/modify_password`;
+- this proves an HMAC-MD5 password transform exists in firmware, but does not prove the login endpoint uses the identical transform.
+
+Implemented:
+- local-only static source probe through the RFC1918 bridge;
+- source seed discovery for common/tools/md5 and modem HTML;
+- structural extraction of auth endpoint literals, login function names and password codec evidence;
+- raw vendor source is not returned to the browser or Application Management;
+- all source findings remain `SOURCE_CANDIDATE_ONLY`.
+
+Current AUTH gate:
+- exact login endpoint + request shape + success/failure semantics still require source/transaction confirmation before `NC03Auth.login()` can be enabled.
