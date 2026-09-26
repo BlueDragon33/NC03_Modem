@@ -65,3 +65,5 @@ assert.ok(app.includes("Nested AUTH transform"), "AUTH lab must surface outer HM
 
 assert.ok(app.includes("Password field dataflow"), "AUTH lab must surface password field dataflow.");
 assert.ok(app.includes("Password recipe status"), "AUTH lab must show password recipe readiness.");
+
+assert.ok(app.includes("LOCAL_BRIDGE_RESTART_REQUIRED"), "AUTH lab must diagnose stale Local Bridge process state.");
