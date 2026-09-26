@@ -8,6 +8,7 @@ import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
 import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
 import { buildDiagnosticReport } from "./src/ui/DiagnosticReport.js";
 import { NC03_RUNTIME_PROTOCOL } from "./src/runtime/RuntimeProtocol.js";
+import { NC03Auth } from "./src/modem/NC03Auth.js";
 
 const app = document.querySelector("#app");
 const prefs = loadPreferences();
@@ -21,7 +22,10 @@ let state = {
   developerMode: prefs.developerMode,
   uiMode: prefs.uiMode,
   baseUrl: prefs.baseUrl,
+  adminUsername: prefs.adminUsername,
   rememberPassword: prefs.rememberPassword,
+  loginLoading: false,
+  loginError: "",
   connectionState: CONNECTION_STATE.RECONNECTING,
   live: null,
   liveStale: false,
@@ -52,6 +56,7 @@ function esc(value) {
 function persist() {
   savePreferences({
     baseUrl: state.baseUrl,
+    adminUsername: state.adminUsername,
     demoMode: state.demoMode,
     developerMode: state.developerMode,
     uiMode: state.uiMode,
@@ -273,16 +278,19 @@ function renderLogin() {
   return `<section class="login-shell">
     <div class="login-card">
       <div class="login-brand"><div class="brand-mark">N3</div><div><small>HYBRID Wi-Fi 5G</small><strong>NC03 Control Center</strong></div></div>
-      <div class="login-copy"><span class="eyebrow">LOCAL MODEM ACCESS</span><h1>Kết nối NC03</h1><p>Địa chỉ modem có thể thay đổi. HAR mới vẫn chưa chứa request nhập mật khẩu, nên app không tự bịa thuật toán đăng nhập.</p></div>
+      <div class="login-copy"><span class="eyebrow">LOCAL MODEM ACCESS</span><h1>Đăng nhập NC03</h1><p>AUTH firmware 8.00.42 đã đủ bằng chứng để bật đăng nhập thật qua Local Bridge. Recipe được kiểm tra lại từ JS của chính modem trước mỗi lần gửi.</p></div>
       ${renderAlwaysOnStatus()}
-      <div class="login-form">
+      <form id="nc03LoginForm" class="login-form">
         <label>Địa chỉ modem<input id="loginBaseUrl" value="${esc(state.baseUrl)}" inputmode="url" autocomplete="url" placeholder="192.168.0.1" /></label>
-        <label>Mật khẩu<input id="loginPassword" type="password" disabled autocomplete="current-password" placeholder="Sẽ mở sau khi AUTH request được xác minh" /></label>
-      </div>
-      <div class="login-options"><div class="locked-option"><strong>Ghi nhớ mật khẩu</strong><span>Chưa hoạt động · sẽ bật mặc định sau khi AUTH VERIFIED.</span></div></div>
+        <label>Tài khoản quản trị<input id="loginUsername" value="${esc(state.adminUsername)}" autocomplete="username" maxlength="15" placeholder="admin" /></label>
+        <label>Mật khẩu<input id="loginPassword" type="password" autocomplete="current-password" minlength="5" maxlength="36" placeholder="Nhập mật khẩu NC03" /></label>
+        <button id="loginSubmit" type="submit" ${state.loginLoading ? "disabled" : ""}>${state.loginLoading ? "Đang xác minh…" : "Đăng nhập"}</button>
+      </form>
+      <div class="login-options"><div class="locked-option"><strong>Ghi nhớ mật khẩu</strong><span>Chưa lưu ở lượt đầu tiên. Chỉ bật vault sau khi login thật trên modem này PASS.</span></div></div>
       ${state.addressError ? `<div class="inline-error">${esc(state.addressError)}</div>` : ""}
+      ${state.loginError ? `<div class="inline-error">${esc(state.loginError)}</div>` : ""}
       <div class="login-actions"><button id="saveLoginAddress" class="secondary-action">Lưu địa chỉ</button><button id="openStockUi">Mở Web UI gốc</button></div>
-      <div class="write-lock"><strong>Read path đã hoạt động qua Local Bridge.</strong><span>Sau khi bạn đăng nhập Web UI gốc, app tự kiểm tra lại mỗi 10 giây. Write API vẫn khóa.</span></div>
+      <div class="write-lock"><strong>AUTH login đã mở · write controls vẫn khóa.</strong><span>Local Bridge giữ CSRF/session trong RAM; không gửi password/token lên App Management hoặc cloud.</span></div>
       <div class="login-safe-actions"><button id="enterDemo">Mở Developer Demo</button></div>
     </div>
   </section>`;
@@ -732,6 +740,59 @@ async function runConnectionDoctor() {
   page();
 }
 
+async function submitNc03Login() {
+  if (state.loginLoading) return;
+  const baseInput = document.querySelector("#loginBaseUrl");
+  const userInput = document.querySelector("#loginUsername");
+  const passwordInput = document.querySelector("#loginPassword");
+  try {
+    state.baseUrl = normalizeModemAddress(baseInput?.value || state.baseUrl);
+    state.adminUsername = String(userInput?.value || "").trim();
+    const password = String(passwordInput?.value || "");
+    if (state.adminUsername.length < 5 || state.adminUsername.length > 15) throw codedError("AUTH_USERNAME_LENGTH_INVALID");
+    if (password.length < 5 || password.length > 36) throw codedError("AUTH_PASSWORD_LENGTH_INVALID");
+    state.loginLoading = true;
+    state.loginError = "";
+    state.addressError = "";
+    persist();
+    page();
+
+    const auth = new NC03Auth({ baseUrl:state.baseUrl });
+    await auth.login({ username:state.adminUsername, password });
+    state.loginLoading = false;
+    state.loginError = "";
+    state.connectionState = CONNECTION_STATE.RECONNECTING;
+    state.view = "home";
+    await refreshAll();
+  } catch (error) {
+    state.loginLoading = false;
+    const code = error?.code || "AUTH_LOGIN_FAILED";
+    const remaining = Number.isFinite(Number(error?.remainingTimes)) ? Number(error.remainingTimes) : null;
+    const labels = {
+      AUTH_USERNAME_LENGTH_INVALID:"Tài khoản phải dài từ 5 đến 15 ký tự.",
+      AUTH_PASSWORD_LENGTH_INVALID:"Mật khẩu phải dài từ 5 đến 36 ký tự.",
+      AUTH_RUNTIME_SOURCE_MISSING:"Không đọc đủ login.js/tools.js/encryption.js từ NC03.",
+      AUTH_HMAC_FORM_RECIPE_UNVERIFIED:"Firmware hiện tại không còn khớp HMAC login recipe đã xác minh.",
+      AUTH_PASSWORD_ENCODE_UNVERIFIED:"Không xác minh được bước password_encode của firmware.",
+      AUTH_TRANSPORT_UNVERIFIED:"Không xác minh được transport POST JSON + X-Csrf-Token.",
+      AUTH_CSRF_FLOW_UNVERIFIED:"Không xác minh được luồng X-Csrf-Token.",
+      AUTH_LOGIN_INFO_UNVERIFIED:"Không xác minh được /goform/get_login_info.",
+      AUTH_SUCCESS_SEMANTICS_UNVERIFIED:"Không xác minh được retcode thành công.",
+      AUTH_CSRF_TOKEN_FETCH_FAILED:"Không lấy được CSRF token từ modem.",
+      AUTH_CSRF_TOKEN_MISSING:"Modem không trả X-Csrf-Token.",
+      AUTH_CSRF_REJECTED:"CSRF token bị modem từ chối.",
+      AUTH_LOGIN_INFO_FAILED:"Modem không trả login challenge hợp lệ.",
+      AUTH_PRIKEY_INVALID:"Login challenge priKey không hợp lệ.",
+      AUTH_POST_LOGIN_VERIFY_FAILED:"Modem trả success nhưng hậu kiểm loginStatus chưa xác nhận đăng nhập.",
+      LOGIN_FAILED:remaining === null ? "Sai tài khoản hoặc mật khẩu." : `Đăng nhập không thành công. Số lần còn lại: ${remaining}.`,
+      LOCAL_BRIDGE_UNAVAILABLE:"Local Bridge không phản hồi.",
+      AUTH_LOGIN_FAILED:"Không thực hiện được đăng nhập NC03."
+    };
+    state.loginError = labels[code] || code;
+    page();
+  }
+}
+
 async function refreshLive({ render = true } = {}) {
   if (state.demoMode) return;
   try {
@@ -750,6 +811,7 @@ async function refreshLive({ render = true } = {}) {
       : error?.code === "AUTHENTICATION_REQUIRED"
         ? CONNECTION_STATE.AUTHENTICATION_REQUIRED
         : CONNECTION_STATE.NC03_UNAVAILABLE;
+    if (!state.live && error?.code === "AUTHENTICATION_REQUIRED") state.view = "login";
   }
   if (render) page();
 }
@@ -831,6 +893,11 @@ function openDiagnosticReport() {
 }
 
 function bind() {
+  document.querySelector("#nc03LoginForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await submitNc03Login();
+  });
+
   document.querySelector("#saveLoginAddress")?.addEventListener("click", async () => {
     const input = document.querySelector("#loginBaseUrl");
     if (!input) return;
