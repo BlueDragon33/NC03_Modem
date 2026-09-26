@@ -4,6 +4,7 @@ import { extname, join, normalize, resolve } from "node:path";
 import { NC03Firmware80042Adapter } from "../src/modem/NC03Firmware80042Adapter.js";
 import { normalizeModemBaseUrl } from "../src/modem/LocalBridgePolicy.js";
 import { buildConnectionDoctorReport } from "../src/modem/ConnectionDoctor.js";
+import { buildAuthSourceEvidence } from "../src/modem/AuthSourceDiscovery.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
@@ -77,6 +78,64 @@ function modemAdapter(baseUrl) {
   return new NC03Firmware80042Adapter({ baseUrl, fetchImpl });
 }
 
+const AUTH_SOURCE_SEEDS = Object.freeze([
+  "/",
+  "/index.html",
+  "/js/common.js",
+  "/js/tools.js",
+  "/js/md5.js"
+]);
+
+async function fetchStaticSource(baseUrl, path) {
+  const url = new URL(path, baseUrl);
+  const response = await fetch(url, {
+    method:"GET",
+    redirect:"manual",
+    signal:AbortSignal.timeout(3500),
+    headers:{ Accept:"text/html,application/javascript,text/javascript,*/*;q=0.5" }
+  });
+  if (!response.ok) return null;
+  const contentType = String(response.headers.get("content-type") || "");
+  if (!/javascript|text\/(?:html|plain)|application\/x-javascript/i.test(contentType)) return null;
+  const text = await response.text();
+  return { path:url.pathname, source:text.slice(0, 524288) };
+}
+
+async function authSourceProbe(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl);
+    const sources = [];
+
+    for (const path of AUTH_SOURCE_SEEDS) {
+      const item = await fetchStaticSource(baseUrl, path).catch(() => null);
+      if (item && !sources.some((current) => current.path === item.path)) sources.push(item);
+    }
+
+    const firstPass = buildAuthSourceEvidence(sources);
+    const extraRefs = firstPass.discoveredScriptRefs
+      .filter((path) => /^\/(?:js|lib)\/[A-Za-z0-9_./-]+\.js$/i.test(path))
+      .filter((path) => !sources.some((item) => item.path === path))
+      .slice(0, 12);
+
+    for (const path of extraRefs) {
+      const item = await fetchStaticSource(baseUrl, path).catch(() => null);
+      if (item && !sources.some((current) => current.path === item.path)) sources.push(item);
+    }
+
+    const evidence = buildAuthSourceEvidence(sources);
+    json(res, 200, {
+      ok:true,
+      baseUrl,
+      evidence
+    });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "AUTH_SOURCE_PROBE_FAILED";
+    const safeCode = /^[A-Z0-9_]+$/.test(code) ? code : "AUTH_SOURCE_PROBE_FAILED";
+    json(res, 502, { ok:false, code:safeCode });
+  }
+}
+
 async function modemDoctor(req, res) {
   try {
     const body = await readJsonBody(req);
@@ -147,6 +206,15 @@ const server = createServer(async (req, res) => {
 
   const headOnly = req.method === "HEAD";
   const pathname = new URL(req.url, "http://127.0.0.1").pathname;
+
+  if (pathname === "/api/nc03/auth-source-probe") {
+    if (req.method !== "POST") {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await authSourceProbe(req, res);
+    return;
+  }
 
   if (pathname === "/api/nc03/doctor") {
     if (req.method !== "POST") {
