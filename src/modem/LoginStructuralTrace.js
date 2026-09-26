@@ -139,7 +139,7 @@ function expressionStructure(expression) {
 
   const authTokens = [];
   for (const match of value.matchAll(/\b([A-Za-z_$][\w$]*)\b/g)) {
-    if (/pass|passwd|password|pwd|user|username|login|auth|token/i.test(match[1])) authTokens.push(match[1]);
+    if (/pass|passwd|password|pwd|user|username|login|auth|token|key/i.test(match[1])) authTokens.push(match[1]);
   }
 
   let shape = "expression";
@@ -158,17 +158,17 @@ function expressionStructure(expression) {
   };
 }
 
-function payloadTrace(functionInfo, payloadVariable) {
-  if (!functionInfo || !payloadVariable) return [];
-  const body = functionInfo.body;
-  const escaped = escapeRegex(payloadVariable);
+function assignmentEntries(text, variable, scope) {
+  if (!variable) return [];
+  const escaped = escapeRegex(variable);
   const entries = [];
 
   const wholeAssign = new RegExp("(?:var|let|const)?\\s*" + escaped + "\\s*=\\s*([^;\\n]+)", "g");
-  for (const match of body.matchAll(wholeAssign)) {
+  for (const match of text.matchAll(wholeAssign)) {
     entries.push({
       kind:"payload-assign",
-      target:payloadVariable,
+      scope,
+      target:variable,
       structure:expressionStructure(match[1])
     });
   }
@@ -178,46 +178,135 @@ function payloadTrace(functionInfo, payloadVariable) {
     new RegExp(escaped + "\\[[\"']([^\"']+)[\"']\\]\\s*=\\s*([^;\\n]+)", "g")
   ];
   for (const pattern of propertyPatterns) {
-    for (const match of body.matchAll(pattern)) {
+    for (const match of text.matchAll(pattern)) {
       entries.push({
         kind:"field-assign",
-        target:payloadVariable + "." + match[1],
+        scope,
+        target:variable + "." + match[1],
         structure:expressionStructure(match[2])
       });
     }
   }
 
+  return entries;
+}
+
+function functionParameterEntries(text, variable) {
+  if (!variable) return [];
+  const entries = [];
+  for (const match of text.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)\s*\{/g)) {
+    const params = match[2].split(",").map((part) => part.trim()).filter(Boolean);
+    const position = params.indexOf(variable);
+    if (position >= 0) {
+      entries.push({
+        kind:"function-param",
+        scope:match[1],
+        target:variable,
+        position
+      });
+    }
+  }
+  return entries;
+}
+
+function relatedCallEntries(text, variable, scope) {
+  if (!variable) return [];
   const calls = [];
-  for (const match of body.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(([^;]{0,1200}?)\)/g)) {
-    if (!match[2].includes(payloadVariable)) continue;
+  for (const match of text.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(([^;]{0,1400}?)\)/g)) {
+    if (!match[2].includes(variable)) continue;
     calls.push({
       kind:"payload-call",
+      scope,
       target:match[1],
       argShapes:splitArgs(match[2]).map(safeArgToken).slice(0, 8)
     });
   }
+  return uniq(calls.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item));
+}
 
+function aliasNames(text, variable) {
+  if (!variable) return [];
+  const escaped = escapeRegex(variable);
+  const aliases = [];
+  const fromTarget = new RegExp("(?:var|let|const)?\\s*([A-Za-z_$][\\w$]*)\\s*=\\s*" + escaped + "\\b", "g");
+  for (const match of text.matchAll(fromTarget)) aliases.push(match[1]);
+  const intoTarget = new RegExp("(?:var|let|const)?\\s*" + escaped + "\\s*=\\s*([A-Za-z_$][\\w$]*)\\b", "g");
+  for (const match of text.matchAll(intoTarget)) aliases.push(match[1]);
+  return uniq(aliases.filter((name) => name !== variable));
+}
+
+function payloadTrace(functionInfo, payloadVariable) {
+  if (!functionInfo || !payloadVariable) return [];
   return [
-    ...entries,
-    ...uniq(calls.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item))
+    ...assignmentEntries(functionInfo.body, payloadVariable, functionInfo.name),
+    ...relatedCallEntries(functionInfo.body, payloadVariable, functionInfo.name)
   ];
+}
+
+export function tracePayloadProvenance(source = "", payloadVariable = null) {
+  const text = String(source ?? "");
+  if (!payloadVariable) return { aliases:[], entries:[] };
+
+  const aliases = aliasNames(text, payloadVariable).slice(0, 12);
+  const variables = uniq([payloadVariable, ...aliases]);
+  const entries = [];
+
+  for (const variable of variables) {
+    entries.push(...assignmentEntries(text, variable, "source"));
+    entries.push(...functionParameterEntries(text, variable));
+    entries.push(...relatedCallEntries(text, variable, "source"));
+  }
+
+  return {
+    aliases,
+    entries:uniq(entries.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item)).slice(0, 40)
+  };
 }
 
 export function traceLoginStructure({ source = "", endpointIndex = -1, payloadVariable = null } = {}) {
   const text = String(source ?? "");
   const functionInfo = endpointIndex >= 0 ? findContainingFunction(text, endpointIndex) : null;
+  const provenance = tracePayloadProvenance(text, payloadVariable);
   return {
     functionName:functionInfo?.name ?? null,
     functionParams:functionInfo?.params ?? [],
-    payloadTrace:payloadTrace(functionInfo, payloadVariable)
+    payloadTrace:payloadTrace(functionInfo, payloadVariable),
+    payloadAliases:provenance.aliases,
+    payloadProvenance:provenance.entries
   };
 }
 
 export function extractAuthNumericConstants(source = "") {
   const text = String(source ?? "");
   const constants = [];
-  for (const match of text.matchAll(/\b(?:var|let|const)?\s*([A-Za-z_$][\w$]*(?:login|pass|passwd|password|pwd|auth|limit)[A-Za-z0-9_$]*)\s*=\s*(-?\d+)\b/gi)) {
+  for (const match of text.matchAll(/\b(?:var|let|const)?\s*([A-Za-z_$][\w$]*)\s*=\s*(-?\d+)\b/g)) {
     constants.push({ name:match[1], value:Number(match[2]) });
   }
   return uniq(constants.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item));
+}
+
+export function resolveResponseCodeCandidates(sources = [], numericCodes = [], symbolicNames = []) {
+  const wantedCodes = new Set(numericCodes.map((value) => String(value)));
+  const wantedNames = new Set(symbolicNames.filter(Boolean));
+  const codeCandidates = {};
+  const symbolValues = {};
+
+  for (const source of sources) {
+    const constants = extractAuthNumericConstants(source?.source ?? "");
+    for (const item of constants) {
+      if (wantedCodes.has(String(item.value))) {
+        if (!codeCandidates[item.value]) codeCandidates[item.value] = [];
+        codeCandidates[item.value].push(item.name);
+      }
+      if (wantedNames.has(item.name)) {
+        if (!symbolValues[item.name]) symbolValues[item.name] = [];
+        symbolValues[item.name].push(item.value);
+      }
+    }
+  }
+
+  for (const key of Object.keys(codeCandidates)) codeCandidates[key] = uniq(codeCandidates[key]).slice(0, 12);
+  for (const key of Object.keys(symbolValues)) symbolValues[key] = uniq(symbolValues[key]).slice(0, 12);
+
+  return { codeCandidates, symbolValues };
 }
