@@ -208,3 +208,11 @@ test("AUTH source UI exposes sanitized argument and object shapes for real login
   assert.match(app, /argumentShapes/);
   assert.match(app, /directObjectKeys/);
 });
+
+
+test("AUTH lab surfaces structural login trace and response-code mapping", () => {
+  assert.match(app, /Payload structural trace/);
+  assert.match(app, /RESPONSE CODE MAP/);
+  assert.match(app, /responseCodeMap/);
+  assert.match(app, /Đã tìm thấy endpoint · shape pending/);
+});
