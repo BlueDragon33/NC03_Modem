@@ -421,7 +421,7 @@ function renderDiscovery() {
     ${sourceEvidence ? `
       <div class="evidence-summary">
         <div><span>Source đã đọc</span><strong>${sourceEvidence.sourcesAnalyzed?.length ?? 0}</strong><small>Local modem only</small></div>
-        <div><span>Login submit</span><strong>${sourceEvidence.loginSubmitEndpoints?.length ?? 0}</strong><small>${sourceEvidence.readyForRequestShapeMapping ? "Có request-shape candidate" : "Chưa có submit candidate"}</small></div>
+        <div><span>Login submit</span><strong>${sourceEvidence.loginSubmitEndpoints?.length ?? 0}</strong><small>${sourceEvidence.readyForRequestShapeMapping ? "Có request-shape candidate" : sourceEvidence.loginSubmitEndpoints?.length ? "Đã tìm thấy endpoint · shape pending" : "Chưa tìm thấy endpoint"}</small></div>
         <div><span>Login page</span><strong>${sourceEvidence.loginPageCandidates?.length ?? 0}</strong><small>Static page candidate</small></div>
         <div><span>Password codec</span><strong>${sourceEvidence.passwordCodec?.hmacMd5 ? "HMAC-MD5" : sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "KEY FOUND" : "—"}</strong><small>${sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "Có fixed loginKey trong source" : "Chưa thấy fixed loginKey"}</small></div>
       </div>
@@ -455,9 +455,16 @@ function renderDiscovery() {
           ].join("\n") || "chưa thấy")}</code></div>
           <div class="call-shape-block"><span>Field / transform</span><code>${call.fields?.length ? esc(call.fields.map((field)=>`${field.field} ← ${field.transform}${field.transformArgs?.length ? `(${field.transformArgs.join(", ")})` : ""}`).join("\n")) : "chưa tách được assignment"}</code></div>
           <div class="call-shape-block"><span>Transforms quanh call</span><code>${esc(call.transforms?.map((item)=>`${item.name}(${item.args?.join(", ") ?? ""})`).join("\n") || "chưa thấy")}</code></div>
-          <small>Response signals: ${esc(call.responseSignals?.join(", ") || "chưa thấy")}</small>
+          <div class="call-shape-block"><span>Payload structural trace</span><code>${esc((call.structuralTrace ?? []).map((entry)=>{
+            if (entry.kind === "payload-call") return `${entry.kind} · ${entry.target} · ${entry.argShapes?.join(", ") || "—"}`;
+            const structure = entry.structure ?? {};
+            const calls = structure.calls?.map((item)=>`${item.name}(${item.args?.join(", ") || ""})`).join(", ");
+            return `${entry.kind} · ${entry.target} · ${structure.shape ?? "—"}${structure.objectKeys?.length ? ` · keys:${structure.objectKeys.join(",")}` : ""}${calls ? ` · calls:${calls}` : ""}${structure.authTokens?.length ? ` · auth:${structure.authTokens.join(",")}` : ""}`;
+          }).join("\n") || "chưa tách được")}</code></div>
+          <small>Response signals: ${esc(call.responseSignals?.map((signal)=>sourceEvidence.responseCodeMap?.[signal] ? `${signal} → ${sourceEvidence.responseCodeMap[signal]}` : signal).join(", ") || "chưa thấy")}</small>
         </article>`).join("") : `<div class="empty">Chưa có login call-site đủ rõ.</div>`}
       </div>
+      ${Object.keys(sourceEvidence.responseCodeMap ?? {}).length ? `<div class="response-code-map"><span>RESPONSE CODE MAP</span><code>${esc(Object.entries(sourceEvidence.responseCodeMap).map(([code,name])=>`${code} → ${name}`).join("\n"))}</code></div>` : ""}
     ` : `<div class="empty">Chạy probe khi máy đang kết nối NC03 để lấy evidence trực tiếp từ firmware local.</div>`}
     <div class="evidence-actions"><button id="runAuthSourceProbe" ${state.authSourceLoading ? "disabled" : ""}>${state.authSourceLoading ? "Đang quét…" : "Quét AUTH source trên modem"}</button></div>
     <div class="advanced-note"><strong>Fail-closed</strong><span>Source candidate không tự bật NC03Auth.login(). Vẫn cần request/response semantics thật trước AUTH VERIFIED.</span></div>
