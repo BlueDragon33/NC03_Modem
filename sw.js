@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v7-resilient-live";
+const CACHE = "nc03-control-center-v8-final-read";
 const ASSETS = [
   "./",
   "./index.html",
