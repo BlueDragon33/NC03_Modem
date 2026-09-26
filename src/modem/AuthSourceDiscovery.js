@@ -252,6 +252,9 @@ function endpointCallsite(text, path, endpoint, index) {
     structuralTrace:structural.payloadTrace,
     payloadOrigins:structural.payloadOrigins,
     payloadAliases:structural.aliases,
+    dependencyVariables:structural.dependencyVariables,
+    dependencyOrigins:structural.dependencyOrigins,
+    dependencyFields:structural.dependencyFields,
     responseSignals:uniq(responseSignals),
     hasHmacMd5:/hex_hmac_md5\s*\(/i.test(around),
     statusLabel:"SOURCE_CALLSITE_CANDIDATE"
@@ -357,23 +360,40 @@ export function buildAuthSourceEvidence(sources = []) {
   const loginFieldCandidates = uniq(loginCallsites.flatMap((item) => [
     ...item.fields.map((field) => field.field),
     ...item.directObjectKeys,
-    ...Object.values(item.objectKeys ?? {}).flat()
+    ...Object.values(item.objectKeys ?? {}).flat(),
+    ...(item.dependencyFields ?? []).map((field) => field.field)
   ]));
   const hasRequestShape = (item) => item.fields.length > 0 || item.directObjectKeys.length > 0 || Object.values(item.objectKeys ?? {}).some((keys) => keys.length > 0) || item.argumentShapes.some((shape) => shape.startsWith("json-stringify:") || shape.startsWith("object:{"));
   const hasPayloadOrigin = (item) => (item.payloadOrigins ?? []).some((entry) => ["payload-assign","payload-append","field-assign","field-append","payload-call"].includes(entry.kind));
-  const responseCodeMap = Object.fromEntries(numericAuthConstants.map((item) => [String(item.value), item.name]));
+  const hasDependencyFields = (item) => (item.dependencyFields ?? []).length > 0;
+  const hasAuthDependency = (item) => (item.dependencyFields ?? []).some((field) =>
+    (field.structure?.authTokens ?? []).length > 0
+    || (field.structure?.calls ?? []).some((call) => /^(?:hex_hmac_md5|hex_md5|md5)$/i.test(call.name))
+  );
+  const observedResponseSignals = uniq(loginCallsites.flatMap((item) => item.responseSignals ?? []));
+  const observedNumericSignals = new Set(observedResponseSignals.filter((signal) => /^-?\d+$/.test(signal)));
+  const observedSymbolSignals = new Set(observedResponseSignals.filter((signal) => !/^-?\d+$/.test(signal)));
+  const responseCodeMap = {};
+  for (const signal of observedNumericSignals) {
+    const names = numericAuthConstants.filter((item) => String(item.value) === signal).map((item) => item.name);
+    responseCodeMap[signal] = names.length ? uniq(names).join(" | ") : "UNMAPPED";
+  }
+  for (const item of numericAuthConstants) {
+    if (observedSymbolSignals.has(item.name)) responseCodeMap[String(item.value)] = item.name;
+  }
   const fixedKeys = uniq(analyses.map((item) => item.passwordCodec.fixedLoginKey).filter(Boolean));
   const hmacMd5 = analyses.some((item) => item.passwordCodec.hmacMd5);
 
   let status = "INSUFFICIENT_SOURCE_EVIDENCE";
-  if (loginCallsites.some((item) => hasRequestShape(item) && item.hasHmacMd5)) status = "LOGIN_CALL_SHAPE_CANDIDATE_READY";
+  if (loginCallsites.some((item) => hasDependencyFields(item) && hasAuthDependency(item))) status = "LOGIN_REQUEST_OBJECT_CANDIDATE_READY";
+  else if (loginCallsites.some((item) => hasRequestShape(item) && item.hasHmacMd5)) status = "LOGIN_CALL_SHAPE_CANDIDATE_READY";
   else if (loginCallsites.some(hasPayloadOrigin)) status = "LOGIN_PAYLOAD_ORIGIN_FOUND";
   else if (loginSubmitEndpoints.length && candidateRequestFields.length && hmacMd5) status = "LOGIN_SOURCE_CANDIDATE_READY";
   else if (loginSubmitEndpoints.length) status = "LOGIN_ENDPOINT_CANDIDATE_FOUND";
   else if (authEndpoints.length || hmacMd5 || fixedKeys.length) status = "AUTH_SUPPORTING_EVIDENCE_ONLY";
 
   return {
-    schema:"nc03-auth-source-evidence/v6",
+    schema:"nc03-auth-source-evidence/v7",
     status,
     sourcesAnalyzed:analyses.map((item) => item.path),
     authEndpoints,
@@ -391,8 +411,11 @@ export function buildAuthSourceEvidence(sources = []) {
       hmacMd5
     },
     discoveredScriptRefs:scriptRefs,
-    readyForRequestShapeMapping:loginCallsites.some(hasRequestShape),
+    readyForRequestShapeMapping:loginCallsites.some((item) => hasRequestShape(item) || hasDependencyFields(item)),
     payloadOriginFound:loginCallsites.some(hasPayloadOrigin),
+    requestObjectMapped:loginCallsites.some(hasDependencyFields),
+    authDependencyMapped:loginCallsites.some(hasAuthDependency),
+    observedResponseSignals,
     analyses,
     safety:{
       sourceCodeReturned:false,
