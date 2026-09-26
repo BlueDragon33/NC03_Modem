@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.6.2 — Resilient Live Telemetry
+## Phase 2 · v0.6.3 — Final Read-Path Hardening
 
 HAR mới của firmware **NC03_8.00.42** đã mở rộng read-path thật:
 
@@ -23,12 +23,14 @@ HAR mới của firmware **NC03_8.00.42** đã mở rộng read-path thật:
 - trạng thái Internet/WAN, 4G/5G, nhà mạng và chất lượng sóng định tính luôn hiển thị;
 - telemetry trên tự động cập nhật **10 giây/lần**, chỉ cập nhật DOM tại chỗ để không làm mất focus/vị trí cuộn;
 - nếu một lần poll bị lỗi tạm thời, app **giữ % pin/sóng/mạng gần nhất** và đánh dấu `Đang kết nối lại / Dữ liệu gần nhất`, không làm các chỉ số nhảy về `—`;
+- trạng thái stale vẫn đúng khi chuyển tab; sidebar/Home/Network không được phép tự hiện xanh lại chỉ vì đang giữ snapshot cũ;
+- thanh live hiển thị **giờ cập nhật thành công gần nhất**; Advanced snapshot cũng có trạng thái `LIVE READ / LAST GOOD / WAITING` và nút tải lại khi lỗi;
 - Local Bridge `/api/nc03/snapshot` giải quyết đường đọc modem từ website local mà không đưa password lên cloud;
 - Advanced read snapshot thêm network settings, Mobile Data, SIM PIN state, Cloud SIM auto-switch, 4 Wi-Fi AP, clients, data usage, DHCP, USB/Cradle, IP Passthrough, security/filter/DMZ, NTP, power/display, firmware/FOTA và **chỉ số lượng** DHCP reservation/port-forward/packet-filter rule;
 - PSK Wi-Fi, IMEI/serial, ICCID/EID/eSIM profile và APN profile cố ý không mirror vào dashboard;
 - HAR mới vẫn không chứa write request thực tế, vì vậy mọi write action tiếp tục fail-closed.
 
-App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session.
+App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. Điều khiển `Ghi nhớ mật khẩu` vẫn bị khóa trong production UI cho tới khi request đăng nhập thật được AUTH VERIFIED; app không giả vờ đã lưu credential khi chưa có auth mapping.
 
 ## Chạy local
 
