@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.6 — AUTH Source Probe
+## Phase 2 · v0.7.7 — Runtime Version Coherence
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API:
 
@@ -42,6 +42,9 @@ Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng
 App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. Trước AUTH VERIFIED, giao diện chỉ hiển thị `Ghi nhớ mật khẩu` như một policy đang khóa — không dùng checkbox có dấu tích gây hiểu nhầm rằng credential đã được lưu.
 
 ## Chạy local
+
+Local runtime tự phát hiện `dist/` cũ: nếu version trong `dist/control/application-management.contract.json` không khớp `package.json`, app tự phục vụ source hiện tại thay vì âm thầm chạy bản cũ.
+
 
 ```bash
 npm run serve:local

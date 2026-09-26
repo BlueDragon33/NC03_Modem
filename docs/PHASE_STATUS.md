@@ -218,3 +218,17 @@ Implemented:
 
 Current AUTH gate:
 - exact login endpoint + request shape + success/failure semantics still require source/transaction confirmation before `NC03Auth.login()` can be enabled.
+
+
+## Phase 2M — LOCAL RUNTIME VERSION COHERENCE
+
+Status: **IMPLEMENTED**
+
+Completed:
+- detect stale `dist` by comparing its management contract version with source `package.json`;
+- serve current source automatically when `dist` is stale;
+- keep contract and static asset root on the same version boundary;
+- expose runtime `version` and `assetRoot` in `/_local/health`;
+- startup banner makes the active version/root explicit.
+
+This prevents an old built artifact such as 0.6.1 from masking current source such as 0.7.6+ during local development.

@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v15-auth-source-probe";
+const CACHE = "nc03-control-center-v16-runtime-coherence";
 const ASSETS = [
   "./",
   "./index.html",
