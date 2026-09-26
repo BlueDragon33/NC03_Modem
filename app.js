@@ -5,7 +5,7 @@ import { parseHar, summarizeCandidates } from "./src/modem/HarDiscovery.js";
 import { loadPreferences, savePreferences, SECURITY_NOTE } from "./src/modem/LocalPreferences.js";
 import { CONNECTION_STATE, connectionStateLabel } from "./src/modem/ConnectionState.js";
 import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
-import { DEFAULT_MODEM_URL, normalizeModemAddress } from "./src/modem/LoginPolicy.js";
+import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
 
 const app = document.querySelector("#app");
 const prefs = loadPreferences();
@@ -245,7 +245,14 @@ function renderAuthNotice() {
 }
 
 function renderDetailsNotice() {
-  if (state.demoMode || !state.detailsStale || !state.details) return "";
+  if (state.demoMode) return "";
+  if (state.detailsError && !state.details) {
+    return `<section class="inline-live-error">
+      <div><strong>Chưa tải được cấu hình chi tiết</strong><span>Telemetry pin/sóng vẫn hoạt động độc lập. Có thể thử lại snapshot cấu hình.</span></div>
+      <button id="retryDetails">Tải lại cấu hình</button>
+    </section>`;
+  }
+  if (!state.detailsStale || !state.details) return "";
   const clock = formatClock(state.lastDetailsSuccessAt);
   return `<section class="inline-live-error">
     <div><strong>Dữ liệu cấu hình đang là bản gần nhất</strong><span>Không refresh được snapshot chi tiết${clock ? ` từ ${esc(clock)}` : ""}. Telemetry pin/sóng vẫn có vòng cập nhật riêng.</span></div>
