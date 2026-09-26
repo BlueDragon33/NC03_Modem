@@ -126,21 +126,14 @@ export function buildDiagnosticReport({
   });
 }
 
-export function renderDiagnosticReportHtml(report) {
+export function renderDiagnosticReportMarkup(report) {
   const generated = new Date(report.generatedAt);
   const generatedLabel = Number.isNaN(generated.getTime()) ? text(report.generatedAt) : generated.toLocaleString("vi-VN");
   const liveAt = report.source.lastLiveSuccessAt ? new Date(report.source.lastLiveSuccessAt).toLocaleString("vi-VN") : "—";
   const detailsAt = report.source.lastDetailsSuccessAt ? new Date(report.source.lastDetailsSuccessAt).toLocaleString("vi-VN") : "—";
   const statusTone = report.source.liveFreshness === "LIVE READ" ? "ok" : report.source.liveFreshness === "LAST GOOD" ? "warn" : "muted";
 
-  return `<!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Báo cáo chẩn đoán NC03</title>
-<style>
-@page{size:A4;margin:14mm}*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;color:#16202a;background:#eef3f6}.sheet{width:min(210mm,100%);min-height:297mm;margin:18px auto;background:#fff;padding:18mm;box-shadow:0 16px 50px #17222d1f}.head{display:flex;justify-content:space-between;gap:24px;border-bottom:2px solid #163c56;padding-bottom:14px}.eyebrow{font-size:10px;letter-spacing:.14em;font-weight:800;color:#39728f}.head h1{margin:6px 0;font-size:26px}.head p{margin:0;color:#657582;font-size:12px}.badge{align-self:flex-start;padding:7px 10px;border-radius:999px;font-size:10px;font-weight:800;border:1px solid #cbd7de}.badge.ok{color:#146b49;background:#eaf8f1;border-color:#bce8d2}.badge.warn{color:#8a5b00;background:#fff7e6;border-color:#efd59b}.badge.muted{color:#66747e;background:#f3f6f8}.meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0 18px}.meta div{padding:10px 12px;background:#f6f9fb;border:1px solid #e1e9ee;border-radius:10px}.meta span,.row span{display:block;color:#71808b;font-size:10px}.meta strong,.row strong{display:block;margin-top:4px;font-size:12px}.section{margin-top:15px;break-inside:avoid}.section h2{margin:0 0 8px;font-size:14px;color:#173e58}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.row{padding:10px 12px;border:1px solid #e2e9ed;border-radius:9px;background:#fff}.limitations{padding:12px 14px;background:#fff8e9;border:1px solid #f0ddb1;border-radius:10px}.limitations li{margin:5px 0;color:#655b47;font-size:11px;line-height:1.5}.foot{margin-top:20px;padding-top:10px;border-top:1px solid #dfe7ec;color:#82909a;font-size:9px;display:flex;justify-content:space-between;gap:12px}.actions{position:fixed;right:18px;bottom:18px}.actions button{border:0;background:#173e58;color:#fff;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}@media print{body{background:#fff}.sheet{margin:0;box-shadow:none;width:auto;min-height:auto;padding:0}.actions{display:none}}@media(max-width:700px){.sheet{margin:0;min-height:100vh;padding:20px}.head,.foot{display:block}.badge{display:inline-block;margin-top:10px}.meta,.grid{grid-template-columns:1fr}.actions{right:12px;bottom:12px}}
-</style></head><body>
-<main class="sheet">
-<header class="head"><div><span class="eyebrow">NC03 CONTROL CENTER · SAFE DIAGNOSTIC</span><h1>Báo cáo chẩn đoán modem</h1><p>Snapshot read-only, loại bỏ dữ liệu nhạy cảm.</p></div><span class="badge ${statusTone}">${escapeHtml(report.source.liveFreshness)}</span></header>
+  return `<header class="head"><div><span class="eyebrow">NC03 CONTROL CENTER · SAFE DIAGNOSTIC</span><h1>Báo cáo chẩn đoán modem</h1><p>Snapshot read-only, loại bỏ dữ liệu nhạy cảm.</p></div><span class="badge ${statusTone}">${escapeHtml(report.source.liveFreshness)}</span></header>
 <section class="meta">
 <div><span>Thời điểm tạo</span><strong>${escapeHtml(generatedLabel)}</strong></div>
 <div><span>Địa chỉ modem</span><strong>${escapeHtml(report.source.modemOrigin)}</strong></div>
@@ -163,10 +156,7 @@ export function renderDiagnosticReportHtml(report) {
 ["Model",report.firmware.model],["Firmware",report.firmware.firmware],["Hardware",report.firmware.hardware],["Manufacturer",report.firmware.manufacturer],["FOTA",report.firmware.fotaStatus]
 ])}</div></section>
 <section class="section"><h2>06 · Giới hạn & an toàn dữ liệu</h2><ul class="limitations">${report.limitations.map((item)=>`<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
-<footer class="foot"><span>${REPORT_SCHEMA}</span><span>NC03 Control Center · local-first · read-only diagnostic report</span></footer>
-</main>
-<div class="actions"><button onclick="window.print()">In / Lưu PDF</button></div>
-</body></html>`;
+<footer class="foot"><span>${REPORT_SCHEMA}</span><span>NC03 Control Center · local-first · read-only diagnostic report</span></footer>`;
 }
 
 export { REPORT_SCHEMA };
