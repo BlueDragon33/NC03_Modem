@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v13-capture-quality";
+const CACHE = "nc03-control-center-v14-connection-doctor";
 const ASSETS = [
   "./",
   "./index.html",
