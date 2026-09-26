@@ -156,20 +156,33 @@ export class NC03Firmware80042Adapter extends NC03Adapter {
     return this.getStatus();
   }
 
+  async getNetworkSettings() {
+    return { ...(await this.getParams(NETWORK_SETTINGS_KEYS)) };
+  }
+
   async getWifiStatus() {
-    const data = await this.getParams(WIFI_KEYS);
-    const aps = [0, 1].map((index) => ({
+    const data = await this.getParams(SAFE_WIFI_KEYS);
+    const aps = [0, 1, 2, 3].map((index) => ({
       index,
       ssid: data[`wifi_ssid_${index}`] ?? null,
+      security: data[`wifi_security_${index}`] ?? null,
+      broadcast: data[`wifi_broadcast_ssid_${index}`] ?? null,
       frequency: data[`wifi_freq_${index}`] ?? null,
       mode: data[`wifi_mode_${index}`] ?? null,
+      channel: data[`wifi_channel_${index}`] ?? null,
+      standard: data[`wifi_80211_mode_${index}`] ?? null,
       state: data[`wifi_state_${index}`] ?? null,
-      clients: numeric(data[`wifi_client_${index}`])
+      clients: numeric(data[`wifi_client_${index}`]),
+      bandwidth: data[`wifi_bandwidth_${index}`] ?? null,
+      maxClients: numeric(data[`wifi_max_client_${index}`])
     })).filter((ap) => ap.ssid || ap.state);
     return {
       enabled: data.wifi_work_status === "open",
       workStatus: data.wifi_work_status ?? null,
       workBand: data.wifi_work_band ?? null,
+      supports6G: data.wifi_if_6g_supported ?? null,
+      sub5G: data.wifi_5g_sub_freq ?? null,
+      totalSwitch: data.wifi_total_switch ?? null,
       aps
     };
   }
@@ -198,6 +211,43 @@ export class NC03Firmware80042Adapter extends NC03Adapter {
     return { ...(await this.getParams(DHCP_KEYS)) };
   }
 
+  async getBridgeStatus() {
+    const data = await this.getParams(["rt_ip_passthrough_switch", "rt_ip_passthrough_lan_type"]);
+    return {
+      enabled: data.rt_ip_passthrough_switch === "enable",
+      state: data.rt_ip_passthrough_switch ?? null,
+      lanType: data.rt_ip_passthrough_lan_type ?? null
+    };
+  }
+
+  async getUsbStatus() {
+    const data = await this.getParams(CONNECTIVITY_KEYS);
+    return {
+      tethering: data.device_usb_tethering_status ?? null,
+      speed: data.device_usb_speed_type ?? null,
+      ethernetType: data.rt_eth_type ?? null,
+      bridgeState: data.rt_ip_passthrough_switch ?? null,
+      bridgeLanType: data.rt_ip_passthrough_lan_type ?? null,
+      cradleScreenSaver: data.lcd_plinth_screen_saver_sw ?? null
+    };
+  }
+
+  async getPowerSettings() {
+    return { ...(await this.getParams(POWER_SETTINGS_KEYS)) };
+  }
+
+  async getSecurityStatus() {
+    return { ...(await this.getParams(SECURITY_STATUS_KEYS)) };
+  }
+
+  async getTimeSettings() {
+    return { ...(await this.getParams(TIME_SETTINGS_KEYS)) };
+  }
+
+  async getFirmwareStatus() {
+    return this.getDeviceInfo();
+  }
+
   async getDeviceState() {
     const payload = await this.requestJson("deviceState");
     return {
@@ -207,6 +257,30 @@ export class NC03Firmware80042Adapter extends NC03Adapter {
       freeRam: numeric(payload.freeram),
       cpuUsage: numeric(payload.cpuusage),
       processes: numeric(payload.procs)
+    };
+  }
+
+  async getAdvancedSnapshot() {
+    const [
+      networkSettings, wifi, clients, dataUsage, dhcp, usb,
+      power, security, time, firmware, deviceState
+    ] = await Promise.all([
+      this.getNetworkSettings(),
+      this.getWifiStatus(),
+      this.getConnectedClients(),
+      this.getDataUsage(),
+      this.getDhcpSettings(),
+      this.getUsbStatus(),
+      this.getPowerSettings(),
+      this.getSecurityStatus(),
+      this.getTimeSettings(),
+      this.getFirmwareStatus(),
+      this.getDeviceState()
+    ]);
+    return {
+      refreshedAt: new Date().toISOString(),
+      networkSettings, wifi, clients, dataUsage, dhcp, usb,
+      power, security, time, firmware, deviceState
     };
   }
 }
