@@ -156,3 +156,47 @@ test("structural trace never exposes string literal values", () => {
   const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
   assert.doesNotMatch(JSON.stringify(report), new RegExp(secret));
 });
+
+
+test("payload provenance finds global construction and aliases outside login()", () => {
+  const source = [
+    'var postdata;',
+    'function preparePayload(passwd){',
+    '  postdata = encodeLogin(passwd);',
+    '  return postdata;',
+    '}',
+    'function login(){',
+    '  saveAjaxJsonData("/goform/login", postdata, function(obj){',
+    '    if(obj.retcode===13){}',
+    '  });',
+    '}'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  const call = report.loginCallsites[0];
+  assert.equal(call.payloadVariable, "postdata");
+  assert.ok(call.payloadProvenance.some((entry) => entry.kind === "payload-assign" && entry.target === "postdata"));
+  const assignment = call.payloadProvenance.find((entry) => entry.kind === "payload-assign");
+  assert.ok(assignment.structure.calls.some((item) => item.name === "encodeLogin"));
+  assert.ok(assignment.structure.authTokens.includes("passwd"));
+});
+
+test("response semantics resolves numeric candidates and symbolic values without raw source", () => {
+  const secret = "SHOULD_NOT_LEAK";
+  const sources = [
+    {path:"/js/common.js",source:'var g_resultSuccess=0; var g_badPassword=13; var unrelated=13;'},
+    {path:"/js/login.js",source:[
+      'function login(){',
+      '  var postdata = makePayload("' + secret + '");',
+      '  saveAjaxJsonData("/goform/login",postdata,function(obj){',
+      '    if(obj.retcode===13){}',
+      '    if(obj.retcode===g_resultSuccess){}',
+      '  });',
+      '}'
+    ].join("\n")}
+  ];
+  const report = buildAuthSourceEvidence(sources);
+  assert.ok(report.responseCodeCandidates["13"].includes("g_badPassword"));
+  assert.ok(report.responseCodeCandidates["13"].includes("unrelated"));
+  assert.deepEqual(report.responseSymbolValues.g_resultSuccess, [0]);
+  assert.doesNotMatch(JSON.stringify(report), new RegExp(secret));
+});
