@@ -156,3 +156,44 @@ test("structural trace never exposes string literal values", () => {
   const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
   assert.doesNotMatch(JSON.stringify(report), new RegExp(secret));
 });
+
+
+test("payload origin trace finds global construction outside login()", () => {
+  const source = [
+    'var g_resultPasswordError = 13;',
+    'var postdata = buildLoginPayload(loginPass);',
+    'postdata += appendAuthToken(authToken);',
+    'function login(){',
+    '  saveAjaxJsonData("/goform/login", postdata, function(obj){',
+    '    if(obj.retcode===13){}',
+    '    if(obj.retcode===g_resultSuccess){}',
+    '  });',
+    '}'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  const call = report.loginCallsites[0];
+  assert.equal(call.functionName, "login");
+  assert.ok(call.payloadOrigins.some((entry) => entry.scope === "global" && entry.kind === "payload-assign"));
+  assert.ok(call.payloadOrigins.some((entry) => entry.scope === "global" && entry.kind === "payload-append"));
+  const origin = call.payloadOrigins.find((entry) => entry.kind === "payload-assign");
+  assert.ok(origin.structure.calls.some((item) => item.name === "buildLoginPayload"));
+  assert.ok(origin.structure.authTokens.includes("loginPass"));
+  assert.equal(report.responseCodeMap["13"], "g_resultPasswordError");
+  assert.equal(report.status, "LOGIN_PAYLOAD_ORIGIN_FOUND");
+  assert.equal(report.payloadOriginFound, true);
+});
+
+test("payload origin trace reports aliases without leaking literal values", () => {
+  const secret = "NEVER_EXPOSE_THIS_VALUE";
+  const source = [
+    'var sourcePayload = makePayload("' + secret + '");',
+    'var postdata = sourcePayload;',
+    'var outbound = postdata;',
+    'function login(){ saveAjaxJsonData("/goform/login",postdata,function(){}); }'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  const call = report.loginCallsites[0];
+  assert.ok(call.payloadAliases.some((item) => item.alias === "sourcePayload" || item.alias === "outbound"));
+  assert.doesNotMatch(JSON.stringify(report), new RegExp(secret));
+  assert.equal(report.safety.sourceCodeReturned, false);
+});
