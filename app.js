@@ -6,7 +6,7 @@ import { loadPreferences, savePreferences, SECURITY_NOTE } from "./src/modem/Loc
 import { CONNECTION_STATE, connectionStateLabel } from "./src/modem/ConnectionState.js";
 import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
 import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
-import { buildDiagnosticReport, renderDiagnosticReportHtml } from "./src/ui/DiagnosticReport.js";
+import { buildDiagnosticReport } from "./src/ui/DiagnosticReport.js";
 
 const app = document.querySelector("#app");
 const prefs = loadPreferences();
@@ -562,17 +562,12 @@ function openDiagnosticReport() {
     lastLiveSuccessAt: state.demoMode ? null : state.lastLiveSuccessAt,
     lastDetailsSuccessAt: state.demoMode ? null : state.lastDetailsSuccessAt
   });
-  const html = renderDiagnosticReportHtml(report);
-  const blob = new Blob([html], { type:"text/html;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const reportWindow = window.open(url, "_blank", "noopener,noreferrer");
+  const encoded = encodeURIComponent(JSON.stringify(report));
+  const reportWindow = window.open(`./report.html#${encoded}`, "_blank", "noopener,noreferrer");
   if (!reportWindow) {
-    URL.revokeObjectURL(url);
     state.detailsError = "Trình duyệt đang chặn cửa sổ báo cáo. Hãy cho phép popup cho NC03 Control Center.";
     page();
-    return;
   }
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 function bind() {
