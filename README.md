@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.9 — Local API Envelope Fix
+## Phase 2 · v0.7.10 — Login-page Deep AUTH Probe
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -38,6 +38,7 @@ Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng
 - **Capture Quality Guard** tự phát hiện modem host trong HAR, phân biệt `get_login_info` status probe với login transaction thật, và cảnh báo `AUTHENTICATED_SESSION_ONLY` khi HAR bắt đầu sau lúc đã đăng nhập;
 - **Connection Doctor** trong Settings chẩn đoán Local Bridge → modem → phiên đăng nhập → firmware/profile → live read, hoàn toàn read-only và không đưa credential/session vào kết quả;
 - **AUTH Source Probe** đọc cục bộ các static JS/HTML của modem đã được HAR chứng minh tồn tại, trích endpoint/function/password-codec candidate nhưng không trả raw source và không tự bật production login;
+- **login-page deep probe** đọc trực tiếp `/common/login.html`, lần theo script tương đối và tách login-submit candidate khỏi logout/status endpoint;
 - **Developer Tools luôn hiện rõ trong Settings**, HAR Evidence Lab không còn bị giấu ở cuối trang.
 
 App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. Trước AUTH VERIFIED, giao diện chỉ hiển thị `Ghi nhớ mật khẩu` như một policy đang khóa — không dùng checkbox có dấu tích gây hiểu nhầm rằng credential đã được lưu.
