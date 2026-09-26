@@ -3,6 +3,7 @@ import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join, normalize, resolve } from "node:path";
 import { NC03Firmware80042Adapter } from "../src/modem/NC03Firmware80042Adapter.js";
 import { normalizeModemBaseUrl } from "../src/modem/LocalBridgePolicy.js";
+import { buildConnectionDoctorReport } from "../src/modem/ConnectionDoctor.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
@@ -76,6 +77,46 @@ function modemAdapter(baseUrl) {
   return new NC03Firmware80042Adapter({ baseUrl, fetchImpl });
 }
 
+async function modemDoctor(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl);
+    const adapter = modemAdapter(baseUrl);
+    const login = await adapter.connect();
+    if (!login.authenticated) {
+      json(res, 200, buildConnectionDoctorReport({
+        baseUrl,
+        bridgeOk:true,
+        authenticated:false,
+        errorCode:"AUTHENTICATION_REQUIRED"
+      }));
+      return;
+    }
+
+    const [live, firmware] = await Promise.all([
+      adapter.getLiveSnapshot(),
+      adapter.getFirmwareStatus()
+    ]);
+
+    json(res, 200, buildConnectionDoctorReport({
+      baseUrl,
+      bridgeOk:true,
+      authenticated:true,
+      live,
+      firmware
+    }));
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "NC03_READ_FAILED";
+    const safeCode = /^[A-Z0-9_]+$/.test(code) ? code : "NC03_READ_FAILED";
+    json(res, 200, buildConnectionDoctorReport({
+      baseUrl:null,
+      bridgeOk:true,
+      authenticated:false,
+      errorCode:safeCode
+    }));
+  }
+}
+
 async function modemRead(req, res, operation) {
   try {
     const body = await readJsonBody(req);
@@ -106,6 +147,15 @@ const server = createServer(async (req, res) => {
 
   const headOnly = req.method === "HEAD";
   const pathname = new URL(req.url, "http://127.0.0.1").pathname;
+
+  if (pathname === "/api/nc03/doctor") {
+    if (req.method !== "POST") {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await modemDoctor(req, res);
+    return;
+  }
 
   if (pathname === "/api/nc03/snapshot" || pathname === "/api/nc03/details") {
     if (req.method !== "POST") {

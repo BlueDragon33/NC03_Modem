@@ -134,3 +134,12 @@ test("settings exposes only privacy-safe local diagnostic reporting", () => {
   assert.match(app, /In \/ Lưu PDF/);
   assert.match(app, /Không spread toàn bộ payload modem/);
 });
+
+
+test("Connection Doctor stays local, read-only and exposes a dedicated endpoint", () => {
+  assert.match(server, /\/api\/nc03\/doctor/);
+  assert.match(server, /buildConnectionDoctorReport/);
+  assert.match(app, /CONNECTION DOCTOR/);
+  assert.match(app, /runConnectionDoctor/);
+  assert.match(app, /không bật write/);
+});

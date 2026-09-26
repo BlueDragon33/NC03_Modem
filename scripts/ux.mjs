@@ -26,3 +26,6 @@ assert.ok(css.includes(".evidence-summary"), "HAR evidence summary layout is req
 assert.ok(css.includes(".har-privacy-banner"), "HAR privacy warning must remain visible.");
 
 assert.ok(css.includes(".capture-quality"), "Capture-quality guidance layout is required.");
+
+assert.ok(app.includes("CONNECTION DOCTOR"), "Settings must expose Connection Doctor.");
+assert.ok(css.includes(".doctor-checks"), "Connection Doctor responsive layout is required.");
