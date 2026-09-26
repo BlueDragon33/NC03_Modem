@@ -12,5 +12,13 @@ assert.ok(css.includes("min-height:44px"), "Interactive controls must keep a 44p
 assert.ok(css.includes("button:focus-visible"), "Keyboard focus must remain visible.");
 assert.ok(css.includes("repeat(4,minmax(0,1fr))"), "Desktop quick actions should use four balanced columns.");
 assert.ok(app.includes("Báo cáo chẩn đoán an toàn"), "Settings must expose the safe diagnostic report.");
+assert.ok(app.includes("HAR Evidence Lab"), "Developer Mode must expose the local HAR Evidence Lab.");
+assert.ok(app.includes("AUTH EVIDENCE"), "HAR Evidence Lab must split authentication evidence.");
+assert.ok(app.includes("WRITE EVIDENCE"), "HAR Evidence Lab must split write evidence.");
+assert.ok(app.includes("downloadHarEvidence"), "Sanitized evidence export must remain available.");
+assert.ok(app.includes("không upload credential lên cloud"), "Local privacy boundary must be explicit.");
 assert.ok(app.includes("Snapshot hiện tại"), "Fresh client counts must use snapshot wording instead of implying a persistent online state.");
 console.log("UX PASS");
+
+assert.ok(css.includes(".evidence-summary"), "HAR evidence summary layout is required.");
+assert.ok(css.includes(".har-privacy-banner"), "HAR privacy warning must remain visible.");

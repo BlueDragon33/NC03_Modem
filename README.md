@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.2 — Auth Evidence Discovery
+## Phase 2 · v0.7.3 — In-App HAR Evidence Lab
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API:
 
@@ -33,7 +33,8 @@ Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng
 - giá trị pin ngoài miền 0–100 bị từ chối thay vì hiển thị như phần trăm hợp lệ;
 - Settings có **Báo cáo chẩn đoán an toàn** dạng A4, có thể In/Lưu PDF, chỉ xuất các trường read-only được chọn rõ ràng và loại trừ credential/secret/identifier nhạy cảm;
 - báo cáo phân biệt rõ **0** với **không có dữ liệu (`—`)**, hiển thị riêng độ mới của Live/Advanced snapshot, chuẩn hóa 4G/5G và chất lượng sóng sang nhãn dễ đọc;
-- HAR analyzer mới nhận diện JSON/form login, chỉ giữ **tên field và metadata bằng chứng**, redaction mật khẩu/token/session/cookie, và mọi auth/write finding đều giữ `CANDIDATE_ONLY`.
+- HAR analyzer nhận diện JSON/form login, chỉ giữ **tên field và metadata bằng chứng**, redaction mật khẩu/token/session/cookie, và mọi auth/write finding đều giữ `CANDIDATE_ONLY`;
+- **HAR Evidence Lab** nằm ngay trong Advanced Developer Mode: chọn HAR local, tách AUTH/WRITE evidence, xem request map, xóa phiên phân tích và xuất `nc03-evidence.json` đã khử bí mật mà không upload file lên cloud.
 
 App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. Trước AUTH VERIFIED, giao diện chỉ hiển thị `Ghi nhớ mật khẩu` như một policy đang khóa — không dùng checkbox có dấu tích gây hiểu nhầm rằng credential đã được lưu.
 
