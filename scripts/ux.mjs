@@ -16,9 +16,13 @@ assert.ok(app.includes("HAR Evidence Lab"), "Developer Mode must expose the loca
 assert.ok(app.includes("AUTH EVIDENCE"), "HAR Evidence Lab must split authentication evidence.");
 assert.ok(app.includes("WRITE EVIDENCE"), "HAR Evidence Lab must split write evidence.");
 assert.ok(app.includes("downloadHarEvidence"), "Sanitized evidence export must remain available.");
+assert.ok(app.includes("CHẤT LƯỢNG CAPTURE"), "HAR lab must explain whether a capture is usable for AUTH mapping.");
+assert.ok(app.includes("AUTHENTICATED_SESSION_ONLY") || app.includes("authCaptureStatus"), "HAR lab must surface capture quality status.");
 assert.ok(app.includes("không upload credential lên cloud"), "Local privacy boundary must be explicit.");
 assert.ok(app.includes("Snapshot hiện tại"), "Fresh client counts must use snapshot wording instead of implying a persistent online state.");
 console.log("UX PASS");
 
 assert.ok(css.includes(".evidence-summary"), "HAR evidence summary layout is required.");
 assert.ok(css.includes(".har-privacy-banner"), "HAR privacy warning must remain visible.");
+
+assert.ok(css.includes(".capture-quality"), "Capture-quality guidance layout is required.");
