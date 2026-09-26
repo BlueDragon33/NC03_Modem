@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.5 — Connection Doctor
+
+- Added a dedicated local read-only Connection Doctor endpoint and Settings panel.
+- Diagnoses Local Bridge availability, modem response, auth requirement, verified firmware profile and live read readiness.
+- AUTH_REQUIRED is reported without inventing a login flow.
+- Firmware mismatch is surfaced as FIRMWARE_UNVERIFIED instead of silently trusting an unknown profile.
+- Diagnostic output explicitly excludes credentials/session values and never enables write controls.
+- Added responsive UX and regression coverage.
+
+
 ## 0.7.4 — HAR Capture Quality Guard
 
 - Added automatic RFC1918 modem-host detection from HAR traffic.
