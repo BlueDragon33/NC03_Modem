@@ -130,3 +130,20 @@ test("HAR2 mobile-service and rule inventory return safe summaries only", async 
   });
   assert.equal("raw" in rules, false);
 });
+
+
+test("battery parser rejects impossible percentages instead of showing fabricated values", async () => {
+  const adapter = new NC03Firmware80042Adapter({
+    fetchImpl: async (url, init = {}) => {
+      const path = new URL(url).pathname;
+      if (path !== "/action/get_mgdb_params") throw new Error("Unexpected path");
+      const body = JSON.parse(init.body);
+      const data = {};
+      if (body.keys.includes("device_battery_percent")) data.device_battery_percent = "255";
+      return response({ retcode:0, data });
+    }
+  });
+  const battery = await adapter.getBattery();
+  assert.equal(battery.exactPercentage, false);
+  assert.equal(battery.percentage, null);
+});
