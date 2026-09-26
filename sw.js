@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v25-auth-probe-cache-compat";
+const CACHE = "nc03-control-center-v26-login-object-dependency";
 const ASSETS = [
   "./",
   "./index.html",

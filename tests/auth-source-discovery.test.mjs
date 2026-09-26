@@ -197,3 +197,51 @@ test("payload origin trace reports aliases without leaking literal values", () =
   assert.doesNotMatch(JSON.stringify(report), new RegExp(secret));
   assert.equal(report.safety.sourceCodeReturned, false);
 });
+
+
+test("request object dependency trace follows JSON stringify object fields", () => {
+  const source = [
+    'var loginKey="fixture";',
+    'var g_loginPasswordError=13;',
+    'function login(){',
+    '  var passwd=getInput();',
+    '  var _obj=new Object();',
+    '  _obj.password=hex_hmac_md5(loginKey,passwd);',
+    '  _obj.async=true;',
+    '  var postdata=JSON.stringify(_obj);',
+    '  saveAjaxJsonData("/goform/login",postdata,function(obj){',
+    '    if(obj.retcode===13){}',
+    '    if(obj.retcode===g_resultSuccess){}',
+    '  });',
+    '}'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  const call = report.loginCallsites[0];
+  assert.ok(call.dependencyVariables.includes("_obj"));
+  assert.ok(call.dependencyFields.some((field) => field.field === "password"));
+  const field = call.dependencyFields.find((item) => item.field === "password");
+  assert.ok(field.structure.calls.some((item) => item.name === "hex_hmac_md5"));
+  assert.equal(report.requestObjectMapped, true);
+  assert.equal(report.authDependencyMapped, true);
+  assert.equal(report.status, "LOGIN_REQUEST_OBJECT_CANDIDATE_READY");
+  assert.equal(report.responseCodeMap["13"], "g_loginPasswordError");
+});
+
+test("response code map excludes unrelated source constants", () => {
+  const source = [
+    'var g_result_lcd_use=203;',
+    'var g_curusernameerror=214;',
+    'function login(){',
+    '  var _obj={password:hex_hmac_md5(loginKey,passwd)};',
+    '  var postdata=JSON.stringify(_obj);',
+    '  saveAjaxJsonData("/goform/login",postdata,function(obj){',
+    '    if(obj.retcode===13){}',
+    '    if(obj.retcode===g_resultSuccess){}',
+    '  });',
+    '}'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  assert.equal(report.responseCodeMap["13"], "UNMAPPED");
+  assert.equal(report.responseCodeMap["203"], undefined);
+  assert.equal(report.responseCodeMap["214"], undefined);
+});

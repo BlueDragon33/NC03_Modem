@@ -234,3 +234,12 @@ test("AUTH Source Probe remains compatible with stale GET clients while current 
   assert.match(server, /\["GET","POST"\]\.includes\(req\.method \|\| "GET"\)/);
   assert.match(app, /METHOD_NOT_ALLOWED — frontend và Local Bridge đang lệch phiên bản/);
 });
+
+
+test("AUTH lab exposes request object dependency evidence before real login", () => {
+  assert.match(app, /Request object dependency trace/);
+  assert.match(app, /Login object fields \/ transforms/);
+  assert.match(app, /dependencyOrigins/);
+  assert.match(app, /dependencyFields/);
+  assert.match(app, /authDependencyMapped/);
+});
