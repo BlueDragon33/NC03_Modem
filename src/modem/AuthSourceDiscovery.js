@@ -417,7 +417,7 @@ export function buildAuthSourceEvidence(sources = []) {
   else if (authEndpoints.length || hmacMd5 || fixedKeys.length) status = "AUTH_SUPPORTING_EVIDENCE_ONLY";
 
   return {
-    schema:"nc03-auth-source-evidence/v8",
+    schema:"nc03-auth-source-evidence/v9",
     status,
     sourcesAnalyzed:analyses.map((item) => item.path),
     authEndpoints,
