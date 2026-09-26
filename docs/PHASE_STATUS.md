@@ -246,3 +246,16 @@ Completed:
 - UX gate protects this discoverability order.
 
 No AUTH/write safety boundary changed.
+
+
+## Phase 2O — LOCAL API ENVELOPE CONSISTENCY
+
+Status: **IMPLEMENTED**
+
+Completed:
+- AUTH Source Probe now returns the standard local `payload` envelope;
+- Connection Doctor now uses the same envelope;
+- browser local client rejects malformed successful responses with `MALFORMED_LOCAL_RESPONSE`;
+- regression tests prevent silent `undefined` results.
+
+This fixes the observed case where clicking **Quét AUTH source trên modem** produced no visible result even though the endpoint returned successfully.
