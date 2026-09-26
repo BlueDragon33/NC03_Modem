@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v27-login-nested-call-trace";
+const CACHE = "nc03-control-center-v28-password-dataflow";
 const ASSETS = [
   "./",
   "./index.html",

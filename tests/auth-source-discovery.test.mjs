@@ -273,3 +273,45 @@ test("nested-call trace preserves outer HMAC around password input val()", () =>
   assert.equal(report.responseCodeMap["0"], "UNMAPPED");
   assert.equal(report.responseCodeMap["13"], "UNMAPPED");
 });
+
+
+test("password dataflow exposes redacted expression skeleton without inventing HMAC", () => {
+  const source = [
+    'var loginKey="fixture";',
+    'var g_resultSuccess=0;',
+    'function login(){',
+    '  var _obj=new Object();',
+    '  _obj.username=hex_hmac_md5(loginKey,"fixture-user");',
+    '  _obj.password=$("#login_password").val()+loginKey;',
+    '  var postdata=JSON.stringify(_obj);',
+    '  saveAjaxJsonData("/goform/login",postdata,function(obj){',
+    '    if(obj.retcode===13){}',
+    '    if(obj.retcode===g_resultSuccess){}',
+    '  });',
+    '}'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  const password = report.passwordFieldEvidence[0];
+  assert.ok(password);
+  assert.match(password.skeleton, /val\(\)\+loginKey/);
+  assert.equal(report.passwordInputCallObserved, true);
+  assert.equal(report.passwordHmacConfirmed, false);
+  assert.equal(report.loginSuccessZeroObserved, true);
+  assert.equal(report.status, "LOGIN_PASSWORD_DATAFLOW_FOUND");
+});
+
+test("password dataflow captures later field use in helper calls", () => {
+  const source = [
+    'var g_resultSuccess=0;',
+    'function login(){',
+    '  var _obj=new Object();',
+    '  _obj.password=$("#login_password").val();',
+    '  normalizeLoginField(_obj.password,loginKey);',
+    '  var postdata=JSON.stringify(_obj);',
+    '  saveAjaxJsonData("/goform/login",postdata,function(obj){if(obj.retcode===g_resultSuccess){}});',
+    '}'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  const password = report.passwordFieldEvidence[0];
+  assert.ok(password.referenceFlow.some((flow) => flow.skeleton.includes("normalizeLoginField")));
+});

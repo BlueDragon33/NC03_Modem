@@ -434,3 +434,11 @@ Next gate:
 - run AUTH Source Probe again;
 - confirm whether `_obj.password` is wrapped by `hex_hmac_md5(loginKey, ...val())`;
 - if confirmed, the request transform + success semantics are sufficient to build the first real login candidate while keeping unknown code 13 as a generic login failure.
+
+
+## Phase 2X — PASSWORD FIELD DATAFLOW
+
+Status: **IMPLEMENTED**
+
+v0.7.18 live evidence shows username HMAC-MD5 is confirmed while password still appears as an input `val()` expression with `loginKey` present. v0.7.19 therefore traces the exact redacted expression skeleton and every subsequent reference to the password field before enabling real login.
+

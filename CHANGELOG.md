@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.19 — Password field dataflow
+
+- Adds redacted expression skeletons for login request fields so operators/call structure remain visible while literals are removed.
+- Traces every observed reference to the password field inside login.js, including later helper calls.
+- Separates “password input observed”, “password HMAC confirmed”, and “login success=0 confirmed” instead of treating any loginKey token as proof of hashing.
+- Adds Password field dataflow and Password recipe status to the AUTH Lab.
+- Production password login remains locked until the final password recipe is evidenced.
+
+
 ## 0.7.18 — Nested login transform tracing
 
 - Replaced the flat login-expression regex with a balanced nested-call parser.

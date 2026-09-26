@@ -478,8 +478,18 @@ function renderDiscovery() {
             const structure = field.structure ?? {};
             const calls = structure.calls?.map((item)=>`${item.name}[${item.depth ?? 0}](${item.args?.join(", ") || ""})`).join(", ");
             const nestedAuth = structure.authTransforms?.map((item)=>`${item.name}[${item.depth ?? 0}](${item.args?.join(", ") || ""})`).join(", ");
-            return `${field.object}.${field.field} ← ${structure.shape ?? "—"}${calls ? ` · calls:${calls}` : ""}${nestedAuth ? ` · Nested AUTH transform:${nestedAuth}` : ""}${structure.authTokens?.length ? ` · auth:${structure.authTokens.join(",")}` : ""}`;
+            return `${field.object}.${field.field} ← ${structure.shape ?? "—"}${structure.skeleton ? ` · skeleton:${structure.skeleton}` : ""}${calls ? ` · calls:${calls}` : ""}${nestedAuth ? ` · Nested AUTH transform:${nestedAuth}` : ""}${structure.authTokens?.length ? ` · auth:${structure.authTokens.join(",")}` : ""}`;
           }).join("\n") || "chưa tách được field của request object")}</code></div>
+          <div class="call-shape-block"><span>Password field dataflow</span><code>${esc((call.dependencyFields ?? []).filter((field)=>/pass|passwd|password|pwd/i.test(field.field)).flatMap((field)=>(field.referenceFlow ?? []).map((flow)=>{
+            const calls = flow.calls?.map((item)=>`${item.name}[${item.depth ?? 0}](${item.args?.join(", ") || ""})`).join(", ");
+            return `${field.object}.${field.field} · ${flow.role} · ${flow.scope} · ${flow.skeleton}${calls ? ` · calls:${calls}` : ""}`;
+          })).join("\n") || "chưa có dataflow riêng cho password")}</code></div>
+          <div class="call-shape-block"><span>Password recipe status</span><code>${esc([
+            `field evidence: ${sourceEvidence.passwordFieldEvidence?.length ?? 0}`,
+            `input call observed: ${sourceEvidence.passwordInputCallObserved ? "yes" : "no"}`,
+            `password HMAC confirmed: ${sourceEvidence.passwordHmacConfirmed ? "yes" : "no"}`,
+            `login success=0 confirmed: ${sourceEvidence.loginSuccessZeroObserved ? "yes" : "no"}`
+          ].join("\n"))}</code></div>
           <small>Dependency variables: ${esc(call.dependencyVariables?.join(", ") || "chưa thấy")} · Response signals: ${esc(call.responseSignals?.map((signal)=>sourceEvidence.responseCodeMap?.[signal] ? `${signal} → ${sourceEvidence.responseCodeMap[signal]}` : signal).join(", ") || "chưa thấy")}</small>
         </article>`).join("") : `<div class="empty">Chưa có login call-site đủ rõ.</div>`}
       </div>
