@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.8 — Developer Lab discoverability
+
+- Moved Developer Tools near the top of Settings instead of hiding them after long diagnostic/configuration sections.
+- HAR Evidence Lab entry is now always visible in Settings.
+- When Developer Mode is off, the disabled button explains exactly what to enable.
+- Enabling Developer Mode immediately activates the HAR Evidence Lab button and keeps the sidebar shortcut.
+- Added a UX gate preventing Developer Tools from drifting back below Modem Connection.
+
+
 ## 0.7.7 — Local runtime version coherence
 
 - Fixed local runtime serving stale `dist/` assets and contract after source had been updated.
