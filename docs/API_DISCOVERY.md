@@ -146,3 +146,17 @@ HAR có một số trường nhạy cảm nhưng production snapshot **không mi
 ### Write evidence
 
 HAR2 không chứa request write thực tế tới modem. Các endpoint write chỉ thấy trong vendor JavaScript vẫn giữ `PARTIAL`, không nâng lên `WRITE VERIFIED`.
+
+
+## HAR2 follow-up — safe inventory
+
+Rà lại toàn bộ 234 request xác nhận thêm các key read-only an toàn:
+
+- `dialup_dataswitch` — Mobile Data state;
+- `mnet_sim_pin_protect`, `mnet_sim_pin_rtimes` — SIM PIN protection/remaining tries;
+- `mnet_uc_switch_enable`, `mnet_uc_switch_notification`, `mnet_uc_switch_nosrv_time`, `mnet_uc_switch_duration` — Cloud SIM auto-switch page state;
+- `rt_ip_mac_bind_0..31`, `rt_port_forward_0..31`, `rt_obj_value_info_v4_lan_0..49`, `rt_obj_value_info_v6_lan_0..49` — inventory nguồn.
+
+Production adapter **không trả raw inventory**. Nó chỉ đếm entry không rỗng để UI hiển thị số DHCP reservation / port-forward / IPv4 filter / IPv6 filter.
+
+HAR2 vẫn không có write transaction thực tế và vẫn không có RSRP/RSRQ/SINR/RSSI.
