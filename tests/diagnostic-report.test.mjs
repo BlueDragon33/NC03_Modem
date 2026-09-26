@@ -60,7 +60,7 @@ test("diagnostic report marks stale snapshots and renders a professional printab
   assert.match(css, /@page\{size:A4/);
   assert.match(page, /In \/ Lưu PDF/);
   assert.match(html, /Snapshot read-only/);
-  assert.match(html, /LAST GOOD/);
+  assert.match(html, /Dữ liệu gần nhất/);
 });
 
 test("diagnostic report escapes modem-provided text", () => {
