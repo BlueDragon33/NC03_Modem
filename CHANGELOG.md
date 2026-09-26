@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.3 — In-app HAR Evidence Lab
+
+- Rebuilt Advanced Developer Mode discovery as a dedicated HAR Evidence Lab.
+- HAR files are analyzed entirely in the current browser session and are never uploaded by the feature.
+- Added separate AUTH evidence and WRITE evidence panels with explicit `CANDIDATE_ONLY` status.
+- Added request-map summary, modem-host count, privacy/safety gate summary and responsive layouts.
+- Added sanitized `nc03-evidence.json` export plus one-click clearing of the current analysis session.
+- Preserved fail-closed behavior: evidence inspection never enables login persistence or modem write controls.
+- Added UX regression gates for privacy messaging, AUTH/WRITE separation and evidence export.
+
+
 ## 0.7.2 — Privacy-safe AUTH/write evidence discovery
 
 - Added a local-only `npm run analyze:har -- <capture.har>` workflow for the next NC03 auth/write capture.
