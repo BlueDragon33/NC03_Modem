@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v24-login-payload-origin";
+const CACHE = "nc03-control-center-v25-auth-probe-cache-compat";
 const ASSETS = [
   "./",
   "./index.html",
@@ -43,24 +43,15 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith("/api/") || url.pathname.startsWith("/_local/")) return;
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((response) => {
-          if (response?.ok) {
-            const copy = response.clone();
-            caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
-          }
-          return response;
-        })
-        .catch(() => null);
-
-      if (cached) {
-        event.waitUntil(network);
-        return cached;
-      }
-
-      return network.then((response) => response || new Response("Offline", { status: 503 }));
-    })
-  );
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    try {
+      const response = await fetch(event.request, { cache:"no-store" });
+      if (response?.ok) await cache.put(event.request, response.clone());
+      return response;
+    } catch {
+      const cached = await cache.match(event.request);
+      return cached || new Response("Offline", { status:503 });
+    }
+  })());
 });

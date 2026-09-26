@@ -28,6 +28,7 @@ const root = usingDist ? distRoot : sourceRoot;
 const host = process.env.NC03_HOST || "127.0.0.1";
 const port = Number(process.env.NC03_PORT || 3006);
 const contractPath = usingDist ? distContractPath : sourceContractPath;
+const DEFAULT_MODEM_BASE_URL = "http://192.168.0.1";
 
 const mime = new Map([
   [".html","text/html; charset=utf-8"],
@@ -145,10 +146,18 @@ async function fetchStaticSource(baseUrl, path) {
   }
 }
 
+async function authProbeBaseUrl(req) {
+  if (req.method === "GET") {
+    const requestUrl = new URL(req.url || "/", "http://127.0.0.1");
+    return normalizeModemBaseUrl(requestUrl.searchParams.get("baseUrl") || DEFAULT_MODEM_BASE_URL);
+  }
+  const body = await readJsonBody(req);
+  return normalizeModemBaseUrl(body.baseUrl);
+}
+
 async function authSourceProbe(req, res) {
   try {
-    const body = await readJsonBody(req);
-    const baseUrl = normalizeModemBaseUrl(body.baseUrl);
+    const baseUrl = await authProbeBaseUrl(req);
     const sources = [];
     const diagnostics = [];
     const collect = async (paths) => {
@@ -282,7 +291,7 @@ const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, "http://127.0.0.1").pathname;
 
   if (pathname === "/api/nc03/auth-source-probe") {
-    if (req.method !== "POST") {
+    if (!["GET","POST"].includes(req.method || "GET")) {
       json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
       return;
     }
