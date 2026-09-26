@@ -476,8 +476,9 @@ function renderDiscovery() {
           }).join("\n") || "chưa tìm thấy object đứng sau payload")}</code></div>
           <div class="call-shape-block"><span>Login object fields / transforms</span><code>${esc((call.dependencyFields ?? []).map((field)=>{
             const structure = field.structure ?? {};
-            const calls = structure.calls?.map((item)=>`${item.name}(${item.args?.join(", ") || ""})`).join(", ");
-            return `${field.object}.${field.field} ← ${structure.shape ?? "—"}${calls ? ` · ${calls}` : ""}${structure.authTokens?.length ? ` · auth:${structure.authTokens.join(",")}` : ""}`;
+            const calls = structure.calls?.map((item)=>`${item.name}[${item.depth ?? 0}](${item.args?.join(", ") || ""})`).join(", ");
+            const nestedAuth = structure.authTransforms?.map((item)=>`${item.name}[${item.depth ?? 0}](${item.args?.join(", ") || ""})`).join(", ");
+            return `${field.object}.${field.field} ← ${structure.shape ?? "—"}${calls ? ` · calls:${calls}` : ""}${nestedAuth ? ` · Nested AUTH transform:${nestedAuth}` : ""}${structure.authTokens?.length ? ` · auth:${structure.authTokens.join(",")}` : ""}`;
           }).join("\n") || "chưa tách được field của request object")}</code></div>
           <small>Dependency variables: ${esc(call.dependencyVariables?.join(", ") || "chưa thấy")} · Response signals: ${esc(call.responseSignals?.map((signal)=>sourceEvidence.responseCodeMap?.[signal] ? `${signal} → ${sourceEvidence.responseCodeMap[signal]}` : signal).join(", ") || "chưa thấy")}</small>
         </article>`).join("") : `<div class="empty">Chưa có login call-site đủ rõ.</div>`}
