@@ -42,3 +42,6 @@ assert.ok(app.includes("Request field candidates"), "AUTH Source Probe must surf
 
 assert.ok(app.includes("PROBE DIAGNOSTICS"), "AUTH probe must show safe per-path diagnostics.");
 assert.ok(css.includes(".probe-diagnostics"), "AUTH probe diagnostics need a readable layout.");
+
+assert.ok(app.includes("callsite-grid"), "AUTH lab must render endpoint-specific callsite evidence.");
+assert.ok(css.includes(".callsite-grid"), "Login callsite evidence needs responsive layout.");

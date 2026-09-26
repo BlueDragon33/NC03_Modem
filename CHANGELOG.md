@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.12 — Login callsite mapping
+
+- Isolated `/goform/login` from passive `/goform/get_login_limit`.
+- Added endpoint-specific callsite extraction from vendor JavaScript.
+- Maps source file, containing function, request helper, payload variable and payload-field assignments.
+- Detects per-field transforms such as `hex_hmac_md5(...)` and keeps only variable names/structure, never values.
+- Extracts structural response signals such as symbolic `retcode` constants around the login callback.
+- AUTH Lab now renders login callsites separately so change-password fields from `systemadmin.js` cannot masquerade as login payload fields.
+- Production login remains fail-closed until the mapped callsite is confirmed against success/failure semantics.
+
+
 ## 0.7.11 — AUTH probe diagnostics
 
 - Added Local Bridge health preflight before AUTH Source Probe.

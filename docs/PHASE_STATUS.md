@@ -291,3 +291,26 @@ Completed:
 - parallel bounded static-source reads;
 - safe per-path status for HTTP OK, redirect, HTTP error, unsupported content, timeout and network error;
 - no raw source, credential or session values in diagnostic output.
+
+
+## Phase 2R — LOGIN CALLSITE MAPPING
+
+Status: **IMPLEMENTED**
+
+Observed live evidence:
+- `/common/login.html` is HTTP 200;
+- `/js/login.js` is HTTP 200;
+- source contains `/goform/login`;
+- source also contains `/goform/get_login_limit`, which is now treated as passive auth/supporting evidence rather than login submit;
+- HMAC-MD5 and fixed `loginKey` are present in firmware source.
+
+Implemented:
+- endpoint-specific callsite mapping;
+- request-helper and payload-variable extraction;
+- login payload-field isolation;
+- per-field transform extraction;
+- response-symbol extraction around the login callback;
+- UI separates login callsite evidence from global AUTH/request-field evidence.
+
+Current gate:
+- run the probe once more and inspect the `/goform/login` callsite. If field transform + success/failure symbols are coherent, the next phase can implement a candidate `NC03Auth.login()` behind an explicit verification gate.
