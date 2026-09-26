@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.6.1"
+    "version": "0.6.2"
   },
   "capabilities": {
     "webLaunch": true,
@@ -44,7 +44,10 @@
     "signalMetric": "qualitative-mnet_sig_level",
     "modemOriginScope": "rfc1918-ipv4-only",
     "pollingPreservesUiState": true,
-    "rawRuleInventoryMirrored": false
+    "rawRuleInventoryMirrored": false,
+    "lastKnownGoodTelemetry": true,
+    "staleTelemetryExplicitlyMarked": true,
+    "uiBridgeOriginPolicyUnified": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
