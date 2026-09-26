@@ -105,17 +105,44 @@ const AUTH_SOURCE_SEEDS = Object.freeze([
 
 async function fetchStaticSource(baseUrl, path) {
   const url = new URL(path, baseUrl);
-  const response = await fetch(url, {
-    method:"GET",
-    redirect:"manual",
-    signal:AbortSignal.timeout(3500),
-    headers:{ Accept:"text/html,application/javascript,text/javascript,*/*;q=0.5" }
-  });
-  if (!response.ok) return null;
-  const contentType = String(response.headers.get("content-type") || "");
-  if (!/javascript|text\/(?:html|plain)|application\/x-javascript/i.test(contentType)) return null;
-  const text = await response.text();
-  return { path:url.pathname, source:text.slice(0, 524288) };
+  const startedAt = Date.now();
+  try {
+    const response = await fetch(url, {
+      method:"GET",
+      redirect:"manual",
+      signal:AbortSignal.timeout(2200),
+      headers:{ Accept:"text/html,application/javascript,text/javascript,*/*;q=0.5" }
+    });
+    const contentType = String(response.headers.get("content-type") || "");
+    const diagnostic = {
+      path:url.pathname,
+      status:response.ok ? "HTTP_OK" : response.status >= 300 && response.status < 400 ? "REDIRECT" : "HTTP_ERROR",
+      httpStatus:response.status,
+      contentType:contentType.split(";")[0] || null,
+      durationMs:Date.now() - startedAt
+    };
+    if (!response.ok) return { item:null, diagnostic };
+    if (!/javascript|text\/(?:html|plain)|application\/x-javascript/i.test(contentType)) {
+      return { item:null, diagnostic:{ ...diagnostic, status:"UNSUPPORTED_CONTENT" } };
+    }
+    const text = await response.text();
+    return {
+      item:{ path:url.pathname, source:text.slice(0, 524288) },
+      diagnostic:{ ...diagnostic, bytes:Buffer.byteLength(text) }
+    };
+  } catch (error) {
+    const name = String(error?.name || "");
+    return {
+      item:null,
+      diagnostic:{
+        path:url.pathname,
+        status:name === "TimeoutError" || name === "AbortError" ? "TIMEOUT" : "NETWORK_ERROR",
+        httpStatus:null,
+        contentType:null,
+        durationMs:Date.now() - startedAt
+      }
+    };
+  }
 }
 
 async function authSourceProbe(req, res) {
@@ -123,23 +150,24 @@ async function authSourceProbe(req, res) {
     const body = await readJsonBody(req);
     const baseUrl = normalizeModemBaseUrl(body.baseUrl);
     const sources = [];
+    const diagnostics = [];
+    const collect = async (paths) => {
+      const results = await Promise.all(paths.map((path) => fetchStaticSource(baseUrl, path)));
+      for (const result of results) {
+        diagnostics.push(result.diagnostic);
+        if (result.item && !sources.some((current) => current.path === result.item.path)) sources.push(result.item);
+      }
+    };
 
-    for (const path of AUTH_SOURCE_SEEDS) {
-      const item = await fetchStaticSource(baseUrl, path).catch(() => null);
-      if (item && !sources.some((current) => current.path === item.path)) sources.push(item);
-    }
+    await collect(AUTH_SOURCE_SEEDS);
 
     const firstPass = buildAuthSourceEvidence(sources);
-
     const loginPages = firstPass.loginPageCandidates
       .filter((path) => /^\/[A-Za-z0-9_./-]+\.html$/i.test(path))
       .filter((path) => !sources.some((item) => item.path === path))
       .slice(0, 6);
 
-    for (const path of loginPages) {
-      const item = await fetchStaticSource(baseUrl, path).catch(() => null);
-      if (item && !sources.some((current) => current.path === item.path)) sources.push(item);
-    }
+    if (loginPages.length) await collect(loginPages);
 
     const secondPass = buildAuthSourceEvidence(sources);
     const extraRefs = secondPass.discoveredScriptRefs
@@ -147,15 +175,24 @@ async function authSourceProbe(req, res) {
       .filter((path) => !sources.some((item) => item.path === path))
       .slice(0, 24);
 
-    for (const path of extraRefs) {
-      const item = await fetchStaticSource(baseUrl, path).catch(() => null);
-      if (item && !sources.some((current) => current.path === item.path)) sources.push(item);
-    }
+    if (extraRefs.length) await collect(extraRefs);
 
     const evidence = buildAuthSourceEvidence(sources);
+    const summary = diagnostics.reduce((acc, item) => {
+      acc[item.status] = (acc[item.status] || 0) + 1;
+      return acc;
+    }, {});
     json(res, 200, {
       ok:true,
-      payload:{ baseUrl, evidence }
+      payload:{
+        baseUrl,
+        evidence,
+        diagnostics:{
+          summary,
+          items:diagnostics,
+          sourceCount:sources.length
+        }
+      }
     });
   } catch (error) {
     const code = error instanceof Error ? error.message : "AUTH_SOURCE_PROBE_FAILED";
