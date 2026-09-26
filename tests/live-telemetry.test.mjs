@@ -13,7 +13,7 @@ const server = fs.readFileSync(new URL("../scripts/serve-local.mjs", import.meta
 
 test("live battery, connection and signal poll every 10 seconds", () => {
   assert.match(app, /const LIVE_REFRESH_MS = 10_000/);
-  assert.match(app, /setInterval\(\(\) => \{ refreshLive\(\)/);
+  assert.match(app, /setInterval\(\(\) => \{ pollLiveOnce\(\)/);
   assert.match(app, /function renderAlwaysOnStatus/);
   for (const label of ["PIN", "KẾT NỐI", "SÓNG", "MẠNG", "10 giây"]) assert.ok(app.includes(label));
 });
@@ -23,8 +23,8 @@ test("local bridge exposes read-only snapshot and details endpoints", () => {
   assert.match(server, /\/api\/nc03\/details/);
   assert.match(server, /adapter\.getLiveSnapshot\(\)/);
   assert.match(server, /adapter\.getAdvancedSnapshot\(\)/);
-  assert.match(server, /isPrivateIpv4/);
-  assert.match(server, /MODEM_ORIGIN_NOT_PRIVATE/);
+  assert.match(server, /normalizeModemBaseUrl/);
+  assert.match(server, /LocalBridgePolicy\.js/);
   assert.match(server, /AUTHENTICATION_REQUIRED/);
 });
 
@@ -49,4 +49,23 @@ test("new HAR modules are read-only rather than write-enabled", () => {
     assert.equal(capability.write, false);
     assert.equal(capability.status, "READ ONLY");
   }
+});
+
+
+test("10 second polling updates live DOM in place and pauses while hidden", () => {
+  assert.match(app, /function updateLiveTelemetryDom/);
+  assert.match(app, /document\.hidden/);
+  assert.match(app, /liveRefreshInFlight/);
+  assert.match(app, /hadLive !== Boolean\(state\.live\)\) page\(\)/);
+  assert.match(app, /else updateLiveTelemetryDom\(\)/);
+  assert.match(app, /visibilitychange/);
+});
+
+test("advanced UI exposes only safe mobile state and rule counts", () => {
+  for (const label of ["Mobile Data", "SIM PIN protect", "Cloud SIM auto-switch", "DHCP reservations", "Port forwarding", "IPv4 packet filters", "IPv6 packet filters"]) {
+    assert.ok(app.includes(label), label);
+  }
+  assert.ok(app.includes("Chỉ thống kê số lượng"));
+  assert.doesNotMatch(app, /wifi_wps_pin_value/);
+  assert.doesNotMatch(app, /rt_dmz_ip/);
 });
