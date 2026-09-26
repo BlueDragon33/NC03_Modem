@@ -206,11 +206,26 @@ function collectPayloadOrigins(text, payloadVariable) {
 
   const whole = new RegExp("(?:\\b(?:var|let|const)\\s+)?\\b" + escaped + "\\s*(\\+=|=)\\s*([^;\\n]+)", "g");
   for (const match of text.matchAll(whole)) {
+    const structure = expressionStructure(match[2]);
+    const literalFields = [];
+    const expression = String(match[2] ?? "").trim();
+    const braceStart = expression.indexOf("{");
+    const braceEnd = expression.lastIndexOf("}");
+    if (braceStart >= 0 && braceEnd > braceStart) {
+      for (const part of splitArgs(expression.slice(braceStart + 1, braceEnd))) {
+        const fieldMatch = part.match(/^\s*(?:["']([^"']+)["']|([A-Za-z_$][\w$]*))\s*:\s*([\s\S]+)$/);
+        if (!fieldMatch) continue;
+        literalFields.push({
+          field:fieldMatch[1] || fieldMatch[2],
+          structure:expressionStructure(fieldMatch[3])
+        });
+      }
+    }
     entries.push({
       kind:match[1] === "+=" ? "payload-append" : "payload-assign",
       target:payloadVariable,
       scope:scopeLabel(text, match.index ?? 0),
-      structure:expressionStructure(match[2])
+      structure:{ ...structure, objectFields:literalFields }
     });
   }
 
@@ -265,9 +280,108 @@ function collectAliases(text, payloadVariable) {
   return uniq(aliases.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item)).slice(0, 30);
 }
 
+
+const DEPENDENCY_NOISE = new Set([
+  "JSON","stringify","parse","Object","Array","String","Number","Boolean","Math","Date",
+  "console","window","document","function","callback","undefined","null","true","false"
+]);
+
+function assignmentExists(text, variable) {
+  const escaped = escapeRegex(variable);
+  return new RegExp("(?:\\b(?:var|let|const)\\s+)?\\b" + escaped + "\\s*(?:\\+=|=)|\\b" + escaped + "(?:\\.[A-Za-z_$][\\w$]*|\\[[\"'][^\"']+[\"']\\])\\s*(?:\\+=|=)").test(text);
+}
+
+function dependencyCandidatesFromEntries(entries, payloadVariable) {
+  const values = [];
+  for (const entry of entries) {
+    for (const id of entry.structure?.identifiers ?? []) values.push(id);
+    for (const call of entry.structure?.calls ?? []) {
+      for (const arg of call.args ?? []) {
+        const match = String(arg).match(/^identifier:([A-Za-z_$][\w$]*)$/);
+        if (match) values.push(match[1]);
+      }
+    }
+  }
+  return uniq(values.filter((value) =>
+    value !== payloadVariable
+    && !DEPENDENCY_NOISE.has(value)
+    && !/^(?:saveAjaxJsonData|ajaxGetJsonData|ajaxGetJsonDataGoform)$/i.test(value)
+  ));
+}
+
+function tracePayloadDependencies(text, functionInfo, payloadVariable) {
+  if (!payloadVariable) return { variables:[], origins:[] };
+  const payloadEntries = collectPayloadOrigins(text, payloadVariable)
+    .filter((entry) => !functionInfo?.name || entry.scope === "function:" + functionInfo.name || entry.scope === "global");
+  const roots = dependencyCandidatesFromEntries(payloadEntries, payloadVariable)
+    .filter((name) => assignmentExists(text, name));
+
+  const queue = roots.map((name) => ({ name, depth:0, parent:payloadVariable }));
+  const seen = new Set();
+  const origins = [];
+  const variables = [];
+
+  while (queue.length) {
+    const current = queue.shift();
+    if (!current || seen.has(current.name) || current.depth > 2) continue;
+    seen.add(current.name);
+    variables.push(current.name);
+
+    const entries = collectPayloadOrigins(text, current.name)
+      .filter((entry) => !functionInfo?.name || entry.scope === "function:" + functionInfo.name || entry.scope === "global")
+      .map((entry) => ({
+        ...entry,
+        dependencyVariable:current.name,
+        parentVariable:current.parent,
+        depth:current.depth
+      }));
+    origins.push(...entries);
+
+    const next = dependencyCandidatesFromEntries(entries, current.name)
+      .filter((name) => assignmentExists(text, name));
+    for (const name of next) queue.push({ name, depth:current.depth + 1, parent:current.name });
+  }
+
+  return {
+    variables:uniq(variables).slice(0, 30),
+    origins:origins.slice(0, 120)
+  };
+}
+
+function dependencyFields(origins) {
+  const fields = [];
+  for (const entry of origins) {
+    const property = String(entry.target ?? "").match(/^[A-Za-z_$][\w$]*\.([A-Za-z_$][\w$]*)$/)?.[1];
+    if (property) {
+      fields.push({
+        object:entry.dependencyVariable,
+        field:property,
+        kind:entry.kind,
+        structure:entry.structure
+      });
+    }
+    for (const item of entry.structure?.objectFields ?? []) {
+      fields.push({
+        object:entry.dependencyVariable,
+        field:item.field,
+        kind:"object-field",
+        structure:item.structure
+      });
+    }
+  }
+  const seen = new Set();
+  return fields.filter((item) => {
+    const key = JSON.stringify([item.object,item.field,item.kind,item.structure]);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 80);
+}
+
 export function traceLoginStructure({ source = "", endpointIndex = -1, payloadVariable = null } = {}) {
   const text = String(source ?? "");
   const functionInfo = endpointIndex >= 0 ? findContainingFunction(text, endpointIndex) : null;
+  const dependencies = tracePayloadDependencies(text, functionInfo, payloadVariable);
   return {
     functionName:functionInfo?.name ?? null,
     functionParams:functionInfo?.params ?? [],
@@ -276,7 +390,10 @@ export function traceLoginStructure({ source = "", endpointIndex = -1, payloadVa
       scope:functionInfo?.name ? "function:" + functionInfo.name : entry.scope
     })),
     payloadOrigins:collectPayloadOrigins(text, payloadVariable),
-    aliases:collectAliases(text, payloadVariable)
+    aliases:collectAliases(text, payloadVariable),
+    dependencyVariables:dependencies.variables,
+    dependencyOrigins:dependencies.origins,
+    dependencyFields:dependencyFields(dependencies.origins)
   };
 }
 
