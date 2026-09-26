@@ -666,7 +666,8 @@ async function runAuthSourceProbe() {
       LOCAL_BRIDGE_UNREACHABLE:"LOCAL_BRIDGE_UNREACHABLE — server local không còn phản hồi.",
       LOCAL_BRIDGE_HEALTH_FAILED:"LOCAL_BRIDGE_HEALTH_FAILED — port hiện tại không phải NC03 Control Center.",
       MALFORMED_LOCAL_RESPONSE:"MALFORMED_LOCAL_RESPONSE — response local sai contract.",
-      AUTH_SOURCE_PROBE_FAILED:"AUTH_SOURCE_PROBE_FAILED — probe phía server gặp lỗi."
+      AUTH_SOURCE_PROBE_FAILED:"AUTH_SOURCE_PROBE_FAILED — probe phía server gặp lỗi.",
+      METHOD_NOT_ALLOWED:"METHOD_NOT_ALLOWED — frontend và Local Bridge đang lệch phiên bản hoặc đang mở nhầm runtime. Tải lại sau khi runtime được cập nhật."
     };
     state.authSourceError = labels[code] || code;
   } finally {
@@ -940,7 +941,11 @@ function bind() {
   });
 }
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js")
+    .then((registration) => registration.update())
+    .catch(() => {});
+}
 await ensureDemo();
 if (!state.demoMode) await refreshAll();
 else page();
