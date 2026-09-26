@@ -8,12 +8,26 @@ import { buildAuthSourceEvidence } from "../src/modem/AuthSourceDiscovery.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
-const root = existsSync(join(distRoot, "index.html")) ? distRoot : sourceRoot;
+const packagePath = join(sourceRoot, "package.json");
+const sourceContractPath = join(sourceRoot, "control", "application-management.contract.json");
+const sourceVersion = JSON.parse(readFileSync(packagePath, "utf8")).version;
+const distContractPath = join(distRoot, "control", "application-management.contract.json");
+
+function distVersionMatchesSource() {
+  if (!existsSync(join(distRoot, "index.html")) || !existsSync(distContractPath)) return false;
+  try {
+    const distContract = JSON.parse(readFileSync(distContractPath, "utf8"));
+    return distContract?.application?.version === sourceVersion;
+  } catch {
+    return false;
+  }
+}
+
+const usingDist = distVersionMatchesSource();
+const root = usingDist ? distRoot : sourceRoot;
 const host = process.env.NC03_HOST || "127.0.0.1";
 const port = Number(process.env.NC03_PORT || 3006);
-const contractPath = existsSync(join(root, "control", "application-management.contract.json"))
-  ? join(root, "control", "application-management.contract.json")
-  : join(sourceRoot, "control", "application-management.contract.json");
+const contractPath = usingDist ? distContractPath : sourceContractPath;
 
 const mime = new Map([
   [".html","text/html; charset=utf-8"],
@@ -246,6 +260,8 @@ const server = createServer(async (req, res) => {
       applicationId:"nc03-modem",
       mode:"local",
       port,
+      version:sourceVersion,
+      assetRoot:usingDist ? "dist" : "source",
       contractEndpoint:"/api/application-management/contract"
     }, headOnly);
     return;
@@ -284,7 +300,9 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(port, host, () => {
-  process.stdout.write(`NC03 Control Center local runtime: http://${host}:${port}\n`);
+  const rootLabel = usingDist ? "dist" : "source";
+  process.stdout.write(`NC03 Control Center v${sourceVersion} local runtime: http://${host}:${port} [${rootLabel}]\n`);
+  if (!usingDist && existsSync(join(distRoot, "index.html"))) process.stdout.write("NC03 notice: stale dist detected; serving current source instead. Run npm run build to refresh dist.\n");
 });
 
 function shutdown() {
