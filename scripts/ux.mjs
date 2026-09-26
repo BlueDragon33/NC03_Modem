@@ -33,3 +33,6 @@ assert.ok(css.includes(".doctor-checks"), "Connection Doctor responsive layout i
 assert.ok(app.includes("AUTH SOURCE PROBE"), "Developer Lab must expose AUTH Source Probe.");
 assert.ok(app.includes("runAuthSourceProbe"), "AUTH Source Probe action is required.");
 assert.ok(css.includes(".source-evidence-grid"), "AUTH source evidence must have responsive layout.");
+
+assert.ok(app.indexOf("DEVELOPER TOOLS") < app.indexOf("MODEM CONNECTION"), "Developer tools must be prominent near the top of Settings.");
+assert.ok(app.includes("Bật Developer Mode để mở Lab"), "HAR Lab entry must remain visible even before Developer Mode is enabled.");
