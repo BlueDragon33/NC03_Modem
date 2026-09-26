@@ -255,6 +255,90 @@ function authTransforms(calls = []) {
     }));
 }
 
+
+function expressionSkeleton(expression) {
+  const text = String(expression ?? "");
+  let out = "";
+  let quote = null;
+  let escaped = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (quote) {
+      if (ch === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (ch === quote) {
+        quote = null;
+        out += "<string>";
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if (/\d/.test(ch)) {
+      out += "<number>";
+      while (i + 1 < text.length && /[\d.]/.test(text[i + 1])) i += 1;
+      continue;
+    }
+    out += ch;
+  }
+  return out.replace(/\s+/g, " ").trim().slice(0, 500);
+}
+
+function statementBounds(text, index) {
+  let start = index;
+  let end = index;
+  while (start > 0 && !/[;\n{}]/.test(text[start - 1])) start -= 1;
+  while (end < text.length && !/[;\n{}]/.test(text[end])) end += 1;
+  return { start, end };
+}
+
+function collectFieldReferenceFlow(text, objectName, fieldName) {
+  const escapedObject = escapeRegex(objectName);
+  const escapedField = escapeRegex(fieldName);
+  const refRe = new RegExp("\\b" + escapedObject + "(?:\\." + escapedField + "|\\[[\"']" + escapedField + "[\"']\\])\\b", "g");
+  const entries = [];
+  for (const match of text.matchAll(refRe)) {
+    const bounds = statementBounds(text, match.index ?? 0);
+    const statement = text.slice(bounds.start, bounds.end).trim();
+    if (!statement) continue;
+
+    let role = "reference";
+    const before = statement.slice(0, Math.max(0, (match.index ?? 0) - bounds.start));
+    const after = statement.slice(Math.max(0, (match.index ?? 0) - bounds.start) + match[0].length);
+    if (/^\s*(?:\+=|=)/.test(after)) role = "assignment-target";
+    else if (/\breturn\s*$/.test(before)) role = "return-value";
+    else if (/\([^)]*$/.test(before)) role = "call-argument";
+    else if (/=\s*$/.test(before)) role = "assignment-source";
+
+    entries.push({
+      scope:scopeLabel(text, match.index ?? 0),
+      role,
+      skeleton:expressionSkeleton(statement),
+      calls:collectCallTree(statement).map((item) => ({
+        name:item.name,
+        depth:item.depth,
+        args:item.args
+      })).slice(0, 20)
+    });
+  }
+
+  const seen = new Set();
+  return entries.filter((entry) => {
+    const key = JSON.stringify(entry);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 40);
+}
+
 function expressionStructure(expression) {
   const value = String(expression ?? "").trim();
   const identifierSource = stripStringLiterals(value);
@@ -283,6 +367,7 @@ function expressionStructure(expression) {
     objectKeys:objectKeys(value),
     calls:uniq(calls.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item)),
     authTransforms:authTransforms(calls),
+    skeleton:expressionSkeleton(value),
     authTokens:uniq(authTokens),
     identifiers:uniq(identifiers).slice(0, 20)
   };
@@ -476,6 +561,10 @@ export function traceLoginStructure({ source = "", endpointIndex = -1, payloadVa
   const text = String(source ?? "");
   const functionInfo = endpointIndex >= 0 ? findContainingFunction(text, endpointIndex) : null;
   const dependencies = tracePayloadDependencies(text, functionInfo, payloadVariable);
+  const fields = dependencyFields(dependencies.origins).map((field) => ({
+    ...field,
+    referenceFlow:collectFieldReferenceFlow(text, field.object, field.field)
+  }));
   return {
     functionName:functionInfo?.name ?? null,
     functionParams:functionInfo?.params ?? [],
@@ -487,7 +576,7 @@ export function traceLoginStructure({ source = "", endpointIndex = -1, payloadVa
     aliases:collectAliases(text, payloadVariable),
     dependencyVariables:dependencies.variables,
     dependencyOrigins:dependencies.origins,
-    dependencyFields:dependencyFields(dependencies.origins)
+    dependencyFields:fields
   };
 }
 
