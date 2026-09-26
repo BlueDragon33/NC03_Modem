@@ -446,9 +446,15 @@ function renderDiscovery() {
           <dl>
             <div><dt>Function</dt><dd>${esc(call.functionName ?? "—")}</dd></div>
             <div><dt>Transport</dt><dd>${esc(call.transportHelper ?? "—")}</dd></div>
-            <div><dt>Payload</dt><dd>${esc(call.payloadVariable ?? "—")}</dd></div>
+            <div><dt>Payload</dt><dd>${esc(call.payloadVariable ?? call.payloadVariables?.join(", ") ?? "—")}</dd></div>
           </dl>
-          <code>${call.fields?.length ? esc(call.fields.map((field)=>`${field.field} ← ${field.transform}${field.transformArgs?.length ? `(${field.transformArgs.join(", ")})` : ""}`).join("\n")) : "Chưa tách được field tại call-site"}</code>
+          <div class="call-shape-block"><span>Argument shape</span><code>${esc(call.argumentShapes?.join("\n") || "chưa tách được")}</code></div>
+          <div class="call-shape-block"><span>Object keys</span><code>${esc([
+            ...(call.directObjectKeys ?? []),
+            ...Object.entries(call.objectKeys ?? {}).flatMap(([name,keys])=>keys.map((key)=>`${name}.${key}`))
+          ].join("\n") || "chưa thấy")}</code></div>
+          <div class="call-shape-block"><span>Field / transform</span><code>${call.fields?.length ? esc(call.fields.map((field)=>`${field.field} ← ${field.transform}${field.transformArgs?.length ? `(${field.transformArgs.join(", ")})` : ""}`).join("\n")) : "chưa tách được assignment"}</code></div>
+          <div class="call-shape-block"><span>Transforms quanh call</span><code>${esc(call.transforms?.map((item)=>`${item.name}(${item.args?.join(", ") ?? ""})`).join("\n") || "chưa thấy")}</code></div>
           <small>Response signals: ${esc(call.responseSignals?.join(", ") || "chưa thấy")}</small>
         </article>`).join("") : `<div class="empty">Chưa có login call-site đủ rõ.</div>`}
       </div>

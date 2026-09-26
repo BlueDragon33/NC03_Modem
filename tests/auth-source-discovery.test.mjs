@@ -46,7 +46,7 @@ test("deep login source separates submit endpoints from status/logout endpoints"
   assert.deepEqual(report.authEndpoints.sort(), ["/action/logout","/goform/get_login_info","/goform/login"].sort());
   assert.deepEqual(report.loginSubmitEndpoints, ["/goform/login"]);
   assert.ok(report.candidateRequestFields.includes("password"));
-  assert.equal(report.status, "LOGIN_CALLSITE_CANDIDATE_READY");
+  assert.equal(report.status, "LOGIN_CALL_SHAPE_CANDIDATE_READY");
   assert.equal(report.readyForRequestShapeMapping, true);
 });
 
@@ -84,6 +84,40 @@ test("get_login_limit stays passive while /goform/login gets its own callsite ma
   assert.deepEqual(report.loginCallsites[0].fields[0].transformArgs, ["loginKey","password"]);
   assert.ok(report.loginCallsites[0].responseSignals.includes("g_resultSuccess"));
   assert.ok(report.loginCallsites[0].responseSignals.includes("g_loginPasswordError"));
-  assert.equal(report.status, "LOGIN_CALLSITE_CANDIDATE_READY");
+  assert.equal(report.status, "LOGIN_CALL_SHAPE_CANDIDATE_READY");
   assert.equal(report.readyForRequestShapeMapping, true);
+});
+
+
+test("login call shape survives object-literal payloads and alternate helper argument order", () => {
+  const source = [
+    'var loginKey="0123456789";',
+    'function doSubmit(){',
+    '  saveAjaxJsonData({',
+    '    password: hex_hmac_md5(loginKey,password),',
+    '    remember: rememberFlag',
+    '  }, "/goform/login", function(obj){',
+    '    if(obj.retcode===g_resultSuccess){}',
+    '  });',
+    '}'
+  ].join("\n");
+  const report = buildAuthSourceEvidence([{path:"/js/login.js",source}]);
+  assert.deepEqual(report.loginSubmitEndpoints, ["/goform/login"]);
+  assert.equal(report.loginCallsites.length, 1);
+  assert.equal(report.loginCallsites[0].transportHelper, "saveAjaxJsonData");
+  assert.ok(report.loginCallsites[0].argumentShapes.some((shape) => shape.startsWith("object:{")));
+  assert.ok(report.loginCallsites[0].directObjectKeys.includes("password"));
+  assert.ok(report.loginCallsites[0].transforms.some((item) => item.name === "hex_hmac_md5"));
+  assert.equal(report.readyForRequestShapeMapping, true);
+  assert.equal(report.status, "LOGIN_CALL_SHAPE_CANDIDATE_READY");
+});
+
+test("call shape never returns raw literal values", () => {
+  const secret = "SUPER_SECRET_PASSWORD";
+  const report = buildAuthSourceEvidence([{
+    path:"/js/login.js",
+    source:'saveAjaxJsonData("/goform/login",{password:"' + secret + '"},function(obj){if(obj.retcode===0){}});'
+  }]);
+  assert.doesNotMatch(JSON.stringify(report), new RegExp(secret));
+  assert.equal(report.safety.sourceCodeReturned, false);
 });

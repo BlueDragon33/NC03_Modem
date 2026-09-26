@@ -314,3 +314,24 @@ Implemented:
 
 Current gate:
 - run the probe once more and inspect the `/goform/login` callsite. If field transform + success/failure symbols are coherent, the next phase can implement a candidate `NC03Auth.login()` behind an explicit verification gate.
+
+
+## Phase 2S — LOGIN CALL-SHAPE TRACING
+
+Status: **IMPLEMENTED**
+
+Live observation from v0.7.12:
+- `/goform/login` is isolated as the only login-submit endpoint;
+- `/common/login.html` and `/js/login.js` both return HTTP 200;
+- the previous parser still could not confirm the request shape, indicating the real firmware builds the login call differently from the simple fixture.
+
+Implemented:
+- containing-call discovery around `/goform/login`;
+- top-level argument parsing;
+- sanitized argument-shape reporting;
+- object-literal key extraction;
+- nearby payload-object key tracing;
+- transform tracing for HMAC-MD5/MD5;
+- callback response-symbol extraction remains available.
+
+No raw source or literal values are returned to the UI.

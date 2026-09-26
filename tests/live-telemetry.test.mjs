@@ -200,3 +200,11 @@ test("AUTH source UI exposes endpoint-specific login callsite mapping", () => {
   assert.match(app, /payloadVariable/);
   assert.match(app, /loginCallsites/);
 });
+
+test("AUTH source UI exposes sanitized argument and object shapes for real login calls", () => {
+  assert.match(app, /Argument shape/);
+  assert.match(app, /Object keys/);
+  assert.match(app, /Transforms quanh call/);
+  assert.match(app, /argumentShapes/);
+  assert.match(app, /directObjectKeys/);
+});

@@ -45,3 +45,7 @@ assert.ok(css.includes(".probe-diagnostics"), "AUTH probe diagnostics need a rea
 
 assert.ok(app.includes("callsite-grid"), "AUTH lab must render endpoint-specific callsite evidence.");
 assert.ok(css.includes(".callsite-grid"), "Login callsite evidence needs responsive layout.");
+
+assert.ok(app.includes("Argument shape"), "Login call evidence must expose sanitized argument shape.");
+assert.ok(app.includes("Transforms quanh call"), "Login call evidence must expose codec transforms.");
+assert.ok(css.includes(".call-shape-block"), "Call-shape evidence needs readable structure.");

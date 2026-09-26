@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.13 — Login call-shape tracing
+
+- Extended `/goform/login` analysis beyond simple `payload.field = value` assignments.
+- Detects the containing request call even when the endpoint is not the first argument.
+- Splits top-level call arguments and reports only sanitized argument shapes.
+- Detects object-literal keys, nearby object variables and `JSON.stringify(variable)` payloads.
+- Traces nearby `hex_hmac_md5` / MD5 transforms without returning raw source or literal values.
+- AUTH Lab now shows argument shape, object keys, field transforms and callback response signals for the login call.
+- Keeps `NC03Auth.login()` fail-closed until the structural result is confirmed.
+
+
 ## 0.7.12 — Login callsite mapping
 
 - Isolated `/goform/login` from passive `/goform/get_login_limit`.

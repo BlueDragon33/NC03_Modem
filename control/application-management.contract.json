@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.12"
+    "version": "0.7.13"
   },
   "capabilities": {
     "webLaunch": true,
@@ -41,7 +41,10 @@
     "authProbeDiagnostics": true,
     "loginCallsiteMapping": true,
     "loginPayloadFieldIsolation": true,
-    "loginResponseSignalExtraction": true
+    "loginResponseSignalExtraction": true,
+    "loginCallArgumentShape": true,
+    "loginObjectKeyDiscovery": true,
+    "loginTransformTrace": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -91,7 +94,8 @@
     "passiveAuthEndpointsNeverCountAsLoginSubmit": true,
     "authProbeDiagnosticsNoRawSource": true,
     "authProbeParallelFetch": true,
-    "getLoginLimitIsPassiveAuthEndpoint": true
+    "getLoginLimitIsPassiveAuthEndpoint": true,
+    "loginCallShapeNoLiteralValues": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
