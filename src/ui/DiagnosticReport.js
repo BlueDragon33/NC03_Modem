@@ -12,6 +12,34 @@ function onOff(value) {
   return text(value);
 }
 
+function humanSignal(value) {
+  const raw = String(value ?? "").toLowerCase();
+  if (raw === "great") return "Rất tốt";
+  if (raw === "good") return "Tốt";
+  if (raw === "normal" || raw === "fair") return "Trung bình";
+  if (raw === "poor" || raw === "weak") return "Yếu";
+  return text(value);
+}
+
+function humanNetwork(value) {
+  const raw = String(value ?? "").toLowerCase();
+  if (raw === "nsa") return "5G NSA";
+  if (raw === "sa") return "5G SA";
+  if (raw === "lte") return "4G LTE";
+  return raw ? raw.toUpperCase() : "—";
+}
+
+function safePercent(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 && number <= 100 ? `${number}%` : "—";
+}
+
+function safeCount(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? Math.trunc(number) : "—";
+}
+
 function formatBytes(value) {
   const bytes = Number(value);
   if (!Number.isFinite(bytes) || bytes < 0) return "—";
@@ -36,6 +64,18 @@ function sectionRows(rows) {
   return rows.map(([label,value]) => `<div class="row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
 }
 
+function freshnessLabel(value) {
+  if (value === "LIVE READ") return "Dữ liệu trực tiếp";
+  if (value === "LAST GOOD") return "Dữ liệu gần nhất";
+  return "Không có dữ liệu";
+}
+
+function freshnessTone(value) {
+  if (value === "LIVE READ") return "ok";
+  if (value === "LAST GOOD") return "warn";
+  return "muted";
+}
+
 export function buildDiagnosticReport({
   baseUrl,
   live,
@@ -56,31 +96,33 @@ export function buildDiagnosticReport({
   const firmware = details?.firmware ?? {};
   const inventory = details?.ruleInventory ?? {};
   const dataUsage = details?.dataUsage ?? {};
+  const liveAvailable = Boolean(live);
+  const detailsAvailable = Boolean(details);
 
   return Object.freeze({
     schema: REPORT_SCHEMA,
     generatedAt,
     source: Object.freeze({
       modemOrigin: text(baseUrl),
-      liveFreshness: live ? (liveStale ? "LAST GOOD" : "LIVE READ") : "UNAVAILABLE",
-      detailsFreshness: details ? (detailsStale ? "LAST GOOD" : "LIVE READ") : "UNAVAILABLE",
+      liveFreshness: liveAvailable ? (liveStale ? "LAST GOOD" : "LIVE READ") : "UNAVAILABLE",
+      detailsFreshness: detailsAvailable ? (detailsStale ? "LAST GOOD" : "LIVE READ") : "UNAVAILABLE",
       lastLiveSuccessAt,
       lastDetailsSuccessAt
     }),
     overview: Object.freeze({
-      connected: liveStale ? "Đang kết nối lại" : status.connected ? "Đã kết nối" : "Chưa kết nối",
+      connected: !liveAvailable ? "Không có dữ liệu" : liveStale ? "Đang kết nối lại" : status.connected ? "Đã kết nối" : "Chưa kết nối",
       internetMode: text(status.internetMode),
-      network: text(signal.systemMode ?? status.network),
+      network: humanNetwork(signal.systemMode ?? status.network),
       carrier: text(status.carrier ?? signal.carrier),
-      signal: text(signal.level ?? status.signalLevel),
+      signal: humanSignal(signal.level ?? status.signalLevel),
       simStatus: text(status.simStatus),
-      battery: battery.percentage === null || battery.percentage === undefined ? "—" : `${battery.percentage}%`,
-      charging: battery.charging ? "Đang sạc" : "Không sạc"
+      battery: safePercent(battery.percentage),
+      charging: !liveAvailable || battery.charging === null || battery.charging === undefined ? "—" : battery.charging ? "Đang sạc" : "Không sạc"
     }),
     wifi: Object.freeze({
       enabled: wifi.enabled === true ? "Bật" : wifi.enabled === false ? "Tắt" : "—",
-      accessPointCount: Array.isArray(wifi.aps) ? wifi.aps.length : 0,
-      connectedClientCount: Array.isArray(details?.clients) ? details.clients.length : 0,
+      accessPointCount: detailsAvailable && Array.isArray(wifi.aps) ? wifi.aps.length : "—",
+      connectedClientCount: detailsAvailable && Array.isArray(details?.clients) ? details.clients.length : "—",
       workBand: text(wifi.workBand)
     }),
     usage: Object.freeze({
@@ -105,10 +147,10 @@ export function buildDiagnosticReport({
       dmz: onOff(security.rt_dmz_switch)
     }),
     rules: Object.freeze({
-      dhcpReservations: Number.isFinite(Number(inventory.dhcpReservations)) ? Number(inventory.dhcpReservations) : 0,
-      portForwardingRules: Number.isFinite(Number(inventory.portForwardingRules)) ? Number(inventory.portForwardingRules) : 0,
-      ipv4PacketFilterRules: Number.isFinite(Number(inventory.ipv4PacketFilterRules)) ? Number(inventory.ipv4PacketFilterRules) : 0,
-      ipv6PacketFilterRules: Number.isFinite(Number(inventory.ipv6PacketFilterRules)) ? Number(inventory.ipv6PacketFilterRules) : 0
+      dhcpReservations: safeCount(inventory.dhcpReservations),
+      portForwardingRules: safeCount(inventory.portForwardingRules),
+      ipv4PacketFilterRules: safeCount(inventory.ipv4PacketFilterRules),
+      ipv6PacketFilterRules: safeCount(inventory.ipv6PacketFilterRules)
     }),
     firmware: Object.freeze({
       model: text(firmware.model),
@@ -119,6 +161,7 @@ export function buildDiagnosticReport({
     }),
     limitations: Object.freeze([
       "Báo cáo chỉ dùng dữ liệu read-only đã xác minh.",
+      "Dấu “—” nghĩa là modem/snapshot chưa cung cấp dữ liệu; không được diễn giải thành giá trị 0 hoặc trạng thái Tắt.",
       "Không chứa mật khẩu Wi-Fi, credential modem, token/session, IMEI/serial, ICCID/EID/eSIM profile hoặc APN profile.",
       "RSRP/RSRQ/SINR không được hiển thị vì HAR hiện tại chưa cung cấp các chỉ số đó.",
       "AUTH và thao tác ghi vẫn khóa cho tới khi có capture thật và WRITE VERIFIED."
@@ -131,14 +174,26 @@ export function renderDiagnosticReportMarkup(report) {
   const generatedLabel = Number.isNaN(generated.getTime()) ? text(report.generatedAt) : generated.toLocaleString("vi-VN");
   const liveAt = report.source.lastLiveSuccessAt ? new Date(report.source.lastLiveSuccessAt).toLocaleString("vi-VN") : "—";
   const detailsAt = report.source.lastDetailsSuccessAt ? new Date(report.source.lastDetailsSuccessAt).toLocaleString("vi-VN") : "—";
-  const statusTone = report.source.liveFreshness === "LIVE READ" ? "ok" : report.source.liveFreshness === "LAST GOOD" ? "warn" : "muted";
+  const liveTone = freshnessTone(report.source.liveFreshness);
+  const detailsTone = freshnessTone(report.source.detailsFreshness);
+  const qualityTone = report.source.liveFreshness === "LIVE READ" && report.source.detailsFreshness === "LIVE READ"
+    ? "ok"
+    : report.source.liveFreshness === "UNAVAILABLE" && report.source.detailsFreshness === "UNAVAILABLE"
+      ? "muted"
+      : "warn";
 
-  return `<header class="head"><div><span class="eyebrow">NC03 CONTROL CENTER · SAFE DIAGNOSTIC</span><h1>Báo cáo chẩn đoán modem</h1><p>Snapshot read-only, loại bỏ dữ liệu nhạy cảm.</p></div><span class="badge ${statusTone}">${escapeHtml(report.source.liveFreshness)}</span></header>
+  return `<header class="head"><div><span class="eyebrow">NC03 CONTROL CENTER · SAFE DIAGNOSTIC</span><h1>Báo cáo chẩn đoán NC03</h1><p>Snapshot read-only · có đánh dấu độ mới dữ liệu · loại bỏ dữ liệu nhạy cảm.</p></div><span class="badge ${liveTone}">${escapeHtml(freshnessLabel(report.source.liveFreshness))}</span></header>
+<section class="quality ${qualityTone}">
+<div><strong>Độ tin cậy dữ liệu</strong><span>Live: ${escapeHtml(freshnessLabel(report.source.liveFreshness))} · Cấu hình: ${escapeHtml(freshnessLabel(report.source.detailsFreshness))}</span></div>
+<div class="quality-badges"><span class="badge ${liveTone}">LIVE</span><span class="badge ${detailsTone}">ADVANCED</span></div>
+</section>
 <section class="meta">
 <div><span>Thời điểm tạo</span><strong>${escapeHtml(generatedLabel)}</strong></div>
 <div><span>Địa chỉ modem</span><strong>${escapeHtml(report.source.modemOrigin)}</strong></div>
 <div><span>Live gần nhất</span><strong>${escapeHtml(liveAt)}</strong></div>
 <div><span>Advanced gần nhất</span><strong>${escapeHtml(detailsAt)}</strong></div>
+<div><span>Trạng thái Live</span><strong>${escapeHtml(freshnessLabel(report.source.liveFreshness))}</strong></div>
+<div><span>Trạng thái cấu hình</span><strong>${escapeHtml(freshnessLabel(report.source.detailsFreshness))}</strong></div>
 </section>
 <section class="section"><h2>01 · Tổng quan kết nối</h2><div class="grid">${sectionRows([
 ["Kết nối",report.overview.connected],["Mạng",report.overview.network],["Nhà mạng",report.overview.carrier],["Chất lượng sóng",report.overview.signal],["Pin",report.overview.battery],["Trạng thái sạc",report.overview.charging],["SIM",report.overview.simStatus],["Internet mode",report.overview.internetMode]

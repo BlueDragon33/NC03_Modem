@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v9-qa-report";
+const CACHE = "nc03-control-center-v10-report-quality";
 const ASSETS = [
   "./",
   "./index.html",

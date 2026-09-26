@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.1 — QA data quality + professional reporting
+
+- Fixed a reporting logic bug where unavailable AP/client/rule counts could be rendered as zero.
+- Reports now distinguish missing data (`—`) from real zero values and from disabled/off states.
+- Added independent Live and Advanced freshness/status presentation plus last-success timestamps.
+- Localized radio values such as NSA/LTE and qualitative signal levels for human-readable reports.
+- Added defensive battery percentage validation inside the report layer.
+- Improved A4 print fidelity with exact print colors and a denser three-column metadata block.
+- Expanded report regression tests for missing-data truthfulness, stale data, XSS/privacy and printable layout.
+
 ## 0.7.0 — Professional QA + diagnostic reporting
 
 - Added a professional A4 diagnostic report with Print / Save PDF support.
