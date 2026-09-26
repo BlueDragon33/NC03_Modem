@@ -156,12 +156,32 @@ export const NETWORK_SETTINGS_KEYS = Object.freeze([
   "mnet_com_mode",
   "mnet_uq_state",
   "dialup_roamswitch",
+  "dialup_dataswitch",
   "mnet_acqorder",
   "mnet_scan_mode",
   "mnet_nr5g_config_mode",
   "mnet_band",
   "mnet_band_lock_type",
   "mnet_band_auto_unlock_switch"
+]);
+
+export const MOBILE_SERVICE_KEYS = Object.freeze([
+  "dialup_dataswitch",
+  "mnet_sim_slot",
+  "mnet_sim_status",
+  "mnet_sim_pin_protect",
+  "mnet_sim_pin_rtimes",
+  "mnet_uc_switch_enable",
+  "mnet_uc_switch_notification",
+  "mnet_uc_switch_nosrv_time",
+  "mnet_uc_switch_duration"
+]);
+
+export const RULE_INVENTORY_KEYS = Object.freeze([
+  ...Array.from({ length: 32 }, (_, index) => `rt_ip_mac_bind_${index}`),
+  ...Array.from({ length: 32 }, (_, index) => `rt_port_forward_${index}`),
+  ...Array.from({ length: 50 }, (_, index) => `rt_obj_value_info_v4_lan_${index}`),
+  ...Array.from({ length: 50 }, (_, index) => `rt_obj_value_info_v6_lan_${index}`)
 ]);
 
 export const CONNECTIVITY_KEYS = Object.freeze([
