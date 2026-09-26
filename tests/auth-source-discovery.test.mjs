@@ -46,7 +46,7 @@ test("deep login source separates submit endpoints from status/logout endpoints"
   assert.deepEqual(report.authEndpoints.sort(), ["/action/logout","/goform/get_login_info","/goform/login"].sort());
   assert.deepEqual(report.loginSubmitEndpoints, ["/goform/login"]);
   assert.ok(report.candidateRequestFields.includes("password"));
-  assert.equal(report.status, "LOGIN_SOURCE_CANDIDATE_READY");
+  assert.equal(report.status, "LOGIN_CALLSITE_CANDIDATE_READY");
   assert.equal(report.readyForRequestShapeMapping, true);
 });
 
