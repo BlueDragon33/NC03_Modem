@@ -482,10 +482,16 @@ function renderSettings() {
   const firmware = d.firmware ?? {};
   const mobileService = d.mobileService ?? {};
   const ruleInventory = d.ruleInventory ?? {};
-  const developerPanel = state.developerMode ? `
-    <section class="panel"><div class="panel-head"><div><span>ADVANCED DEVELOPER MODE</span><h2>Discovery & Mock</h2></div>${statusPill("LOCAL TOOLING","warn")}</div>
-      <div class="settings-actions"><button id="openDiscovery">Mở HAR Evidence Lab</button><label class="demo-switch"><input id="demoToggle" type="checkbox" ${state.demoMode ? "checked" : ""}/><span>Mock Mode · DEMO DATA</span></label></div>
-    </section>` : "";
+  const developerPanel = `
+    <section class="panel developer-tools-panel">
+      <div class="panel-head"><div><span>DEVELOPER TOOLS</span><h2>HAR Evidence Lab</h2></div>${statusPill(state.developerMode ? "ENABLED" : "OFF", state.developerMode ? "warn" : "muted")}</div>
+      <p class="body-copy">Công cụ phân tích HAR, AUTH Source Probe và Mock Mode. Không bật API ghi.</p>
+      <label class="developer-toggle"><input id="developerToggle" type="checkbox" ${state.developerMode ? "checked" : ""}/><span><strong>Bật Advanced Developer Mode</strong><small>Cho phép mở HAR Evidence Lab và các công cụ reverse-engineering local.</small></span></label>
+      <div class="settings-actions">
+        <button id="openDiscovery" ${state.developerMode ? "" : "disabled"}>${state.developerMode ? "Mở HAR Evidence Lab" : "Bật Developer Mode để mở Lab"}</button>
+        ${state.developerMode ? `<label class="demo-switch"><input id="demoToggle" type="checkbox" ${state.demoMode ? "checked" : ""}/><span>Mock Mode · DEMO DATA</span></label>` : ""}
+      </div>
+    </section>`;
 
   const advanced = state.uiMode === UI_MODE.ADVANCED ? `
   <section class="panel"><div class="panel-head"><div><span>HAR2 · MOBILE SERVICE</span><h2>SIM / dữ liệu / Cloud SIM</h2></div>${statusPill("READ ONLY")}</div>
@@ -514,6 +520,7 @@ function renderSettings() {
   <section class="panel"><div class="panel-head"><div><span>INTERFACE MODE</span><h2>Chế độ giao diện</h2></div>${statusPill(state.uiMode === UI_MODE.ADVANCED ? "ADVANCED" : "BASIC")}</div>
     <div class="mode-selector"><button data-ui-mode="basic" data-active="${state.uiMode === UI_MODE.BASIC}"><strong>Basic Mode</strong><span>Pin · Internet · Sóng · Wi-Fi · Devices</span></button><button data-ui-mode="advanced" data-active="${state.uiMode === UI_MODE.ADVANCED}"><strong>Advanced Mode</strong><span>Network · USB · Bridge · Security · NTP · Power · FOTA</span></button></div>
   </section>
+  ${developerPanel}
   <section class="panel"><div class="panel-head"><div><span>MODEM CONNECTION</span><h2>Địa chỉ NC03</h2></div>${statusPill("LOCAL ONLY")}</div>
     <div class="form-grid"><label>Địa chỉ modem<input id="baseUrl" value="${esc(state.baseUrl)}" inputmode="url" placeholder="192.168.0.1" /></label><label>Tự làm mới<strong>10 giây/lần</strong></label></div>
     ${state.addressError ? `<div class="inline-error">${esc(state.addressError)}</div>` : ""}
@@ -532,9 +539,6 @@ function renderSettings() {
     </div>
     <div class="settings-actions"><button id="openDiagnosticReport" ${state.demoMode || state.live || state.details ? "" : "disabled"}>Mở báo cáo · In / Lưu PDF</button></div>
     <div class="advanced-note"><strong>Privacy-first</strong><span>Chỉ xuất trường đã chọn rõ ràng. Không spread toàn bộ payload modem vào báo cáo.</span></div>
-  </section>
-  <section class="panel"><div class="panel-head"><div><span>DEVELOPER</span><h2>Advanced Developer Mode</h2></div>${statusPill(state.developerMode ? "ENABLED" : "OFF")}</div>
-    <label class="developer-toggle"><input id="developerToggle" type="checkbox" ${state.developerMode ? "checked" : ""}/><span><strong>Bật công cụ reverse-engineering</strong><small>Hiện API Discovery và Mock Mode. Không bật API ghi.</small></span></label>
   </section>
   ${developerPanel}`;
 }
