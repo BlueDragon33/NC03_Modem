@@ -410,3 +410,27 @@ Next gate:
 - run AUTH Source Probe again on firmware 8.00.42;
 - inspect **Request object dependency trace** and **Login object fields / transforms**;
 - when the password field + HMAC inputs and success/failure response semantics are coherent, implement the first real `NC03Auth.login()` candidate and then unlock the password input behind the verified gate.
+
+
+## Phase 2W — NESTED LOGIN TRANSFORM TRACE
+
+Status: **IMPLEMENTED**
+
+Live evidence from v0.7.17:
+- request object fields include `_obj.username` and `_obj.password`;
+- username already exposes `hex_hmac_md5(loginKey, <literal>)`;
+- password currently appears as an inner `val()` call, which indicates the previous flat parser is losing an outer transform;
+- login response success is observed as `0 → g_resultSuccess`;
+- response code `13` is observed in the login branch but remains unmapped.
+
+Implemented:
+- balanced parenthesis call-tree parser;
+- nested call depth;
+- nested HMAC/MD5 transform extraction;
+- per-field Nested AUTH transform output;
+- literal values remain redacted.
+
+Next gate:
+- run AUTH Source Probe again;
+- confirm whether `_obj.password` is wrapped by `hex_hmac_md5(loginKey, ...val())`;
+- if confirmed, the request transform + success semantics are sufficient to build the first real login candidate while keeping unknown code 13 as a generic login failure.
