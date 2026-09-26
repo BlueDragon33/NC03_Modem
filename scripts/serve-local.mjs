@@ -6,6 +6,7 @@ import { normalizeModemBaseUrl } from "../src/modem/LocalBridgePolicy.js";
 import { buildConnectionDoctorReport } from "../src/modem/ConnectionDoctor.js";
 import { buildAuthSourceEvidence } from "../src/modem/AuthSourceDiscovery.js";
 import { NC03_RUNTIME_PROTOCOL } from "../src/runtime/RuntimeProtocol.js";
+import { performVerifiedLogin } from "../src/modem/server/NC03LoginRuntime.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
@@ -31,6 +32,7 @@ const host = process.env.NC03_HOST || "127.0.0.1";
 const port = Number(process.env.NC03_PORT || 3006);
 const contractPath = usingDist ? distContractPath : sourceContractPath;
 const DEFAULT_MODEM_BASE_URL = "http://192.168.0.1";
+const modemSessions = new Map();
 
 const mime = new Map([
   [".html","text/html; charset=utf-8"],
@@ -86,12 +88,37 @@ async function readJsonBody(req, maxBytes = 4096) {
   return raw ? JSON.parse(raw) : {};
 }
 
-function modemAdapter(baseUrl) {
-  const fetchImpl = (url, init = {}) => fetch(url, {
+function sessionKey(baseUrl) {
+  return new URL(baseUrl).origin;
+}
+
+function sessionToken(baseUrl) {
+  return modemSessions.get(sessionKey(baseUrl))?.csrfToken ?? null;
+}
+
+function saveSession(baseUrl, patch) {
+  const key = sessionKey(baseUrl);
+  const current = modemSessions.get(key) ?? {};
+  modemSessions.set(key, { ...current, ...patch, updatedAt:new Date().toISOString() });
+}
+
+async function sessionFetch(baseUrl, url, init = {}) {
+  const headers = new Headers(init.headers ?? {});
+  const token = sessionToken(baseUrl);
+  if (token && !headers.has("X-Csrf-Token")) headers.set("X-Csrf-Token", token);
+  const response = await fetch(url, {
     ...init,
-    redirect: "manual",
-    signal: AbortSignal.timeout(3500)
+    headers,
+    redirect:"manual",
+    signal:init.signal ?? AbortSignal.timeout(3500)
   });
+  const nextToken = response.headers.get("x-csrf-token");
+  if (nextToken) saveSession(baseUrl, { csrfToken:nextToken });
+  return response;
+}
+
+function modemAdapter(baseUrl) {
+  const fetchImpl = (url, init = {}) => sessionFetch(baseUrl, url, init);
   return new NC03Firmware80042Adapter({ baseUrl, fetchImpl });
 }
 
@@ -219,6 +246,64 @@ async function authSourceProbe(req, res) {
   }
 }
 
+async function collectLoginRuntimeSources(baseUrl) {
+  const required = ["/js/login.js", "/js/tools.js", "/js/encryption.js"];
+  const results = await Promise.all(required.map((path) => fetchStaticSource(baseUrl, path)));
+  const sources = results.map((item) => item.item).filter(Boolean);
+  if (sources.length !== required.length) throw new Error("AUTH_RUNTIME_SOURCE_MISSING");
+  return sources;
+}
+
+async function modemLogin(req, res) {
+  try {
+    const body = await readJsonBody(req, 16384);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl);
+    const username = String(body.username ?? "");
+    const password = String(body.password ?? "");
+    const sources = await collectLoginRuntimeSources(baseUrl);
+
+    const result = await performVerifiedLogin({
+      baseUrl,
+      username,
+      password,
+      sources,
+      fetchImpl:(url, init = {}) => fetch(url, {
+        ...init,
+        redirect:"manual",
+        signal:init.signal ?? AbortSignal.timeout(5000)
+      }),
+      onToken:(csrfToken) => saveSession(baseUrl, { csrfToken })
+    });
+
+    if (!result.authenticated) {
+      json(res, 401, {
+        ok:false,
+        code:"LOGIN_FAILED",
+        remainingTimes:result.remainingTimes
+      });
+      return;
+    }
+
+    saveSession(baseUrl, {
+      csrfToken:result.csrfToken,
+      authenticated:true,
+      loginUser:result.loginUser
+    });
+    json(res, 200, {
+      ok:true,
+      payload:{
+        authenticated:true,
+        loginUser:result.loginUser,
+        recipe:result.recipe
+      }
+    });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "AUTH_LOGIN_FAILED";
+    const safeCode = /^[A-Z0-9_]+$/.test(code) ? code : "AUTH_LOGIN_FAILED";
+    json(res, 502, { ok:false, code:safeCode });
+  }
+}
+
 async function modemDoctor(req, res) {
   try {
     const body = await readJsonBody(req);
@@ -298,6 +383,15 @@ const server = createServer(async (req, res) => {
 
   const headOnly = req.method === "HEAD";
   const pathname = new URL(req.url, "http://127.0.0.1").pathname;
+
+  if (pathname === "/api/nc03/login") {
+    if (req.method !== "POST") {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await modemLogin(req, res);
+    return;
+  }
 
   if (pathname === "/api/nc03/auth-source-probe") {
     if (!["GET","POST"].includes(req.method || "GET")) {
