@@ -381,11 +381,35 @@ export function buildAuthSourceEvidence(sources = []) {
   for (const item of numericAuthConstants) {
     if (observedSymbolSignals.has(item.name)) responseCodeMap[String(item.value)] = item.name;
   }
+  const passwordFieldEvidence = loginCallsites.flatMap((item) =>
+    (item.dependencyFields ?? [])
+      .filter((field) => /pass|passwd|password|pwd/i.test(field.field))
+      .map((field) => ({
+        sourcePath:item.sourcePath,
+        object:field.object,
+        field:field.field,
+        kind:field.kind,
+        skeleton:field.structure?.skeleton ?? "",
+        calls:field.structure?.calls ?? [],
+        authTransforms:field.structure?.authTransforms ?? [],
+        authTokens:field.structure?.authTokens ?? [],
+        referenceFlow:field.referenceFlow ?? []
+      }))
+  );
+  const passwordHmacConfirmed = passwordFieldEvidence.some((field) =>
+    field.authTransforms.some((item) => /^(?:hex_hmac_md5|hex_md5|md5)$/i.test(item.name))
+  );
+  const passwordInputCallObserved = passwordFieldEvidence.some((field) =>
+    field.calls.some((item) => /^(?:val|getValue|getInput)$/i.test(item.name))
+  );
+  const loginSuccessZeroObserved = responseCodeMap["0"] === "g_resultSuccess"
+    || (observedNumericSignals.has("0") && observedSymbolSignals.has("g_resultSuccess"));
   const fixedKeys = uniq(analyses.map((item) => item.passwordCodec.fixedLoginKey).filter(Boolean));
   const hmacMd5 = analyses.some((item) => item.passwordCodec.hmacMd5);
 
   let status = "INSUFFICIENT_SOURCE_EVIDENCE";
-  if (loginCallsites.some((item) => hasDependencyFields(item) && hasAuthDependency(item))) status = "LOGIN_REQUEST_OBJECT_CANDIDATE_READY";
+  if (passwordFieldEvidence.length && loginSuccessZeroObserved) status = "LOGIN_PASSWORD_DATAFLOW_FOUND";
+  else if (loginCallsites.some((item) => hasDependencyFields(item) && hasAuthDependency(item))) status = "LOGIN_REQUEST_OBJECT_CANDIDATE_READY";
   else if (loginCallsites.some((item) => hasRequestShape(item) && item.hasHmacMd5)) status = "LOGIN_CALL_SHAPE_CANDIDATE_READY";
   else if (loginCallsites.some(hasPayloadOrigin)) status = "LOGIN_PAYLOAD_ORIGIN_FOUND";
   else if (loginSubmitEndpoints.length && candidateRequestFields.length && hmacMd5) status = "LOGIN_SOURCE_CANDIDATE_READY";
@@ -393,7 +417,7 @@ export function buildAuthSourceEvidence(sources = []) {
   else if (authEndpoints.length || hmacMd5 || fixedKeys.length) status = "AUTH_SUPPORTING_EVIDENCE_ONLY";
 
   return {
-    schema:"nc03-auth-source-evidence/v7",
+    schema:"nc03-auth-source-evidence/v8",
     status,
     sourcesAnalyzed:analyses.map((item) => item.path),
     authEndpoints,
@@ -416,6 +440,10 @@ export function buildAuthSourceEvidence(sources = []) {
     requestObjectMapped:loginCallsites.some(hasDependencyFields),
     authDependencyMapped:loginCallsites.some(hasAuthDependency),
     observedResponseSignals,
+    passwordFieldEvidence,
+    passwordHmacConfirmed,
+    passwordInputCallObserved,
+    loginSuccessZeroObserved,
     analyses,
     safety:{
       sourceCodeReturned:false,
