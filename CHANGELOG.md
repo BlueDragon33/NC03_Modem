@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.10 — Login-page deep AUTH probe
+
+- Added evidence-backed `/common/login.html` probing without logging the modem out.
+- Added relative `<script src="../...">` discovery so login-page JavaScript can be followed safely.
+- Added vendor-source login-page reference extraction.
+- Separated true login-submit endpoint candidates from passive `logout` / `get_login_info` endpoints.
+- Added structural AUTH request-field extraction without retaining values.
+- AUTH Source Probe now shows login page, login-submit endpoint and request-field candidates separately.
+- Existing HMAC-MD5 / fixed-login-key evidence remains candidate-only until request/response semantics are confirmed.
+- No credential persistence or write capability was enabled.
+
+
 ## 0.7.9 — Local API envelope fix
 
 - Fixed AUTH Source Probe returning a valid response shape that the shared local client silently discarded.
