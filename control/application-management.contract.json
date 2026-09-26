@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.5"
+    "version": "0.7.6"
   },
   "capabilities": {
     "webLaunch": true,
@@ -33,13 +33,16 @@
     "sanitizedEvidenceExport": true,
     "harCaptureQualityGuard": true,
     "harModemHostAutoDetection": true,
-    "connectionDoctor": true
+    "connectionDoctor": true,
+    "authSourceProbe": true,
+    "authPasswordCodecEvidence": true
   },
   "endpoints": {
     "status": "/api/control/status",
     "liveTelemetry": "/api/nc03/snapshot",
     "advancedRead": "/api/nc03/details",
-    "connectionDoctor": "/api/nc03/doctor"
+    "connectionDoctor": "/api/nc03/doctor",
+    "authSourceProbe": "/api/nc03/auth-source-probe"
   },
   "policy": {
     "remoteAdminReady": false,
@@ -72,7 +75,9 @@
     "harEvidenceExportRedacted": true,
     "authStatusProbeNeverPromotedToLogin": true,
     "authenticatedSessionCaptureRequiresRecapture": true,
-    "connectionDoctorReadOnly": true
+    "connectionDoctorReadOnly": true,
+    "authSourceProbeLocalOnly": true,
+    "authSourceCandidateNeverAutoVerified": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
