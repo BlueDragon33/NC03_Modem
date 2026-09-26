@@ -54,6 +54,7 @@ test("login policy is password-only, remembers after success and normalizes conf
   assert.equal(LOGIN_POLICY.rememberPasswordDefault, true);
   assert.equal(LOGIN_POLICY.persistCredentialOnlyAfterAuthenticated, true);
   assert.equal(normalizeModemAddress("192.168.0.1"), DEFAULT_MODEM_URL);
-  assert.equal(normalizeModemAddress("http://192.168.8.1/settings"), "http://192.168.8.1");
+  assert.equal(normalizeModemAddress("http://192.168.8.1"), "http://192.168.8.1");
+  assert.throws(() => normalizeModemAddress("http://192.168.8.1/settings"));
   assert.throws(() => normalizeModemAddress("ftp://192.168.0.1"));
 });
