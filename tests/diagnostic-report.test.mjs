@@ -87,3 +87,44 @@ test("report page uses same-origin external assets and fragment-only payload tra
   assert.match(script, /history\.replaceState/);
   assert.doesNotMatch(script, /fetch\(/);
 });
+
+
+test("diagnostic report never converts missing snapshot data into false zero/offline facts", () => {
+  const report = buildDiagnosticReport({ baseUrl:"http://192.168.0.1" });
+  assert.equal(report.overview.connected, "Không có dữ liệu");
+  assert.equal(report.overview.battery, "—");
+  assert.equal(report.overview.charging, "—");
+  assert.equal(report.wifi.accessPointCount, "—");
+  assert.equal(report.wifi.connectedClientCount, "—");
+  assert.equal(report.rules.dhcpReservations, "—");
+  assert.equal(report.rules.portForwardingRules, "—");
+});
+
+test("diagnostic report localizes network/signal and rejects invalid report percentages", () => {
+  const report = buildDiagnosticReport({
+    live:{status:{connected:true},battery:{percentage:135,charging:false},signal:{level:"great",systemMode:"nsa"}},
+    details:{wifi:{aps:[]},clients:[],ruleInventory:{dhcpReservations:0,portForwardingRules:0,ipv4PacketFilterRules:0,ipv6PacketFilterRules:0}}
+  });
+  assert.equal(report.overview.network, "5G NSA");
+  assert.equal(report.overview.signal, "Rất tốt");
+  assert.equal(report.overview.battery, "—");
+  assert.equal(report.rules.dhcpReservations, 0);
+  assert.equal(report.wifi.connectedClientCount, 0);
+});
+
+test("printable report exposes both live and advanced freshness with professional print safeguards", () => {
+  const report = buildDiagnosticReport({
+    live:{status:{connected:true},battery:{percentage:80},signal:{level:"good",systemMode:"lte"}},
+    details:{wifi:{aps:[]},clients:[]},
+    liveStale:false,
+    detailsStale:true
+  });
+  const html = renderDiagnosticReportMarkup(report);
+  const css = fs.readFileSync(new URL("../report.css", import.meta.url), "utf8");
+  assert.match(html, /Độ tin cậy dữ liệu/);
+  assert.match(html, /Trạng thái Live/);
+  assert.match(html, /Trạng thái cấu hình/);
+  assert.match(html, /Dữ liệu gần nhất/);
+  assert.match(css, /print-color-adjust:exact/);
+  assert.match(css, /grid-template-columns:repeat\(3,1fr\)/);
+});
