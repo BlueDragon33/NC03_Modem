@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.15 — Login payload provenance
+
+- Extended login analysis beyond the containing `login()` function to trace the identified payload variable across all of `/js/login.js`.
+- Finds global assignments, aliases, function parameters, field assignments and calls that consume the payload variable.
+- Keeps provenance structural-only: literal strings and credential values are never returned.
+- Response semantics now resolves numeric callback codes against all matching firmware constants, while symbolic callback names are resolved back to numeric values when available.
+- AUTH Lab shows **Payload provenance** and **Response semantics** candidates.
+- Ambiguous numeric matches remain explicitly candidate-only instead of being treated as verified meanings.
+- Production authentication remains fail-closed.
+
+
 ## 0.7.14 — Login structural trace
 
 - Added a dedicated privacy-safe structural tracer for the real `login()` function.
