@@ -181,3 +181,19 @@ Current external gate:
 - a HAR captured from **logout → one successful login** is still required before implementing `NC03Auth.login()`.
 
 No credential persistence or write operation was enabled.
+
+
+## Phase 2K — CONNECTION DOCTOR
+
+Status: **IMPLEMENTED**
+
+Completed:
+- local read-only `POST /api/nc03/doctor`;
+- Local Bridge → modem → authentication → firmware/profile → live-read diagnostic chain;
+- explicit `AUTH_REQUIRED`, `FIRMWARE_UNVERIFIED`, `MODEM_UNREACHABLE` and `OK` states;
+- Settings UI with one-click diagnosis and direct Web UI login action when auth is required;
+- no credential, token, cookie or session values in the report;
+- no write capability promotion;
+- responsive and regression-tested diagnostic UX.
+
+AUTH and write remain evidence-gated.
