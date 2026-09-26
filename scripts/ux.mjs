@@ -36,3 +36,6 @@ assert.ok(css.includes(".source-evidence-grid"), "AUTH source evidence must have
 
 assert.ok(app.indexOf("DEVELOPER TOOLS") < app.indexOf("MODEM CONNECTION"), "Developer tools must be prominent near the top of Settings.");
 assert.ok(app.includes("Bật Developer Mode để mở Lab"), "HAR Lab entry must remain visible even before Developer Mode is enabled.");
+
+assert.ok(app.includes("Login submit endpoint"), "AUTH Source Probe must surface login-submit candidates separately.");
+assert.ok(app.includes("Request field candidates"), "AUTH Source Probe must surface structural request fields.");
