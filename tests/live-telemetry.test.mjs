@@ -69,3 +69,22 @@ test("advanced UI exposes only safe mobile state and rule counts", () => {
   assert.doesNotMatch(app, /wifi_wps_pin_value/);
   assert.doesNotMatch(app, /rt_dmz_ip/);
 });
+
+
+test("transient poll failure preserves last-known-good battery and signal instead of blanking telemetry", () => {
+  assert.match(app, /liveStale:/);
+  assert.match(app, /lastLiveSuccessAt:/);
+  assert.match(app, /state\.liveStale = false/);
+  assert.match(app, /state\.liveStale = Boolean\(state\.live\)/);
+  assert.doesNotMatch(app, /catch \(error\) \{\s*state\.live = null;/);
+  assert.match(app, /Dữ liệu gần nhất/);
+  assert.match(app, /Đang kết nối lại/);
+});
+
+test("saved modem address uses the same RFC1918 policy as the Local Bridge", () => {
+  const loginPolicy = fs.readFileSync(new URL("../src/modem/LoginPolicy.js", import.meta.url), "utf8");
+  const preferences = fs.readFileSync(new URL("../src/modem/LocalPreferences.js", import.meta.url), "utf8");
+  assert.match(loginPolicy, /normalizeModemBaseUrl/);
+  assert.match(preferences, /normalizeModemBaseUrl/);
+  assert.match(preferences, /safeBaseUrl/);
+});
