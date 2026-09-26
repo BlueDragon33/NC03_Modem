@@ -42,3 +42,21 @@ Still required before production control:
 Status: **NEXT**
 
 Do not enable remember-admin, auto-login or write controls until auth/transport are VERIFIED.
+
+
+## Phase 2C — HAR2 LIVE TELEMETRY
+
+Status: **IMPLEMENTED / VERIFYING RELEASE**
+
+Completed:
+- exact battery percentage promoted to always-visible UI;
+- Internet connection + qualitative signal + 4G/5G/carrier always-visible UI;
+- 10-second live polling;
+- safe local read bridge with private-origin validation;
+- extended read-only Advanced snapshot from HAR2;
+- 4-AP Wi-Fi read support;
+- explicit secret-field exclusion;
+- no fabricated RSRP/RSRQ/SINR;
+- write endpoints remain fail-closed.
+
+Next write milestone still requires an actual write HAR capture with rollback.
