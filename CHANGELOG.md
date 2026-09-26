@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.3 — Final read-path hardening
+
+- Keep stale/reconnecting state correct across navigation so Sidebar/Home/Network cannot falsely turn green from last-known data.
+- Show the timestamp of the most recent successful live telemetry refresh.
+- Track Advanced snapshot freshness separately and expose LIVE READ / LAST GOOD / retry behavior.
+- Show a clear error when the Advanced snapshot has never loaded instead of silently rendering empty values.
+- Keep Remember Password visibly disabled until the real NC03 authentication request is verified.
+- Reject invalid manual modem addresses with an inline RFC1918 validation message instead of silently replacing the user's input.
+- Synchronize release contract policies for these final read-path guarantees.
+
 ## 0.6.2 — Resilient last-known-good telemetry
 
 - Preserve the last-known-good exact battery %, signal and network values across transient 10-second polling failures.
