@@ -224,3 +224,13 @@ test("AUTH lab exposes full-file payload origin and alias traces", () => {
   assert.match(app, /payloadOrigins/);
   assert.match(app, /payloadAliases/);
 });
+
+
+test("AUTH Source Probe remains compatible with stale GET clients while current UI uses POST", () => {
+  assert.match(app, /method: "POST"/);
+  assert.match(server, /async function authProbeBaseUrl/);
+  assert.match(server, /req\.method === "GET"/);
+  assert.match(server, /DEFAULT_MODEM_BASE_URL = "http:\/\/192\.168\.0\.1"/);
+  assert.match(server, /\["GET","POST"\]\.includes\(req\.method \|\| "GET"\)/);
+  assert.match(app, /METHOD_NOT_ALLOWED — frontend và Local Bridge đang lệch phiên bản/);
+});
