@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v17-developer-lab";
+const CACHE = "nc03-control-center-v18-local-api-envelope";
 const ASSETS = [
   "./",
   "./index.html",

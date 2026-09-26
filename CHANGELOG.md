@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.9 — Local API envelope fix
+
+- Fixed AUTH Source Probe returning a valid response shape that the shared local client silently discarded.
+- Fixed the same response-envelope mismatch in Connection Doctor.
+- Standardized local success responses as `{ ok:true, payload:... }`.
+- Added a malformed-response guard so future contract drift fails visibly instead of rendering an empty result.
+- Added regression tests for AUTH Source Probe and Connection Doctor envelopes.
+
+
 ## 0.7.8 — Developer Lab discoverability
 
 - Moved Developer Tools near the top of Settings instead of hiding them after long diagnostic/configuration sections.
