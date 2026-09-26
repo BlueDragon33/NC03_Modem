@@ -1,6 +1,8 @@
 const SENSITIVE_HEADER = /authorization|cookie|set-cookie|csrf|token|password|secret|session/i;
 const SENSITIVE_QUERY = /password|passwd|pwd|token|session|sid|csrf|secret|auth/i;
 const AUTH_FIELD = /password|passwd|pwd|login|auth|session|token|csrf|challenge/i;
+const CREDENTIAL_FIELD = /password|passwd|pwd|passcode|credential|login_password|admin_password/i;
+const AUTH_STATUS_PATH = /(?:get_login_info|login_info|session_status|auth_status)$/i;
 const WRITE_PATH = /(?:^|\/)(?:[^/]*_set_[^/]*|set|save|apply|reboot|restart|clear|update|schedule)(?:\/|$)|\/(?:reboot|restart)$/i;
 
 const CANDIDATE_RULES = Object.freeze([
@@ -103,6 +105,24 @@ export function classifyHarCandidate({ url = "", path = "", requestBody = "" } =
   return CANDIDATE_RULES.filter(([, pattern]) => pattern.test(source)).map(([name]) => name);
 }
 
+function privateIpv4(host) {
+  const parts = String(host ?? "").split(".").map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  return parts[0] === 10 || (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || (parts[0] === 192 && parts[1] === 168);
+}
+
+export function detectHarModemHost(har) {
+  const counts = new Map();
+  for (const entry of har?.log?.entries ?? []) {
+    try {
+      const host = new URL(entry?.request?.url ?? "").hostname;
+      if (!privateIpv4(host)) continue;
+      counts.set(host, (counts.get(host) ?? 0) + 1);
+    } catch {}
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? null;
+}
+
 export function parseHar(har, { modemHost = "192.168.0.1" } = {}) {
   const entries = Array.isArray(har?.log?.entries) ? har.log.entries : [];
   return entries
@@ -186,6 +206,8 @@ export function summarizeAuthCandidates(entries) {
     if (item.responseSetsCookie) reasons.push("set-cookie-present");
     if (item.responseRedirect) reasons.push("redirect-response");
     if (item.status >= 200 && item.status < 400) reasons.push("http-success-range");
+    const credentialField = (item.requestFields ?? []).some((field) => CREDENTIAL_FIELD.test(field));
+    const statusProbe = AUTH_STATUS_PATH.test(item.path) && !credentialField && item.requestBodyKind === "empty";
     return {
       id:item.id,
       method:item.method,
@@ -195,7 +217,8 @@ export function summarizeAuthCandidates(entries) {
       requestFields:item.requestFields ?? [],
       responseBodyKind:item.responseBodyKind,
       responseFields:item.responseFields ?? [],
-      evidence:reasons,
+      evidence:statusProbe ? [...reasons, "auth-status-probe"] : reasons,
+      candidateKind:statusProbe ? "STATUS_PROBE" : "LOGIN_TRANSACTION_CANDIDATE",
       verified:false,
       statusLabel:"CANDIDATE_ONLY"
     };
@@ -223,15 +246,86 @@ export function summarizeWriteCandidates(entries) {
     }));
 }
 
-export function buildHarEvidenceReport(har, { modemHost = "192.168.0.1" } = {}) {
-  const entries = parseHar(har, { modemHost });
+function safePagePaths(har, modemHost) {
+  const pages = Array.isArray(har?.log?.pages) ? har.log.pages : [];
+  return pages.map((page) => {
+    try {
+      const url = new URL(page?.title ?? "");
+      if (url.hostname !== modemHost) return null;
+      return url.pathname;
+    } catch {
+      return null;
+    }
+  }).filter(Boolean);
+}
+
+function authenticatedSessionObserved(har, modemHost) {
+  for (const entry of har?.log?.entries ?? []) {
+    try {
+      const url = new URL(entry?.request?.url ?? "");
+      if (url.hostname !== modemHost || !AUTH_STATUS_PATH.test(url.pathname)) continue;
+      const text = entry?.response?.content?.text ?? "";
+      const payload = JSON.parse(text);
+      if (Number(payload?.loginStatus) === 1) return true;
+    } catch {}
+  }
+  return false;
+}
+
+export function assessHarCaptureQuality(har, { modemHost = null } = {}) {
+  const resolvedHost = modemHost || detectHarModemHost(har) || "192.168.0.1";
+  const entries = parseHar(har, { modemHost:resolvedHost });
+  const authCandidates = summarizeAuthCandidates(entries);
+  const writeCandidates = summarizeWriteCandidates(entries);
+  const loginTransactions = authCandidates.filter((item) => item.candidateKind === "LOGIN_TRANSACTION_CANDIDATE");
+  const statusProbes = authCandidates.filter((item) => item.candidateKind === "STATUS_PROBE");
+  const authenticatedState = authenticatedSessionObserved(har, resolvedHost);
+  const pagePaths = safePagePaths(har, resolvedHost);
+
+  let authCaptureStatus = "NO_AUTH_EVIDENCE";
+  let authMessage = "HAR chưa có bằng chứng đăng nhập.";
+  if (loginTransactions.length) {
+    authCaptureStatus = "LOGIN_TRANSACTION_CANDIDATE_FOUND";
+    authMessage = "HAR có transaction ứng viên để map AUTH; vẫn cần xác minh success/failure semantics.";
+  } else if (authenticatedState) {
+    authCaptureStatus = "AUTHENTICATED_SESSION_ONLY";
+    authMessage = "HAR bắt đầu khi modem đã đăng nhập; chưa có request nhập mật khẩu.";
+  } else if (statusProbes.length) {
+    authCaptureStatus = "AUTH_STATUS_ONLY";
+    authMessage = "HAR chỉ có probe trạng thái đăng nhập, chưa có transaction đăng nhập.";
+  }
+
   return {
-    schema:"nc03-har-evidence/v1",
-    modemHost,
+    authCaptureStatus,
+    authMessage,
+    authenticatedStateObserved:authenticatedState,
+    loginTransactionCandidateCount:loginTransactions.length,
+    authStatusProbeCount:statusProbes.length,
+    writeCaptureStatus:writeCandidates.length ? "WRITE_CANDIDATE_FOUND" : "NO_WRITE_TRANSACTION",
+    writeTransactionCandidateCount:writeCandidates.length,
+    readyForAuthMapping:loginTransactions.length > 0,
+    readyForWriteMapping:writeCandidates.length > 0,
+    pagePaths,
+    guidance:loginTransactions.length ? [] : [
+      "Đăng xuất khỏi Web UI gốc trước khi capture.",
+      "Mở DevTools → Network và xóa log cũ.",
+      "Bật Preserve log, sau đó đăng nhập đúng một lần.",
+      "Export HAR with content ngay sau khi đăng nhập thành công."
+    ]
+  };
+}
+
+export function buildHarEvidenceReport(har, { modemHost = null } = {}) {
+  const resolvedHost = modemHost || detectHarModemHost(har) || "192.168.0.1";
+  const entries = parseHar(har, { modemHost:resolvedHost });
+  return {
+    schema:"nc03-har-evidence/v2",
+    modemHost:resolvedHost,
     entryCount:entries.length,
     candidates:summarizeCandidates(entries),
     authCandidates:summarizeAuthCandidates(entries),
     writeCandidates:summarizeWriteCandidates(entries),
+    captureQuality:assessHarCaptureQuality(har, { modemHost:resolvedHost }),
     safety:{
       secretsRedacted:true,
       candidatesAreNotVerified:true,

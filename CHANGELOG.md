@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.4 — HAR Capture Quality Guard
+
+- Added automatic RFC1918 modem-host detection from HAR traffic.
+- Added capture-quality classification for real login candidates, auth-status probes and already-authenticated sessions.
+- `get_login_info` without credential input is now explicitly treated as a status probe, never as a login transaction.
+- Added `AUTHENTICATED_SESSION_ONLY` detection when a HAR starts after login and contains no credential request.
+- Added in-app recapture guidance for logout → clear Network → Preserve log → single login → export HAR.
+- Added CLI host auto-detection and evidence schema v2 capture-quality metadata.
+- Added regression coverage based on the observed settings-page capture pattern.
+- Kept AUTH persistence and all write controls fail-closed.
+
+
 ## 0.7.3 — In-app HAR Evidence Lab
 
 - Rebuilt Advanced Developer Mode discovery as a dedicated HAR Evidence Lab.

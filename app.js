@@ -365,6 +365,7 @@ function renderEvidenceList(items, emptyText, tone = "muted") {
       <div class="evidence-meta">
         <span>HTTP ${esc(item.status ?? "—")}</span>
         <span>${esc(item.requestBodyKind ?? "empty")}</span>
+        ${item.candidateKind ? `<span>${esc(item.candidateKind)}</span>` : ""}
         ${item.requestFields?.length ? `<span>${esc(item.requestFields.slice(0, 8).join(", "))}${item.requestFields.length > 8 ? "…" : ""}</span>` : ""}
       </div>
       ${item.evidence?.length ? `<small>${esc(item.evidence.join(" · "))}</small>` : ""}
@@ -376,6 +377,9 @@ function renderDiscovery() {
   const evidence = state.harEvidence;
   const authCandidates = evidence?.authCandidates ?? [];
   const writeCandidates = evidence?.writeCandidates ?? [];
+  const quality = evidence?.captureQuality ?? null;
+  const authReady = quality?.readyForAuthMapping === true;
+  const writeReady = quality?.readyForWriteMapping === true;
   return `${renderTopbar("HAR Evidence Lab", "Advanced Developer Mode: phân tích HAR ngay trên thiết bị, không upload credential lên cloud.")}
   <section class="panel discovery-panel">
     <div class="panel-head"><div><span>LOCAL HAR ANALYZER</span><h2>Phân tích Web UI gốc NC03</h2></div>${statusPill(evidence ? `${evidence.entryCount} request` : "CHỜ HAR", evidence ? "ok" : "muted")}</div>
@@ -383,10 +387,19 @@ function renderDiscovery() {
     <div class="import-box"><input id="harInput" type="file" accept=".har,application/json"/><div><strong>Chọn file HAR từ DevTools</strong><span>${state.harFileName ? `Đang phân tích: ${esc(state.harFileName)}` : "Ưu tiên capture riêng một lần đăng nhập để xác minh AUTH."}</span></div></div>
     ${state.discoveryError ? `<div class="inline-error">${esc(state.discoveryError)}</div>` : ""}
     ${evidence ? `
+      <div class="capture-quality" data-ready="${authReady}">
+        <div><span>CHẤT LƯỢNG CAPTURE</span><strong>${esc(quality?.authCaptureStatus ?? "UNKNOWN")}</strong><small>${esc(quality?.authMessage ?? "Chưa đánh giá được HAR.")}</small></div>
+        <div class="capture-flags">
+          <span data-ok="${authReady}">AUTH mapping: ${authReady ? "có candidate" : "chưa đủ"}</span>
+          <span data-ok="${writeReady}">WRITE mapping: ${writeReady ? "có candidate" : "chưa có"}</span>
+          ${quality?.pagePaths?.length ? `<span>Trang: ${esc(quality.pagePaths.join(", "))}</span>` : ""}
+        </div>
+        ${quality?.guidance?.length ? `<ol>${quality.guidance.map((step)=>`<li>${esc(step)}</li>`).join("")}</ol>` : ""}
+      </div>
       <div class="evidence-summary">
-        <div><span>Request modem</span><strong>${evidence.entryCount}</strong><small>Đúng host ${esc(evidence.modemHost)}</small></div>
-        <div><span>AUTH candidates</span><strong>${authCandidates.length}</strong><small>Chưa tự xác minh</small></div>
-        <div><span>WRITE candidates</span><strong>${writeCandidates.length}</strong><small>Chưa tự mở write</small></div>
+        <div><span>Request modem</span><strong>${evidence.entryCount}</strong><small>Host tự nhận diện: ${esc(evidence.modemHost)}</small></div>
+        <div><span>AUTH candidates</span><strong>${authCandidates.length}</strong><small>${quality?.loginTransactionCandidateCount ?? 0} login · ${quality?.authStatusProbeCount ?? 0} probe</small></div>
+        <div><span>WRITE candidates</span><strong>${writeCandidates.length}</strong><small>${esc(quality?.writeCaptureStatus ?? "UNKNOWN")}</small></div>
         <div><span>Safety gate</span><strong>LOCKED</strong><small>Không tự bật control</small></div>
       </div>
       <div class="evidence-actions"><button id="downloadHarEvidence">Xuất evidence.json</button><button id="clearHarEvidence" class="secondary-action">Xóa phiên phân tích</button></div>
@@ -716,10 +729,9 @@ function bind() {
     if (!file || !state.developerMode) return;
     try {
       const har = JSON.parse(await file.text());
-      const modemHost = new URL(state.baseUrl).hostname;
-      state.harEntries = parseHar(har, { modemHost });
+      state.harEvidence = buildHarEvidenceReport(har);
+      state.harEntries = parseHar(har, { modemHost:state.harEvidence.modemHost });
       state.harCandidates = summarizeCandidates(state.harEntries);
-      state.harEvidence = buildHarEvidenceReport(har, { modemHost });
       state.harFileName = file.name;
       state.discoveryError = "";
     } catch (error) {

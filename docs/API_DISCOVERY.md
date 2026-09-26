@@ -160,3 +160,19 @@ Rà lại toàn bộ 234 request xác nhận thêm các key read-only an toàn:
 Production adapter **không trả raw inventory**. Nó chỉ đếm entry không rỗng để UI hiển thị số DHCP reservation / port-forward / IPv4 filter / IPv6 filter.
 
 HAR2 vẫn không có write transaction thực tế và vẫn không có RSRP/RSRQ/SINR/RSSI.
+
+
+## HAR3 — settings-page capture quality finding
+
+Một capture mới có **30 request** và page bắt đầu tại `/html/settings.html`. Capture này xác nhận:
+
+- modem host thực tế trong request là `192.168.0.1`;
+- `POST /goform/get_login_info` trả trạng thái **đã đăng nhập**;
+- không có request mang credential/password để thực hiện đăng nhập;
+- không quan sát Cookie, Authorization hoặc Set-Cookie trong transaction đăng nhập vì transaction đăng nhập không có mặt;
+- toàn bộ phần còn lại là bootstrap/read polling (`config.xml`, `get_mgdb_params`, `router_get_hosts_info`);
+- không có write transaction.
+
+Kết luận evidence: **AUTHENTICATED_SESSION_ONLY**, chưa đủ để map `NC03Auth.login()`.
+
+Analyzer v0.7.4 phải tự nhận ra trường hợp này và hướng dẫn capture lại từ trạng thái logout thay vì coi `get_login_info` là login transaction.

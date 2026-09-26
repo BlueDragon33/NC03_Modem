@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v12-har-evidence-lab";
+const CACHE = "nc03-control-center-v13-capture-quality";
 const ASSETS = [
   "./",
   "./index.html",
