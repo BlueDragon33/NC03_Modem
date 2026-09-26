@@ -31,22 +31,29 @@ Completed:
 - vendor JavaScript write endpoints catalogued as PARTIAL only;
 - regression tests prevent discovered writes from being accidentally enabled.
 
-Still required before production control:
+Still required before production **write** control:
 - actual login transaction/auth algorithm;
-- cross-origin/direct-LAN transport validation or Local Bridge implementation;
 - write-operation capture and rollback tests;
-- detailed radio metrics capture if available.
+- detailed radio metrics capture if a future firmware/page exposes them.
 
 ## Phase 2B — AUTH + TRANSPORT
 
-Status: **NEXT**
+Status: **TRANSPORT COMPLETE / AUTH PENDING**
 
-Do not enable remember-admin, auto-login or write controls until auth/transport are VERIFIED.
+Completed:
+- Local Bridge read transport is implemented and integrated with Application Management;
+- bridge origin policy is restricted to RFC1918 IPv4 modem addresses;
+- browser no longer needs to call modem HTTP directly for production reads.
+
+Pending:
+- actual password login request/session semantics.
+
+Do not enable remember-admin, auto-login or write controls until AUTH is VERIFIED.
 
 
 ## Phase 2C — HAR2 LIVE TELEMETRY
 
-Status: **IMPLEMENTED / VERIFYING RELEASE**
+Status: **COMPLETE**
 
 Completed:
 - exact battery percentage promoted to always-visible UI;
@@ -60,3 +67,16 @@ Completed:
 - write endpoints remain fail-closed.
 
 Next write milestone still requires an actual write HAR capture with rollback.
+
+
+## Phase 2D — LIVE UX + SAFE INVENTORY
+
+Status: **COMPLETE**
+
+Completed:
+- 10-second polling updates only live fields and preserves scroll/focus;
+- polling pauses in hidden tabs and prevents overlapping refreshes;
+- Mobile Data / SIM PIN / Cloud SIM auto-switch read state;
+- count-only DHCP reservation / port-forward / IPv4+IPv6 packet-filter inventory;
+- Local Bridge blocks loopback/public/hostname targets;
+- PWA stale-while-revalidate cache prevents stale published UI.
