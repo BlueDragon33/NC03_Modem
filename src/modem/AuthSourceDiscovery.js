@@ -250,6 +250,8 @@ function endpointCallsite(text, path, endpoint, index) {
     fields,
     transforms:uniq(transforms.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item)),
     structuralTrace:structural.payloadTrace,
+    payloadOrigins:structural.payloadOrigins,
+    payloadAliases:structural.aliases,
     responseSignals:uniq(responseSignals),
     hasHmacMd5:/hex_hmac_md5\s*\(/i.test(around),
     statusLabel:"SOURCE_CALLSITE_CANDIDATE"
@@ -369,7 +371,7 @@ export function buildAuthSourceEvidence(sources = []) {
   else if (authEndpoints.length || hmacMd5 || fixedKeys.length) status = "AUTH_SUPPORTING_EVIDENCE_ONLY";
 
   return {
-    schema:"nc03-auth-source-evidence/v5",
+    schema:"nc03-auth-source-evidence/v6",
     status,
     sourcesAnalyzed:analyses.map((item) => item.path),
     authEndpoints,
