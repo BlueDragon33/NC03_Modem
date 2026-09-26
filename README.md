@@ -15,9 +15,9 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.1 — QA Data Quality + Professional Reporting
+## Phase 2 · v0.7.2 — Auth Evidence Discovery
 
-HAR mới của firmware **NC03_8.00.42** đã mở rộng read-path thật:
+Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API:
 
 - % pin chính xác luôn hiển thị trên mọi màn hình;
 - trạng thái Internet/WAN, 4G/5G, nhà mạng và chất lượng sóng định tính luôn hiển thị;
@@ -28,11 +28,12 @@ HAR mới của firmware **NC03_8.00.42** đã mở rộng read-path thật:
 - Local Bridge `/api/nc03/snapshot` giải quyết đường đọc modem từ website local mà không đưa password lên cloud;
 - Advanced read snapshot thêm network settings, Mobile Data, SIM PIN state, Cloud SIM auto-switch, 4 Wi-Fi AP, clients, data usage, DHCP, USB/Cradle, IP Passthrough, security/filter/DMZ, NTP, power/display, firmware/FOTA và **chỉ số lượng** DHCP reservation/port-forward/packet-filter rule;
 - PSK Wi-Fi, IMEI/serial, ICCID/EID/eSIM profile và APN profile cố ý không mirror vào dashboard;
-- HAR mới vẫn không chứa write request thực tế, vì vậy mọi write action tiếp tục fail-closed;
+- HAR hiện có vẫn không chứa write request thực tế, vì vậy mọi write action tiếp tục fail-closed;
 - Home không còn gọi client/data cũ là dữ liệu hiện tại khi Advanced snapshot đã stale;
 - giá trị pin ngoài miền 0–100 bị từ chối thay vì hiển thị như phần trăm hợp lệ;
 - Settings có **Báo cáo chẩn đoán an toàn** dạng A4, có thể In/Lưu PDF, chỉ xuất các trường read-only được chọn rõ ràng và loại trừ credential/secret/identifier nhạy cảm;
-- báo cáo phân biệt rõ **0** với **không có dữ liệu (`—`)**, hiển thị riêng độ mới của Live/Advanced snapshot, chuẩn hóa 4G/5G và chất lượng sóng sang nhãn dễ đọc, đồng thời từ chối % pin ngoài 0–100 ngay ở lớp báo cáo.
+- báo cáo phân biệt rõ **0** với **không có dữ liệu (`—`)**, hiển thị riêng độ mới của Live/Advanced snapshot, chuẩn hóa 4G/5G và chất lượng sóng sang nhãn dễ đọc;
+- HAR analyzer mới nhận diện JSON/form login, chỉ giữ **tên field và metadata bằng chứng**, redaction mật khẩu/token/session/cookie, và mọi auth/write finding đều giữ `CANDIDATE_ONLY`.
 
 App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. Trước AUTH VERIFIED, giao diện chỉ hiển thị `Ghi nhớ mật khẩu` như một policy đang khóa — không dùng checkbox có dấu tích gây hiểu nhầm rằng credential đã được lưu.
 
@@ -46,6 +47,22 @@ Mặc định mở `http://127.0.0.1:3006`. Khi chạy từ Application Manageme
 
 Local Bridge hiện là transport local production cho read-path. Bridge và UI dùng chung một policy: chỉ nhận modem origin là **IPv4 RFC1918** (`10/8`, `172.16/12`, `192.168/16`), không nhận localhost/loopback/public host. Giá trị lưu cũ không hợp lệ tự trở về `192.168.0.1`. Direct browser → modem vẫn là tùy chọn nghiên cứu, không phải đường chính.
 
+## Phân tích HAR cục bộ
+
+Sau khi export HAR từ Web UI gốc:
+
+```bash
+npm run analyze:har -- capture.har
+```
+
+Nếu modem dùng IP khác:
+
+```bash
+npm run analyze:har -- capture.har --host=192.168.1.1
+```
+
+Report chỉ chứa evidence đã khử bí mật. Xem quy trình chi tiết tại `docs/AUTH_DISCOVERY.md`.
+
 ## Kiểm tra
 
 ```bash
@@ -56,12 +73,13 @@ Không coi release là PASS nếu một gate trong pipeline thất bại.
 
 ## Bước tiếp theo
 
-Ưu tiên Phase 2B:
+Ưu tiên Phase 2B theo đúng evidence gate:
 
-1. map request đăng nhập password-only của firmware;
-2. nối credential vault vào kết quả đăng nhập thành công;
-3. capture từng write operation ít rủi ro để nâng từ PARTIAL → WRITE VERIFIED;
-4. chỉ nghiên cứu Direct LAN transport nếu nó mang lại lợi ích rõ hơn Local Bridge hiện tại.
+1. capture **login transaction** thật của firmware;
+2. chạy `npm run analyze:har -- <file.har>` để tạo evidence report an toàn;
+3. map request/response/session semantics vào `NC03Auth`;
+4. chỉ sau AUTH VERIFIED mới nối credential vault vào kết quả đăng nhập thành công;
+5. capture một write operation ít rủi ro kèm rollback để nâng từng capability từ PARTIAL → WRITE VERIFIED.
 
 ## Publish
 
