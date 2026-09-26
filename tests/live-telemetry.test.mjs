@@ -153,3 +153,14 @@ test("AUTH Source Probe is local-only evidence tooling and does not enable login
   assert.match(app, /SOURCE_CANDIDATE|Source candidate|source candidate/i);
   assert.match(app, /runAuthSourceProbe/);
 });
+
+
+test("local helper rejects malformed success envelopes instead of silently returning undefined", () => {
+  assert.match(app, /MALFORMED_LOCAL_RESPONSE/);
+  assert.match(app, /hasOwnProperty\.call\(payload, "payload"\)/);
+});
+
+test("AUTH Source Probe and Connection Doctor use the standard local API payload envelope", () => {
+  assert.match(server, /payload:\{ baseUrl, evidence \}/);
+  assert.match(server, /payload:buildConnectionDoctorReport/);
+});
