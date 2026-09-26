@@ -162,3 +162,22 @@ Still externally evidence-gated:
 - real low-risk write transaction with rollback.
 
 No AUTH or WRITE capability is promoted by this UI.
+
+
+## Phase 2J — HAR CAPTURE QUALITY GUARD
+
+Status: **IMPLEMENTED**
+
+Completed:
+- modem host auto-detection from RFC1918 HAR traffic;
+- auth-status probes separated from login-transaction candidates;
+- authenticated-session-only captures explicitly detected;
+- capture page paths included without query/secret values;
+- in-app recapture guidance added when AUTH evidence is insufficient;
+- CLI and browser analyzer use the same capture-quality report;
+- regression tests cover the observed settings-page / already-authenticated pattern.
+
+Current external gate:
+- a HAR captured from **logout → one successful login** is still required before implementing `NC03Auth.login()`.
+
+No credential persistence or write operation was enabled.
