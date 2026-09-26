@@ -461,10 +461,32 @@ function renderDiscovery() {
             const calls = structure.calls?.map((item)=>`${item.name}(${item.args?.join(", ") || ""})`).join(", ");
             return `${entry.kind} · ${entry.target} · ${structure.shape ?? "—"}${structure.objectKeys?.length ? ` · keys:${structure.objectKeys.join(",")}` : ""}${calls ? ` · calls:${calls}` : ""}${structure.authTokens?.length ? ` · auth:${structure.authTokens.join(",")}` : ""}`;
           }).join("\n") || "chưa tách được")}</code></div>
-          <small>Response signals: ${esc(call.responseSignals?.map((signal)=>sourceEvidence.responseCodeMap?.[signal] ? `${signal} → ${sourceEvidence.responseCodeMap[signal]}` : signal).join(", ") || "chưa thấy")}</small>
+          <div class="call-shape-block"><span>Payload provenance</span><code>${esc([
+            ...(call.payloadAliases?.length ? [`aliases: ${call.payloadAliases.join(", ")}`] : []),
+            ...(call.payloadProvenance ?? []).map((entry)=>{
+              if (entry.kind === "payload-call") return `${entry.scope ?? "source"} · ${entry.kind} · ${entry.target} · ${entry.argShapes?.join(", ") || "—"}`;
+              if (entry.kind === "function-param") return `${entry.scope} · function-param · ${entry.target} · #${entry.position}`;
+              const structure = entry.structure ?? {};
+              const calls = structure.calls?.map((item)=>`${item.name}(${item.args?.join(", ") || ""})`).join(", ");
+              return `${entry.scope ?? "source"} · ${entry.kind} · ${entry.target} · ${structure.shape ?? "—"}${structure.objectKeys?.length ? ` · keys:${structure.objectKeys.join(",")}` : ""}${calls ? ` · calls:${calls}` : ""}${structure.authTokens?.length ? ` · auth:${structure.authTokens.join(",")}` : ""}`;
+            })
+          ].join("\n") || "chưa tìm thấy provenance")}</code></div>
+          <small>Response signals: ${esc(call.responseSignals?.map((signal)=>{
+            const mapped = sourceEvidence.responseCodeMap?.[signal];
+            const candidates = sourceEvidence.responseCodeCandidates?.[signal];
+            const symbolValues = sourceEvidence.responseSymbolValues?.[signal];
+            if (mapped) return `${signal} → ${mapped}`;
+            if (candidates?.length) return `${signal} → candidates: ${candidates.join(" / ")}`;
+            if (symbolValues?.length) return `${signal} → value: ${symbolValues.join(" / ")}`;
+            return signal;
+          }).join(", ") || "chưa thấy")}</small>
         </article>`).join("") : `<div class="empty">Chưa có login call-site đủ rõ.</div>`}
       </div>
-      ${Object.keys(sourceEvidence.responseCodeMap ?? {}).length ? `<div class="response-code-map"><span>RESPONSE CODE MAP</span><code>${esc(Object.entries(sourceEvidence.responseCodeMap).map(([code,name])=>`${code} → ${name}`).join("\n"))}</code></div>` : ""}
+      ${(Object.keys(sourceEvidence.responseCodeMap ?? {}).length || Object.keys(sourceEvidence.responseCodeCandidates ?? {}).length || Object.keys(sourceEvidence.responseSymbolValues ?? {}).length) ? `<div class="response-code-map"><span>RESPONSE SEMANTICS</span><code>${esc([
+        ...Object.entries(sourceEvidence.responseCodeMap ?? {}).map(([code,name])=>`${code} → ${name}`),
+        ...Object.entries(sourceEvidence.responseCodeCandidates ?? {}).filter(([code])=>!sourceEvidence.responseCodeMap?.[code]).map(([code,names])=>`${code} → candidates: ${names.join(" / ")}`),
+        ...Object.entries(sourceEvidence.responseSymbolValues ?? {}).map(([name,values])=>`${name} → ${values.join(" / ")}`)
+      ].join("\n"))}</code></div>` : ""}
     ` : `<div class="empty">Chạy probe khi máy đang kết nối NC03 để lấy evidence trực tiếp từ firmware local.</div>`}
     <div class="evidence-actions"><button id="runAuthSourceProbe" ${state.authSourceLoading ? "disabled" : ""}>${state.authSourceLoading ? "Đang quét…" : "Quét AUTH source trên modem"}</button></div>
     <div class="advanced-note"><strong>Fail-closed</strong><span>Source candidate không tự bật NC03Auth.login(). Vẫn cần request/response semantics thật trước AUTH VERIFIED.</span></div>
