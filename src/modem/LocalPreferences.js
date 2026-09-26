@@ -4,6 +4,7 @@ const KEY = "nc03-control-center:preferences:v2";
 
 const DEFAULTS = Object.freeze({
   baseUrl: DEFAULT_NC03_ORIGIN,
+  adminUsername: "admin",
   demoMode: false,
   developerMode: false,
   uiMode: "basic",
@@ -25,6 +26,7 @@ export function loadPreferences(storage = globalThis.localStorage) {
     const parsed = JSON.parse(raw);
     return {
       baseUrl: safeBaseUrl(parsed.baseUrl),
+      adminUsername: typeof parsed.adminUsername === "string" && parsed.adminUsername.trim() ? parsed.adminUsername.trim().slice(0, 15) : DEFAULTS.adminUsername,
       demoMode: parsed.demoMode === true,
       developerMode: parsed.developerMode === true,
       uiMode: parsed.uiMode === "advanced" ? "advanced" : "basic",
@@ -38,6 +40,7 @@ export function loadPreferences(storage = globalThis.localStorage) {
 export function savePreferences(preferences, storage = globalThis.localStorage) {
   const safe = {
     baseUrl: safeBaseUrl(preferences.baseUrl),
+    adminUsername: typeof preferences.adminUsername === "string" && preferences.adminUsername.trim() ? preferences.adminUsername.trim().slice(0, 15) : DEFAULTS.adminUsername,
     demoMode: preferences.demoMode === true,
     developerMode: preferences.developerMode === true,
     uiMode: preferences.uiMode === "advanced" ? "advanced" : "basic",
