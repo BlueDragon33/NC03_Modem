@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.3"
+    "version": "0.7.4"
   },
   "capabilities": {
     "webLaunch": true,
@@ -30,7 +30,9 @@
     "localDiagnosticReport": true,
     "localHarEvidenceAnalyzer": true,
     "inAppHarEvidenceLab": true,
-    "sanitizedEvidenceExport": true
+    "sanitizedEvidenceExport": true,
+    "harCaptureQualityGuard": true,
+    "harModemHostAutoDetection": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -65,7 +67,9 @@
     "authDiscoveryEvidenceOnly": true,
     "writeCandidateNeverAutoVerified": true,
     "harAnalysisLocalOnly": true,
-    "harEvidenceExportRedacted": true
+    "harEvidenceExportRedacted": true,
+    "authStatusProbeNeverPromotedToLogin": true,
+    "authenticatedSessionCaptureRequiresRecapture": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
