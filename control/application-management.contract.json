@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.5.1"
+    "version": "0.5.2"
   },
   "capabilities": {
     "webLaunch": true,
@@ -24,7 +24,9 @@
     "payments": false,
     "reports": false
   },
-  "endpoints": {},
+  "endpoints": {
+    "status": "/api/control/status"
+  },
   "policy": {
     "remoteAdminReady": false,
     "localFirst": true,
