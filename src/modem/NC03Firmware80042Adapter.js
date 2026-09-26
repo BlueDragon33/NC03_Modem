@@ -4,7 +4,9 @@ import {
   BATTERY_KEYS,
   DATA_USAGE_KEYS,
   DHCP_KEYS,
+  MOBILE_SERVICE_KEYS,
   NC03_FIRMWARE_80042,
+  RULE_INVENTORY_KEYS,
   STATUS_KEYS,
   registerNC0380042ReadRoutes
 } from "./NC03Firmware80042Profile.js";
@@ -85,6 +87,10 @@ function signalFrom(data) {
   };
 }
 
+function countConfigured(data, prefix) {
+  return Object.entries(data).filter(([key, value]) => key.startsWith(prefix) && typeof value === "string" && value.trim()).length;
+}
+
 export class NC03Firmware80042Adapter extends NC03Adapter {
   constructor({ baseUrl = "http://192.168.0.1", fetchImpl = globalThis.fetch } = {}) {
     super({ baseUrl });
@@ -158,6 +164,31 @@ export class NC03Firmware80042Adapter extends NC03Adapter {
 
   async getNetworkSettings() {
     return { ...(await this.getParams(NETWORK_SETTINGS_KEYS)) };
+  }
+
+  async getMobileServiceStatus() {
+    const data = await this.getParams(MOBILE_SERVICE_KEYS);
+    return {
+      mobileData: data.dialup_dataswitch ?? null,
+      simSlot: data.mnet_sim_slot ?? null,
+      simStatus: data.mnet_sim_status ?? null,
+      pinProtection: data.mnet_sim_pin_protect ?? null,
+      pinRemainingTries: numeric(data.mnet_sim_pin_rtimes),
+      cloudSimAutoSwitch: data.mnet_uc_switch_enable ?? null,
+      cloudSimNotification: data.mnet_uc_switch_notification ?? null,
+      cloudSimNoServiceMinutes: numeric(data.mnet_uc_switch_nosrv_time),
+      cloudSimDuration: data.mnet_uc_switch_duration ?? null
+    };
+  }
+
+  async getRuleInventory() {
+    const data = await this.getParams(RULE_INVENTORY_KEYS);
+    return {
+      dhcpReservations: countConfigured(data, "rt_ip_mac_bind_"),
+      portForwardingRules: countConfigured(data, "rt_port_forward_"),
+      ipv4PacketFilterRules: countConfigured(data, "rt_obj_value_info_v4_lan_"),
+      ipv6PacketFilterRules: countConfigured(data, "rt_obj_value_info_v6_lan_")
+    };
   }
 
   async getWifiStatus() {
@@ -262,10 +293,12 @@ export class NC03Firmware80042Adapter extends NC03Adapter {
 
   async getAdvancedSnapshot() {
     const [
-      networkSettings, wifi, clients, dataUsage, dhcp, usb,
+      networkSettings, mobileService, ruleInventory, wifi, clients, dataUsage, dhcp, usb,
       power, security, time, firmware, deviceState
     ] = await Promise.all([
       this.getNetworkSettings(),
+      this.getMobileServiceStatus(),
+      this.getRuleInventory(),
       this.getWifiStatus(),
       this.getConnectedClients(),
       this.getDataUsage(),
@@ -279,7 +312,7 @@ export class NC03Firmware80042Adapter extends NC03Adapter {
     ]);
     return {
       refreshedAt: new Date().toISOString(),
-      networkSettings, wifi, clients, dataUsage, dhcp, usb,
+      networkSettings, mobileService, ruleInventory, wifi, clients, dataUsage, dhcp, usb,
       power, security, time, firmware, deviceState
     };
   }
