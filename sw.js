@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v21-login-callsite-mapping";
+const CACHE = "nc03-control-center-v22-login-call-shape";
 const ASSETS = [
   "./",
   "./index.html",
