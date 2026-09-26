@@ -89,7 +89,11 @@ function findContainingCall(text, endpointIndex) {
       else if (ch === ")") {
         depth -= 1;
         if (depth === 0) {
-          return { helper, open:start + pos, close:i, body:text.slice(start + pos + 1, i) };
+          const openIndex = start + pos;
+          if (openIndex < endpointIndex && endpointIndex < i) {
+            return { helper, open:openIndex, close:i, body:text.slice(openIndex + 1, i) };
+          }
+          break;
         }
       }
     }
