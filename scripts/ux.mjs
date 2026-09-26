@@ -53,3 +53,6 @@ assert.ok(css.includes(".call-shape-block"), "Call-shape evidence needs readable
 assert.ok(app.includes("Payload structural trace"), "AUTH lab must show payload structural trace.");
 assert.ok(app.includes("RESPONSE CODE MAP"), "AUTH lab must show response-code symbol mapping when available.");
 assert.ok(css.includes(".response-code-map"), "Response-code evidence needs readable layout.");
+
+assert.ok(app.includes("Payload origin trace · toàn file login.js"), "AUTH lab must surface payload origins beyond the login() body.");
+assert.ok(app.includes("Payload aliases"), "AUTH lab must surface payload aliases.");

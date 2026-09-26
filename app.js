@@ -421,7 +421,7 @@ function renderDiscovery() {
     ${sourceEvidence ? `
       <div class="evidence-summary">
         <div><span>Source đã đọc</span><strong>${sourceEvidence.sourcesAnalyzed?.length ?? 0}</strong><small>Local modem only</small></div>
-        <div><span>Login submit</span><strong>${sourceEvidence.loginSubmitEndpoints?.length ?? 0}</strong><small>${sourceEvidence.readyForRequestShapeMapping ? "Có request-shape candidate" : sourceEvidence.loginSubmitEndpoints?.length ? "Đã tìm thấy endpoint · shape pending" : "Chưa tìm thấy endpoint"}</small></div>
+        <div><span>Login submit</span><strong>${sourceEvidence.loginSubmitEndpoints?.length ?? 0}</strong><small>${sourceEvidence.readyForRequestShapeMapping ? "Có request-shape candidate" : sourceEvidence.payloadOriginFound ? "Đã thấy nguồn payload · field pending" : sourceEvidence.loginSubmitEndpoints?.length ? "Đã tìm thấy endpoint · shape pending" : "Chưa tìm thấy endpoint"}</small></div>
         <div><span>Login page</span><strong>${sourceEvidence.loginPageCandidates?.length ?? 0}</strong><small>Static page candidate</small></div>
         <div><span>Password codec</span><strong>${sourceEvidence.passwordCodec?.hmacMd5 ? "HMAC-MD5" : sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "KEY FOUND" : "—"}</strong><small>${sourceEvidence.passwordCodec?.fixedLoginKeyPresent ? "Có fixed loginKey trong source" : "Chưa thấy fixed loginKey"}</small></div>
       </div>
@@ -461,6 +461,13 @@ function renderDiscovery() {
             const calls = structure.calls?.map((item)=>`${item.name}(${item.args?.join(", ") || ""})`).join(", ");
             return `${entry.kind} · ${entry.target} · ${structure.shape ?? "—"}${structure.objectKeys?.length ? ` · keys:${structure.objectKeys.join(",")}` : ""}${calls ? ` · calls:${calls}` : ""}${structure.authTokens?.length ? ` · auth:${structure.authTokens.join(",")}` : ""}`;
           }).join("\n") || "chưa tách được")}</code></div>
+          <div class="call-shape-block"><span>Payload origin trace · toàn file login.js</span><code>${esc((call.payloadOrigins ?? []).map((entry)=>{
+            if (entry.kind === "payload-call") return `${entry.scope} · ${entry.kind} · ${entry.target} · ${entry.argShapes?.join(", ") || "—"}`;
+            const structure = entry.structure ?? {};
+            const calls = structure.calls?.map((item)=>`${item.name}(${item.args?.join(", ") || ""})`).join(", ");
+            return `${entry.scope} · ${entry.kind} · ${entry.target} · ${structure.shape ?? "—"}${structure.objectKeys?.length ? ` · keys:${structure.objectKeys.join(",")}` : ""}${calls ? ` · calls:${calls}` : ""}${structure.authTokens?.length ? ` · auth:${structure.authTokens.join(",")}` : ""}${structure.identifiers?.length ? ` · ids:${structure.identifiers.join(",")}` : ""}`;
+          }).join("\n") || "chưa tìm thấy nguồn tạo payload trong file")}</code></div>
+          <div class="call-shape-block"><span>Payload aliases</span><code>${esc((call.payloadAliases ?? []).map((item)=>`${item.scope} · ${item.relation} · ${item.alias}`).join("\n") || "không có alias quan sát được")}</code></div>
           <small>Response signals: ${esc(call.responseSignals?.map((signal)=>sourceEvidence.responseCodeMap?.[signal] ? `${signal} → ${sourceEvidence.responseCodeMap[signal]}` : signal).join(", ") || "chưa thấy")}</small>
         </article>`).join("") : `<div class="empty">Chưa có login call-site đủ rõ.</div>`}
       </div>
