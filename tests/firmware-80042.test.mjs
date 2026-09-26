@@ -101,3 +101,22 @@ test("write methods remain fail-closed despite vendor JS discovery", async () =>
   await assert.rejects(adapter.setWifiPassword("new-value"));
   await assert.rejects(adapter.reboot());
 });
+
+
+test("HAR2 mobile-service and rule inventory return safe summaries only", async () => {
+  const { fetchImpl } = makeFetch();
+  const adapter = new NC03Firmware80042Adapter({ fetchImpl });
+  const mobile = await adapter.getMobileServiceStatus();
+  const rules = await adapter.getRuleInventory();
+  assert.equal(mobile.mobileData, "on");
+  assert.equal(mobile.pinProtection, "disable");
+  assert.equal(mobile.pinRemainingTries, 2);
+  assert.equal(mobile.cloudSimAutoSwitch, "disable");
+  assert.deepEqual(rules, {
+    dhcpReservations: 1,
+    portForwardingRules: 1,
+    ipv4PacketFilterRules: 1,
+    ipv6PacketFilterRules: 1
+  });
+  assert.equal("raw" in rules, false);
+});
