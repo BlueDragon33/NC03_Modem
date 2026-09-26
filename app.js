@@ -577,6 +577,11 @@ async function localRead(path) {
     error.code = payload.code || "";
     throw error;
   }
+  if (!Object.prototype.hasOwnProperty.call(payload, "payload")) {
+    const error = new Error("MALFORMED_LOCAL_RESPONSE");
+    error.code = "MALFORMED_LOCAL_RESPONSE";
+    throw error;
+  }
   return payload.payload;
 }
 
