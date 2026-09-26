@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.17 — Login request-object dependency tracing
+
+- Follows the confirmed `postdata = JSON.stringify(_obj)` chain back into the request object serialized by the real firmware login flow.
+- Traces request-object assignments, property assignments and helper calls up to two dependency levels without returning literal values.
+- Surfaces per-field transform evidence so a password-like field can be tied to `hex_hmac_md5` / MD5 or other observed transforms before production login is enabled.
+- Adds dedicated **Request object dependency trace** and **Login object fields / transforms** panels to the AUTH Lab.
+- Response-code mapping is now limited to symbols/numeric values actually observed in the login response branch, avoiding unrelated constants from the same source file.
+- Production password login remains locked until field/transform and success/failure semantics are coherent.
+
+
 ## 0.7.16 — AUTH probe cache/runtime compatibility
 
 - Fixed `METHOD_NOT_ALLOWED` when a stale PWA frontend still calls AUTH Source Probe with legacy GET semantics while the Local Bridge has already been upgraded.
