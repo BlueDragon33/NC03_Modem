@@ -1,3 +1,5 @@
+import { CAPABILITY_STATUS } from "./CapabilityRegistry.js";
+
 export const LIVE_TELEMETRY_KEYS = Object.freeze([
   "fota_curr_istatus",
   "wifi_work_status",
@@ -119,3 +121,29 @@ export const SENSITIVE_KEYS_NOT_MIRRORED = Object.freeze([
   "esim_profile_*",
   "dialup_profile_*"
 ]);
+
+export const HAR2_CAPABILITY_OVERRIDES = Object.freeze([
+  ["Status", "live telemetry"],
+  ["Battery", "exact percentage"],
+  ["Wi-Fi", "up to four AP profiles without PSK"],
+  ["Mobile Network", "qualitative signal + 4G/5G mode"],
+  ["Network Settings", "acquisition/scan/5G config"],
+  ["SIM / eSIM", "slot/status metadata; identifiers withheld"],
+  ["Data Usage", "day/month counters"],
+  ["DHCP", "IPv4 read"],
+  ["USB / Cradle", "USB tether/speed + cradle state"],
+  ["Firewall / Security", "WPS/filter/DMZ state"],
+  ["Time / NTP", "sync/timezone state"],
+  ["Power / Display", "charging/power/display state"],
+  ["Bridge Mode", "IP passthrough state"],
+  ["Firmware / FOTA", "firmware/update state"]
+].map(([module, evidence]) => Object.freeze({
+  module,
+  read: true,
+  write: false,
+  endpoint: "/action/get_mgdb_params",
+  method: "POST",
+  auth: "active modem login required",
+  evidence,
+  status: CAPABILITY_STATUS.READ_ONLY
+})));
