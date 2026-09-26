@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildDiagnosticReport, renderDiagnosticReportHtml, REPORT_SCHEMA } from "../src/ui/DiagnosticReport.js";
+import fs from "node:fs";
+import { buildDiagnosticReport, renderDiagnosticReportMarkup, REPORT_SCHEMA } from "../src/ui/DiagnosticReport.js";
 
 test("diagnostic report exposes only selected safe fields", () => {
   const report = buildDiagnosticReport({
@@ -52,10 +53,12 @@ test("diagnostic report marks stale snapshots and renders a professional printab
   assert.equal(report.source.detailsFreshness, "LAST GOOD");
   assert.equal(report.overview.connected, "Đang kết nối lại");
 
-  const html = renderDiagnosticReportHtml(report);
+  const html = renderDiagnosticReportMarkup(report);
+  const css = fs.readFileSync(new URL("../report.css", import.meta.url), "utf8");
+  const page = fs.readFileSync(new URL("../report.html", import.meta.url), "utf8");
   assert.match(html, /Báo cáo chẩn đoán modem/);
-  assert.match(html, /@page\{size:A4/);
-  assert.match(html, /In \/ Lưu PDF/);
+  assert.match(css, /@page\{size:A4/);
+  assert.match(page, /In \/ Lưu PDF/);
   assert.match(html, /Snapshot read-only/);
   assert.match(html, /LAST GOOD/);
 });
@@ -65,9 +68,22 @@ test("diagnostic report escapes modem-provided text", () => {
     live:{status:{carrier:'<script>alert("x")</script>'},battery:{},signal:{}},
     details:{wifi:{aps:[]},clients:[],firmware:{model:'<img src=x onerror=alert(1)>'}}
   });
-  const html = renderDiagnosticReportHtml(report);
+  const html = renderDiagnosticReportMarkup(report);
   assert.equal(html.includes('<script>alert("x")</script>'), false);
   assert.equal(html.includes('<img src=x onerror=alert(1)>'), false);
   assert.match(html, /&lt;script&gt;/);
   assert.match(html, /&lt;img/);
+});
+
+
+test("report page uses same-origin external assets and fragment-only payload transport", () => {
+  const page = fs.readFileSync(new URL("../report.html", import.meta.url), "utf8");
+  const script = fs.readFileSync(new URL("../report.js", import.meta.url), "utf8");
+  assert.match(page, /Content-Security-Policy/);
+  assert.match(page, /\.\/report\.css/);
+  assert.match(page, /\.\/report\.js/);
+  assert.doesNotMatch(page, /onclick=|onload=|onerror=/i);
+  assert.match(script, /location\.hash/);
+  assert.match(script, /history\.replaceState/);
+  assert.doesNotMatch(script, /fetch\(/);
 });
