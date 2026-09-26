@@ -133,13 +133,18 @@ function expressionStructure(expression) {
     if (["if","for","while","switch","function"].includes(name)) continue;
     calls.push({
       name,
-      args:splitArgs(match[2]).map(safeArgToken).slice(0, 6)
+      args:splitArgs(match[2]).map(safeArgToken).slice(0, 8)
     });
   }
 
   const authTokens = [];
   for (const match of value.matchAll(/\b([A-Za-z_$][\w$]*)\b/g)) {
-    if (/pass|passwd|password|pwd|user|username|login|auth|token/i.test(match[1])) authTokens.push(match[1]);
+    if (/pass|passwd|password|pwd|user|username|login|auth|token|key/i.test(match[1])) authTokens.push(match[1]);
+  }
+
+  const identifiers = [];
+  for (const match of value.matchAll(/\b([A-Za-z_$][\w$]*)\b/g)) {
+    if (!["var","let","const","true","false","null","undefined","return","new","function"].includes(match[1])) identifiers.push(match[1]);
   }
 
   let shape = "expression";
@@ -154,53 +159,80 @@ function expressionStructure(expression) {
     shape,
     objectKeys:objectKeys(value),
     calls:uniq(calls.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item)),
-    authTokens:uniq(authTokens)
+    authTokens:uniq(authTokens),
+    identifiers:uniq(identifiers).slice(0, 20)
   };
 }
 
-function payloadTrace(functionInfo, payloadVariable) {
-  if (!functionInfo || !payloadVariable) return [];
-  const body = functionInfo.body;
+function scopeLabel(text, index) {
+  const info = findContainingFunction(text, index);
+  return info?.name ? "function:" + info.name : "global";
+}
+
+function collectPayloadOrigins(text, payloadVariable) {
+  if (!payloadVariable) return [];
   const escaped = escapeRegex(payloadVariable);
   const entries = [];
 
-  const wholeAssign = new RegExp("(?:var|let|const)?\\s*" + escaped + "\\s*=\\s*([^;\\n]+)", "g");
-  for (const match of body.matchAll(wholeAssign)) {
+  const whole = new RegExp("(?:\\b(?:var|let|const)\\s+)?\\b" + escaped + "\\s*(\\+=|=)\\s*([^;\\n]+)", "g");
+  for (const match of text.matchAll(whole)) {
     entries.push({
-      kind:"payload-assign",
+      kind:match[1] === "+=" ? "payload-append" : "payload-assign",
       target:payloadVariable,
-      structure:expressionStructure(match[1])
+      scope:scopeLabel(text, match.index ?? 0),
+      structure:expressionStructure(match[2])
     });
   }
 
   const propertyPatterns = [
-    new RegExp(escaped + "\\.([A-Za-z_$][\\w$]*)\\s*=\\s*([^;\\n]+)", "g"),
-    new RegExp(escaped + "\\[[\"']([^\"']+)[\"']\\]\\s*=\\s*([^;\\n]+)", "g")
+    new RegExp("\\b" + escaped + "\\.([A-Za-z_$][\\w$]*)\\s*(\\+=|=)\\s*([^;\\n]+)", "g"),
+    new RegExp("\\b" + escaped + "\\[[\"']([^\"']+)[\"']\\]\\s*(\\+=|=)\\s*([^;\\n]+)", "g")
   ];
   for (const pattern of propertyPatterns) {
-    for (const match of body.matchAll(pattern)) {
+    for (const match of text.matchAll(pattern)) {
       entries.push({
-        kind:"field-assign",
+        kind:match[2] === "+=" ? "field-append" : "field-assign",
         target:payloadVariable + "." + match[1],
-        structure:expressionStructure(match[2])
+        scope:scopeLabel(text, match.index ?? 0),
+        structure:expressionStructure(match[3])
       });
     }
   }
 
-  const calls = [];
-  for (const match of body.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(([^;]{0,1200}?)\)/g)) {
+  for (const match of text.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(([^;]{0,1800}?)\)/g)) {
     if (!match[2].includes(payloadVariable)) continue;
-    calls.push({
+    entries.push({
       kind:"payload-call",
       target:match[1],
-      argShapes:splitArgs(match[2]).map(safeArgToken).slice(0, 8)
+      scope:scopeLabel(text, match.index ?? 0),
+      argShapes:splitArgs(match[2]).map(safeArgToken).slice(0, 10)
     });
   }
 
-  return [
-    ...entries,
-    ...uniq(calls.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item))
-  ];
+  const seen = new Set();
+  const deduped = [];
+  for (const entry of entries) {
+    const key = JSON.stringify(entry);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(entry);
+  }
+  return deduped.slice(0, 80);
+}
+
+function collectAliases(text, payloadVariable) {
+  if (!payloadVariable) return [];
+  const escaped = escapeRegex(payloadVariable);
+  const aliases = [];
+
+  for (const match of text.matchAll(new RegExp("\\b([A-Za-z_$][\\w$]*)\\s*=\\s*" + escaped + "\\b", "g"))) {
+    if (match[1] !== payloadVariable) aliases.push({ alias:match[1], relation:"from-payload", scope:scopeLabel(text, match.index ?? 0) });
+  }
+  for (const match of text.matchAll(new RegExp("\\b" + escaped + "\\s*=\\s*([A-Za-z_$][\\w$]*)\\b", "g"))) {
+    if (match[1] !== payloadVariable) aliases.push({ alias:match[1], relation:"to-payload", scope:scopeLabel(text, match.index ?? 0) });
+  }
+
+  return uniq(aliases.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item)).slice(0, 30);
 }
 
 export function traceLoginStructure({ source = "", endpointIndex = -1, payloadVariable = null } = {}) {
@@ -209,15 +241,22 @@ export function traceLoginStructure({ source = "", endpointIndex = -1, payloadVa
   return {
     functionName:functionInfo?.name ?? null,
     functionParams:functionInfo?.params ?? [],
-    payloadTrace:payloadTrace(functionInfo, payloadVariable)
+    payloadTrace:collectPayloadOrigins(functionInfo?.body ?? "", payloadVariable).map((entry) => ({
+      ...entry,
+      scope:functionInfo?.name ? "function:" + functionInfo.name : entry.scope
+    })),
+    payloadOrigins:collectPayloadOrigins(text, payloadVariable),
+    aliases:collectAliases(text, payloadVariable)
   };
 }
 
 export function extractAuthNumericConstants(source = "") {
   const text = String(source ?? "");
   const constants = [];
-  for (const match of text.matchAll(/\b(?:var|let|const)?\s*([A-Za-z_$][\w$]*(?:login|pass|passwd|password|pwd|auth|limit)[A-Za-z0-9_$]*)\s*=\s*(-?\d+)\b/gi)) {
-    constants.push({ name:match[1], value:Number(match[2]) });
+  for (const match of text.matchAll(/\b(?:var|let|const)?\s*([A-Za-z_$][\w$]*)\s*=\s*(-?\d+)\b/g)) {
+    const name = match[1];
+    if (!/(?:^g_(?:result|error|login|auth)|result|error|fail|success|login|pass|passwd|password|pwd|auth|limit)/i.test(name)) continue;
+    constants.push({ name, value:Number(match[2]) });
   }
-  return uniq(constants.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item));
+  return uniq(constants.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item)).slice(0, 120);
 }
