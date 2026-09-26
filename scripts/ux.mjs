@@ -56,3 +56,7 @@ assert.ok(css.includes(".response-code-map"), "Response-code evidence needs read
 
 assert.ok(app.includes("Payload origin trace · toàn file login.js"), "AUTH lab must surface payload origins beyond the login() body.");
 assert.ok(app.includes("Payload aliases"), "AUTH lab must surface payload aliases.");
+
+assert.ok(app.includes("Request object dependency trace"), "AUTH lab must trace the object serialized into postdata.");
+assert.ok(app.includes("Login object fields / transforms"), "AUTH lab must show request-object field transforms.");
+assert.ok(app.includes("authDependencyMapped"), "AUTH lab must expose the request-object AUTH mapping state.");
