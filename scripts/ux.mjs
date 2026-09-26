@@ -39,3 +39,6 @@ assert.ok(app.includes("Bật Developer Mode để mở Lab"), "HAR Lab entry mu
 
 assert.ok(app.includes("Login submit endpoint"), "AUTH Source Probe must surface login-submit candidates separately.");
 assert.ok(app.includes("Request field candidates"), "AUTH Source Probe must surface structural request fields.");
+
+assert.ok(app.includes("PROBE DIAGNOSTICS"), "AUTH probe must show safe per-path diagnostics.");
+assert.ok(css.includes(".probe-diagnostics"), "AUTH probe diagnostics need a readable layout.");
