@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const required = [
-  "index.html", "app.js", "styles.css", "manifest.webmanifest", "sw.js", "icon.svg",
+  "index.html", "app.js", "styles.css", "manifest.webmanifest", "sw.js", "icon.svg", "report.html", "report.css", "report.js",
   "src/modem/NC03Adapter.js", "src/modem/MockNC03Adapter.js", "src/modem/HarDiscovery.js",
   "src/modem/NC03Auth.js", "src/modem/NC03Api.js", "src/modem/NC03Session.js",
   "src/modem/NC03Parser.js", "src/modem/NC03Capabilities.js", "src/modem/ConnectionState.js",
