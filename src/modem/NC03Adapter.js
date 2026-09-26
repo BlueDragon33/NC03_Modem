@@ -15,13 +15,21 @@ export class NC03Adapter {
   async login() { throw new UnsupportedCapabilityError("login"); }
   async logout() { throw new UnsupportedCapabilityError("logout"); }
   async getDeviceInfo() { throw new UnsupportedCapabilityError("getDeviceInfo"); }
+  async getLiveSnapshot() { throw new UnsupportedCapabilityError("getLiveSnapshot"); }
   async getStatus() { throw new UnsupportedCapabilityError("getStatus"); }
   async getBattery() { throw new UnsupportedCapabilityError("getBattery"); }
   async getSignal() { throw new UnsupportedCapabilityError("getSignal"); }
   async getNetworkInfo() { throw new UnsupportedCapabilityError("getNetworkInfo"); }
+  async getNetworkSettings() { throw new UnsupportedCapabilityError("getNetworkSettings"); }
   async getWifiStatus() { throw new UnsupportedCapabilityError("getWifiStatus"); }
   async getConnectedClients() { throw new UnsupportedCapabilityError("getConnectedClients"); }
   async getDataUsage() { throw new UnsupportedCapabilityError("getDataUsage"); }
+  async getUsbStatus() { throw new UnsupportedCapabilityError("getUsbStatus"); }
+  async getPowerSettings() { throw new UnsupportedCapabilityError("getPowerSettings"); }
+  async getSecurityStatus() { throw new UnsupportedCapabilityError("getSecurityStatus"); }
+  async getTimeSettings() { throw new UnsupportedCapabilityError("getTimeSettings"); }
+  async getFirmwareStatus() { throw new UnsupportedCapabilityError("getFirmwareStatus"); }
+  async getAdvancedSnapshot() { throw new UnsupportedCapabilityError("getAdvancedSnapshot"); }
   async setWifiSettings() { throw new UnsupportedCapabilityError("setWifiSettings"); }
   async setWifiPassword() { throw new UnsupportedCapabilityError("setWifiPassword"); }
   async setWifiBand() { throw new UnsupportedCapabilityError("setWifiBand"); }
