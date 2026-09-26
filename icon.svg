@@ -1,13 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
-  <title id="title">NC03 Control Center</title>
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#82e6ff"/>
-      <stop offset="1" stop-color="#3d77ff"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="#0b1117"/>
-  <rect x="54" y="54" width="404" height="404" rx="92" fill="url(#g)"/>
-  <path d="M134 346V166h42l94 112V166h48v180h-41l-95-113v113h-48Z" fill="#04101a"/>
-  <path d="M342 214c0-33 25-55 64-55 35 0 61 18 65 47h-43c-3-9-11-14-23-14-13 0-21 7-21 18 0 12 9 18 27 18h17v32h-18c-20 0-31 8-31 22 0 13 10 21 27 21 14 0 24-6 28-17h44c-5 33-33 51-72 51-43 0-70-22-70-57 0-19 10-34 28-43-15-8-22-22-22-43Z" fill="#04101a"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NC03 Modem Control">
+  <defs><linearGradient id="g" x1="8" y1="6" x2="56" y2="58"><stop stop-color="#3d77ff"/><stop offset="1" stop-color="#0b1117"/></linearGradient></defs>
+  <rect width="64" height="64" rx="16" fill="#0b1117"/>
+  <rect x="12" y="34" width="40" height="15" rx="5" fill="url(#g)" stroke="#8ee8ff" stroke-width="1.5"/>
+  <circle cx="21" cy="41.5" r="2" fill="#9ff4c5"/>
+  <circle cx="28" cy="41.5" r="2" fill="#82e6ff"/>
+  <path d="M22 27c6-6 14-6 20 0M27 22c3-3 7-3 10 0M32 17h.1" fill="none" stroke="#82e6ff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M44 34v-6M20 34v-6" stroke="#d5f7ff" stroke-width="2.5" stroke-linecap="round"/>
 </svg>
