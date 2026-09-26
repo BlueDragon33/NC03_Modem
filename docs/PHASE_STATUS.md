@@ -108,3 +108,20 @@ Completed:
 - no new write capability was inferred or enabled.
 
 Read-path implementation is now complete for the evidence currently available. Remaining AUTH/write work is externally evidence-gated and must not be guessed.
+
+
+## Phase 2G — PROFESSIONAL QA + DIAGNOSTIC REPORT
+
+Status: **IMPLEMENTED**
+
+Completed:
+- professional tester pass over stale/fresh semantics, navigation persistence, invalid input and device-status wording;
+- Home explicitly marks stale Advanced client/data metrics;
+- impossible battery percentages are rejected;
+- remember-password UI cannot visually imply that a credential was saved before AUTH verification;
+- responsive quick actions use a balanced 4/2/1 layout;
+- keyboard focus visibility and 44 px interactive targets are enforced;
+- privacy-safe A4 diagnostic report added with Print / Save PDF;
+- report output is allow-list based and covered against secret leakage and HTML injection.
+
+No modem write capability was enabled. AUTH/write remain externally evidence-gated.
