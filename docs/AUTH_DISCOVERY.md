@@ -76,3 +76,16 @@ Không merge code bật login/write thật nếu chưa có:
 - rollback test cho write;
 - regression test;
 - fail-closed behavior khi firmware khác hoặc response bất thường.
+
+
+## Evidence từ HAR mới: password codec candidate
+
+HAR mới chứa source tĩnh của trang System Admin. Trong source này firmware định nghĩa một fixed `loginKey` và dùng:
+
+`hex_hmac_md5(loginKey, currentPassword)`
+
+cho trường mật khẩu hiện tại trước khi gọi `/action/modify_password`.
+
+Đây là **SOURCE CANDIDATE**, không phải bằng chứng đủ để kết luận login dùng cùng payload/endpoint. v0.7.6 thêm AUTH Source Probe để đọc trực tiếp `common.js`, `tools.js`, `md5.js` và các script được landing HTML tham chiếu, sau đó chỉ trả structural evidence.
+
+Nếu probe tìm được endpoint/login function phù hợp, bước tiếp theo là đối chiếu request shape và success/failure semantics trước khi nâng AUTH VERIFIED.
