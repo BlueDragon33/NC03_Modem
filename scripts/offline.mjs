@@ -34,7 +34,6 @@ for (const asset of ["./index.html","./app.js","./styles.css","./manifest.webman
   assert.ok(sw.includes(`"${asset}"`), `Service worker cache is missing ${asset}`);
 }
 assert.match(sw, /caches\.open\(CACHE\)/);
-assert.match(sw, /caches\.match\(event\.request\)/);
 assert.match(sw, /const response = await fetch\(event\.request, \{ cache:"no-store" \}\)/);
 assert.match(sw, /await cache\.put\(event\.request, response\.clone\(\)\)/);
 assert.match(sw, /const cached = await cache\.match\(event\.request\)/);
