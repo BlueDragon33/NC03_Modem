@@ -129,7 +129,7 @@ test("home makes stale Advanced data explicit instead of implying current client
 
 test("settings exposes only privacy-safe local diagnostic reporting", () => {
   assert.match(app, /buildDiagnosticReport/);
-  assert.match(app, /renderDiagnosticReportHtml/);
+  assert.match(app, /report\.html#/);
   assert.match(app, /openDiagnosticReport/);
   assert.match(app, /In \/ Lưu PDF/);
   assert.match(app, /Không spread toàn bộ payload modem/);
