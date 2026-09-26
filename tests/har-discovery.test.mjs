@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildHarEvidenceReport, classifyHarCandidate, describeBody, parseHar, redactHeaders, redactUrl, sanitizeBody, summarizeAuthCandidates, summarizeCandidates, summarizeWriteCandidates } from "../src/modem/HarDiscovery.js";
+import { assessHarCaptureQuality, buildHarEvidenceReport, classifyHarCandidate, describeBody, detectHarModemHost, parseHar, redactHeaders, redactUrl, sanitizeBody, summarizeAuthCandidates, summarizeCandidates, summarizeWriteCandidates } from "../src/modem/HarDiscovery.js";
 
 test("redacts sensitive headers and query", () => {
   assert.equal(redactHeaders([{name:"Cookie",value:"sid=123"}])[0].value, "****");
@@ -68,4 +68,56 @@ test("write-like endpoints are candidates only and POST read endpoints are not m
   assert.equal(writes.length, 1);
   assert.equal(writes[0].path, "/action/device_set_battery_safe_charge");
   assert.equal(writes[0].verified, false);
+});
+
+
+test("detects the dominant RFC1918 modem host from HAR instead of trusting the filename", () => {
+  const har = {log:{entries:[
+    {request:{url:"http://192.168.0.1/a"}},
+    {request:{url:"http://192.168.0.1/b"}},
+    {request:{url:"http://192.168.0.2/c"}},
+    {request:{url:"https://example.com/x"}}
+  ]}};
+  assert.equal(detectHarModemHost(har), "192.168.0.1");
+});
+
+test("capture quality distinguishes authenticated-session-only HAR from a real login transaction", () => {
+  const har = {log:{
+    pages:[{title:"http://192.168.0.1/html/settings.html?r=1"}],
+    entries:[
+      {
+        request:{method:"POST",url:"http://192.168.0.1/goform/get_login_info",headers:[]},
+        response:{status:200,headers:[],content:{mimeType:"application/json",text:'{"loginStatus":1,"loginUser":"private","login_ipaddr":"192.168.0.9"}'}},
+        time:4
+      },
+      {
+        request:{method:"POST",url:"http://192.168.0.1/action/get_mgdb_params",headers:[],postData:{mimeType:"application/json",text:'{"keys":["device_battery_percent"]}'}},
+        response:{status:200,headers:[],content:{mimeType:"application/json",text:'{"retcode":0,"data":{"device_battery_percent":"90"}}'}},
+        time:5
+      }
+    ]
+  }};
+  const quality = assessHarCaptureQuality(har);
+  assert.equal(quality.authCaptureStatus, "AUTHENTICATED_SESSION_ONLY");
+  assert.equal(quality.authenticatedStateObserved, true);
+  assert.equal(quality.readyForAuthMapping, false);
+  assert.equal(quality.writeCaptureStatus, "NO_WRITE_TRANSACTION");
+  assert.deepEqual(quality.pagePaths, ["/html/settings.html"]);
+  const report = buildHarEvidenceReport(har);
+  assert.equal(report.schema, "nc03-har-evidence/v2");
+  assert.equal(report.modemHost, "192.168.0.1");
+  assert.equal(report.captureQuality.authCaptureStatus, "AUTHENTICATED_SESSION_ONLY");
+  assert.doesNotMatch(JSON.stringify(report), /private|192\.168\.0\.9/);
+});
+
+test("capture quality promotes only credential-bearing login as an AUTH mapping candidate", () => {
+  const har = {log:{entries:[{
+    request:{method:"POST",url:"http://192.168.8.1/goform/login",headers:[{name:"Content-Type",value:"application/x-www-form-urlencoded"}],postData:{mimeType:"application/x-www-form-urlencoded",text:"password=secret"}},
+    response:{status:200,headers:[],content:{mimeType:"application/json",text:'{"retcode":0}'}},
+    time:10
+  }]}};
+  const quality = assessHarCaptureQuality(har);
+  assert.equal(quality.authCaptureStatus, "LOGIN_TRANSACTION_CANDIDATE_FOUND");
+  assert.equal(quality.readyForAuthMapping, true);
+  assert.equal(quality.loginTransactionCandidateCount, 1);
 });
