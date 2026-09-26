@@ -1,0 +1,73 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { buildDiagnosticReport, renderDiagnosticReportHtml, REPORT_SCHEMA } from "../src/ui/DiagnosticReport.js";
+
+test("diagnostic report exposes only selected safe fields", () => {
+  const report = buildDiagnosticReport({
+    baseUrl:"http://192.168.0.1",
+    live:{
+      status:{ connected:true, internetMode:"mobile", network:"nsa", carrier:"Carrier", signalLevel:"great", simStatus:"ready" },
+      battery:{ percentage:72, charging:false },
+      signal:{ systemMode:"nsa", carrier:"Carrier", level:"great" }
+    },
+    details:{
+      wifi:{ enabled:true, workBand:"dual", aps:[{ssid:"Home"}], xmg_wifi_psk_0:"SECRET-PSK" },
+      clients:[{name:"Phone",mac:"AA:BB"}],
+      dataUsage:{statistics_data_used:1024,statistics_day_data_used:2048},
+      firmware:{model:"NC03",firmware:"NC03_8.00.42",hardware:"HW",manufacturer:"Vendor",fotaStatus:"idle",device_imei:"SECRET-IMEI"},
+      security:{wifi_wps_enable_state:"disable",wifi_macfilter_mode:"disable",rt_ipfilter_type:"disable",rt_dmz_switch:"disable",rt_dmz_ip:"192.168.0.9"},
+      ruleInventory:{dhcpReservations:1,portForwardingRules:2,ipv4PacketFilterRules:3,ipv6PacketFilterRules:4},
+      power:{device_charge_long_life:"enable",device_bat_safe_charge_switch:"enable",device_power_saving_mode:"normal"},
+      usb:{bridgeState:"disable",tethering:"disable",speed:"usb3",ethernetType:"none"},
+      token:"SECRET-TOKEN",
+      password:"SECRET-PASSWORD",
+      mnet_sim_iccid:"SECRET-ICCID",
+      esim_eid:"SECRET-EID",
+      dialup_profile_0:"SECRET-APN"
+    },
+    lastLiveSuccessAt:"2026-09-26T07:00:00.000Z",
+    lastDetailsSuccessAt:"2026-09-26T07:00:05.000Z"
+  });
+
+  assert.equal(report.schema, REPORT_SCHEMA);
+  assert.equal(report.overview.battery, "72%");
+  assert.equal(report.wifi.accessPointCount, 1);
+  assert.equal(report.wifi.connectedClientCount, 1);
+  const serialized = JSON.stringify(report);
+  for (const secret of ["SECRET-PSK","SECRET-IMEI","SECRET-TOKEN","SECRET-PASSWORD","SECRET-ICCID","SECRET-EID","SECRET-APN","192.168.0.9"]) {
+    assert.equal(serialized.includes(secret), false, `report leaked ${secret}`);
+  }
+});
+
+test("diagnostic report marks stale snapshots and renders a professional printable layout", () => {
+  const report = buildDiagnosticReport({
+    baseUrl:"http://192.168.0.1",
+    live:{status:{connected:true},battery:{percentage:51},signal:{level:"good",systemMode:"lte"}},
+    details:{wifi:{aps:[]},clients:[]},
+    liveStale:true,
+    detailsStale:true,
+    generatedAt:"2026-09-26T07:00:00.000Z"
+  });
+  assert.equal(report.source.liveFreshness, "LAST GOOD");
+  assert.equal(report.source.detailsFreshness, "LAST GOOD");
+  assert.equal(report.overview.connected, "Đang kết nối lại");
+
+  const html = renderDiagnosticReportHtml(report);
+  assert.match(html, /Báo cáo chẩn đoán modem/);
+  assert.match(html, /@page\{size:A4/);
+  assert.match(html, /In \/ Lưu PDF/);
+  assert.match(html, /Snapshot read-only/);
+  assert.match(html, /LAST GOOD/);
+});
+
+test("diagnostic report escapes modem-provided text", () => {
+  const report = buildDiagnosticReport({
+    live:{status:{carrier:'<script>alert("x")</script>'},battery:{},signal:{}},
+    details:{wifi:{aps:[]},clients:[],firmware:{model:'<img src=x onerror=alert(1)>'}}
+  });
+  const html = renderDiagnosticReportHtml(report);
+  assert.equal(html.includes('<script>alert("x")</script>'), false);
+  assert.equal(html.includes('<img src=x onerror=alert(1)>'), false);
+  assert.match(html, /&lt;script&gt;/);
+  assert.match(html, /&lt;img/);
+});
