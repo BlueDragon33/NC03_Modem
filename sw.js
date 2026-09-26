@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v8-final-read";
+const CACHE = "nc03-control-center-v9-qa-report";
 const ASSETS = [
   "./",
   "./index.html",
@@ -21,7 +21,8 @@ const ASSETS = [
   "./src/modem/LocalBridgePolicy.js",
   "./src/modem/NC03Firmware80042Profile.js",
   "./src/modem/NC03Har2Profile.js",
-  "./src/ui/NavigationModel.js"
+  "./src/ui/NavigationModel.js",
+  "./src/ui/DiagnosticReport.js"
 ];
 
 self.addEventListener("install", (event) => {
