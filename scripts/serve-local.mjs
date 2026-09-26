@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join, normalize, resolve } from "node:path";
 import { NC03Firmware80042Adapter } from "../src/modem/NC03Firmware80042Adapter.js";
+import { normalizeModemBaseUrl } from "../src/modem/LocalBridgePolicy.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
@@ -55,24 +56,6 @@ function sendFile(res, file, headOnly = false) {
 
 function contract() {
   return JSON.parse(readFileSync(contractPath, "utf8"));
-}
-
-function isPrivateIpv4(hostname) {
-  const parts = hostname.split(".").map(Number);
-  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
-  if (parts[0] === 10 || parts[0] === 127) return true;
-  if (parts[0] === 192 && parts[1] === 168) return true;
-  return parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31;
-}
-
-function normalizeModemBaseUrl(value) {
-  const raw = typeof value === "string" && value.trim() ? value.trim() : "http://192.168.0.1";
-  const url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `http://${raw}`);
-  const safeHost = url.hostname === "localhost" || url.hostname === "::1" || isPrivateIpv4(url.hostname);
-  if (!safeHost || !["http:","https:"].includes(url.protocol)) throw new Error("MODEM_ORIGIN_NOT_PRIVATE");
-  if (url.username || url.password || url.search || url.hash || (url.pathname && url.pathname !== "/")) throw new Error("MODEM_ORIGIN_INVALID");
-  if (url.port && !["80","443"].includes(url.port)) throw new Error("MODEM_PORT_NOT_ALLOWED");
-  return url.origin;
 }
 
 async function readJsonBody(req, maxBytes = 4096) {
