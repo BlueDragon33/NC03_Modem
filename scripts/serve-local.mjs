@@ -140,8 +140,7 @@ async function authSourceProbe(req, res) {
     const evidence = buildAuthSourceEvidence(sources);
     json(res, 200, {
       ok:true,
-      baseUrl,
-      evidence
+      payload:{ baseUrl, evidence }
     });
   } catch (error) {
     const code = error instanceof Error ? error.message : "AUTH_SOURCE_PROBE_FAILED";
@@ -157,12 +156,15 @@ async function modemDoctor(req, res) {
     const adapter = modemAdapter(baseUrl);
     const login = await adapter.connect();
     if (!login.authenticated) {
-      json(res, 200, buildConnectionDoctorReport({
-        baseUrl,
-        bridgeOk:true,
-        authenticated:false,
-        errorCode:"AUTHENTICATION_REQUIRED"
-      }));
+      json(res, 200, {
+        ok:true,
+        payload:buildConnectionDoctorReport({
+          baseUrl,
+          bridgeOk:true,
+          authenticated:false,
+          errorCode:"AUTHENTICATION_REQUIRED"
+        })
+      });
       return;
     }
 
@@ -171,22 +173,28 @@ async function modemDoctor(req, res) {
       adapter.getFirmwareStatus()
     ]);
 
-    json(res, 200, buildConnectionDoctorReport({
-      baseUrl,
-      bridgeOk:true,
-      authenticated:true,
-      live,
-      firmware
-    }));
+    json(res, 200, {
+      ok:true,
+      payload:buildConnectionDoctorReport({
+        baseUrl,
+        bridgeOk:true,
+        authenticated:true,
+        live,
+        firmware
+      })
+    });
   } catch (error) {
     const code = error instanceof Error ? error.message : "NC03_READ_FAILED";
     const safeCode = /^[A-Z0-9_]+$/.test(code) ? code : "NC03_READ_FAILED";
-    json(res, 200, buildConnectionDoctorReport({
-      baseUrl:null,
-      bridgeOk:true,
-      authenticated:false,
-      errorCode:safeCode
-    }));
+    json(res, 200, {
+      ok:true,
+      payload:buildConnectionDoctorReport({
+        baseUrl:null,
+        bridgeOk:true,
+        authenticated:false,
+        errorCode:safeCode
+      })
+    });
   }
 }
 
