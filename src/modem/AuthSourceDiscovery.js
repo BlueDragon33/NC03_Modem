@@ -82,7 +82,7 @@ export function buildAuthSourceEvidence(sources = []) {
     loginFunctions,
     passwordCodec:{
       fixedLoginKeyPresent:fixedKeys.length > 0,
-      fixedLoginKeys,
+      fixedLoginKeys:fixedKeys,
       hmacMd5
     },
     discoveredScriptRefs:scriptRefs,
