@@ -7,6 +7,7 @@ import { CONNECTION_STATE, connectionStateLabel } from "./src/modem/ConnectionSt
 import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
 import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
 import { buildDiagnosticReport } from "./src/ui/DiagnosticReport.js";
+import { NC03_RUNTIME_PROTOCOL } from "./src/runtime/RuntimeProtocol.js";
 
 const app = document.querySelector("#app");
 const prefs = loadPreferences();
@@ -642,6 +643,10 @@ async function localHealth() {
     if (!response.ok || payload.ok !== true || payload.app !== "nc03-control-center") {
       throw codedError("LOCAL_BRIDGE_HEALTH_FAILED");
     }
+    if (payload.runtimeProtocol !== NC03_RUNTIME_PROTOCOL.id
+      || payload.authEvidenceSchema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema) {
+      throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
+    }
     return payload;
   } catch (error) {
     if (error?.code) throw error;
@@ -679,7 +684,12 @@ async function runAuthSourceProbe() {
   page();
   try {
     await localHealth();
-    state.authSourceEvidence = await localRead("/api/nc03/auth-source-probe");
+    const probe = await localRead("/api/nc03/auth-source-probe");
+    if (probe?.runtime?.protocolId !== NC03_RUNTIME_PROTOCOL.id
+      || probe?.evidence?.schema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema) {
+      throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
+    }
+    state.authSourceEvidence = probe;
     state.authSourceError = "";
   } catch (error) {
     state.authSourceEvidence = null;
@@ -687,6 +697,7 @@ async function runAuthSourceProbe() {
     const labels = {
       LOCAL_BRIDGE_UNREACHABLE:"LOCAL_BRIDGE_UNREACHABLE — server local không còn phản hồi.",
       LOCAL_BRIDGE_HEALTH_FAILED:"LOCAL_BRIDGE_HEALTH_FAILED — port hiện tại không phải NC03 Control Center.",
+      LOCAL_BRIDGE_RESTART_REQUIRED:"LOCAL_BRIDGE_RESTART_REQUIRED — giao diện mới nhưng Local Bridge vẫn đang chạy code/schema cũ trong RAM. Dừng process NC03 và khởi động lại runtime.",
       MALFORMED_LOCAL_RESPONSE:"MALFORMED_LOCAL_RESPONSE — response local sai contract.",
       AUTH_SOURCE_PROBE_FAILED:"AUTH_SOURCE_PROBE_FAILED — probe phía server gặp lỗi.",
       METHOD_NOT_ALLOWED:"METHOD_NOT_ALLOWED — frontend và Local Bridge đang lệch phiên bản hoặc đang mở nhầm runtime. Tải lại sau khi runtime được cập nhật."
