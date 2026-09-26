@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.2 — Privacy-safe AUTH/write evidence discovery
+
+- Added a local-only `npm run analyze:har -- <capture.har>` workflow for the next NC03 auth/write capture.
+- HAR parsing now understands JSON and form-urlencoded request bodies while redacting credential/token/session values.
+- Evidence reports expose only structural metadata such as field names, body shape, status codes and cookie/auth-header presence.
+- Added explicit auth candidate summaries without promoting them to AUTH VERIFIED.
+- Added write-like candidate summaries while keeping every finding `CANDIDATE_ONLY` and `verified:false`.
+- Prevented POST read routes such as `get_mgdb_params` from being misclassified as write solely because they use POST.
+- Added regression tests proving raw credentials/session values do not appear in the generated evidence report.
+- Added a capture/rollback workflow document for the remaining Phase 2B evidence gate.
+- Application Management contract now advertises the local evidence analyzer while keeping remote admin and modem command proxy disabled.
+
 ## 0.7.1 — QA data quality + professional reporting
 
 - Fixed a reporting logic bug where unavailable AP/client/rule counts could be rendered as zero.

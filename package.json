@@ -1,6 +1,6 @@
 {
   "name": "nc03-control-center",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,6 +15,7 @@
     "test": "npm run unit && npm run integration",
     "verify": "npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run offline && npm run security",
     "offline": "node scripts/offline.mjs",
-    "serve:local": "node scripts/serve-local.mjs"
+    "serve:local": "node scripts/serve-local.mjs",
+    "analyze:har": "node scripts/analyze-har.mjs"
   }
 }
