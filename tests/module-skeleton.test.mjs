@@ -58,3 +58,9 @@ test("login policy is password-only, remembers after success and normalizes conf
   assert.throws(() => normalizeModemAddress("http://192.168.8.1/settings"));
   assert.throws(() => normalizeModemAddress("ftp://192.168.0.1"));
 });
+
+
+test("remember-password policy remains future-facing until authentication is verified", () => {
+  assert.equal(LOGIN_POLICY.persistCredentialOnlyAfterAuthenticated, true);
+  assert.equal(LOGIN_POLICY.reuseRememberedCredentialOnNextLaunch, true);
+});
