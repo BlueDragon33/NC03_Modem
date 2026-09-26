@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.14 — Login structural trace
+
+- Added a dedicated privacy-safe structural tracer for the real `login()` function.
+- Traces how the identified payload variable is constructed before `/goform/login` without returning raw source or literal values.
+- Reports payload assignments, field assignments, related payload calls, call names and auth-related symbol names.
+- Added numeric AUTH constant extraction so response codes such as `13` can be mapped back to symbolic firmware names when present.
+- AUTH Lab now shows **Payload structural trace** and **Response code map**.
+- Clarified the login status label so an identified endpoint is no longer shown as “no submit candidate”.
+- Production authentication remains fail-closed until request shape and success/failure semantics are coherent.
+
+
 ## 0.7.13 — Login call-shape tracing
 
 - Extended `/goform/login` analysis beyond simple `payload.field = value` assignments.
