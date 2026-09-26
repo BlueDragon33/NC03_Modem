@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.2 — Resilient last-known-good telemetry
+
+- Preserve the last-known-good exact battery %, signal and network values across transient 10-second polling failures.
+- Mark stale telemetry as reconnecting / last-known rather than falsely showing it as current.
+- Keep connection state current while retaining the most recent safe telemetry values.
+- Unify UI address validation, persisted preferences and Local Bridge origin policy around RFC1918 IPv4 only.
+- Repair invalid/stale persisted modem origins automatically to the safe default.
+- Cache LocalBridgePolicy in the PWA release artifact.
+
 ## 0.6.1 — Stable 10-second telemetry UX + safe inventory
 
 - Stopped the 10-second telemetry loop from re-rendering the whole page; only live fields update in place.
