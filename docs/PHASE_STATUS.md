@@ -361,3 +361,27 @@ Implemented:
 Next gate:
 - run AUTH Source Probe again and inspect **Payload structural trace** plus **Response code map**.
 - if `postdata` construction and the meaning of response code `13` are resolved, build the first candidate `NC03Auth.login()` behind an explicit verification gate.
+
+
+## Phase 2U — LOGIN PAYLOAD-ORIGIN TRACE
+
+Status: **IMPLEMENTED**
+
+Live observation from v0.7.14:
+- `/goform/login`, `/js/login.js`, `login()`, `saveAjaxJsonData`, and payload variable `postdata` are confirmed;
+- response signals include `13` and `g_resultSuccess`;
+- the payload is not constructed in a pattern visible inside the immediate `login()` body.
+
+Implemented:
+- full-file search for `postdata` assignments and appends;
+- full-file property mutation tracing;
+- calls referencing `postdata`;
+- scope labels (global vs containing function);
+- payload alias graph;
+- expanded numeric result/error constant discovery;
+- separate status for payload-origin evidence vs complete request shape;
+- strict no-literal-value output remains enforced.
+
+Next gate:
+- run AUTH Source Probe again and inspect **Payload origin trace · toàn file login.js**, **Payload aliases**, and **Response code map**.
+- if the payload origin resolves to a helper or alias chain, trace that helper/alias one level deeper before implementing `NC03Auth.login()`.
