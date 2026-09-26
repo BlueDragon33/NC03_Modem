@@ -15,15 +15,15 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.6.0 — HAR2 Live Telemetry
+## Phase 2 · v0.6.1 — Live UX + Safe Read Inventory
 
 HAR mới của firmware **NC03_8.00.42** đã mở rộng read-path thật:
 
 - % pin chính xác luôn hiển thị trên mọi màn hình;
 - trạng thái Internet/WAN, 4G/5G, nhà mạng và chất lượng sóng định tính luôn hiển thị;
-- telemetry trên tự động cập nhật **10 giây/lần**;
+- telemetry trên tự động cập nhật **10 giây/lần**, chỉ cập nhật DOM tại chỗ để không làm mất focus/vị trí cuộn;
 - Local Bridge `/api/nc03/snapshot` giải quyết đường đọc modem từ website local mà không đưa password lên cloud;
-- Advanced read snapshot thêm network settings, 4 Wi-Fi AP, clients, data usage, DHCP, USB/Cradle, IP Passthrough, security/filter/DMZ, NTP, power/display, firmware/FOTA;
+- Advanced read snapshot thêm network settings, Mobile Data, SIM PIN state, Cloud SIM auto-switch, 4 Wi-Fi AP, clients, data usage, DHCP, USB/Cradle, IP Passthrough, security/filter/DMZ, NTP, power/display, firmware/FOTA và **chỉ số lượng** DHCP reservation/port-forward/packet-filter rule;
 - PSK Wi-Fi, IMEI/serial, ICCID/EID/eSIM profile và APN profile cố ý không mirror vào dashboard;
 - HAR mới vẫn không chứa write request thực tế, vì vậy mọi write action tiếp tục fail-closed.
 
@@ -32,12 +32,12 @@ App Management dùng runtime local NC03 và Universal Contract, nhưng không s�
 ## Chạy local
 
 ```bash
-python -m http.server 4173
+npm run serve:local
 ```
 
-Sau đó mở `http://localhost:4173`.
+Mặc định mở `http://127.0.0.1:3006`. Khi chạy từ Application Management bằng `npm run run:all`, NC03 dùng `http://127.0.0.1:3010`.
 
-Lưu ý: Web UI gốc chạy same-origin trên modem. Direct PWA → `192.168.0.1` còn phải xác minh CORS/Local Network Access. Local Bridge là fallback nếu browser chặn.
+Local Bridge hiện là transport local production cho read-path. Bridge chỉ nhận modem origin là **IPv4 RFC1918** (`10/8`, `172.16/12`, `192.168/16`), không nhận localhost/loopback/public host. Direct browser → modem vẫn là tùy chọn nghiên cứu, không phải đường chính.
 
 ## Kiểm tra
 
@@ -53,9 +53,8 @@ Không coi release là PASS nếu một gate trong pipeline thất bại.
 
 1. map request đăng nhập password-only của firmware;
 2. nối credential vault vào kết quả đăng nhập thành công;
-3. test Direct LAN transport;
-4. nếu bị browser chặn, triển khai Local Bridge;
-5. capture từng write operation ít rủi ro để nâng từ PARTIAL → WRITE VERIFIED.
+3. capture từng write operation ít rủi ro để nâng từ PARTIAL → WRITE VERIFIED;
+4. chỉ nghiên cứu Direct LAN transport nếu nó mang lại lợi ích rõ hơn Local Bridge hiện tại.
 
 ## Publish
 
