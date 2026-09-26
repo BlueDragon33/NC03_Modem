@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v26-login-object-dependency";
+const CACHE = "nc03-control-center-v27-login-nested-call-trace";
 const ASSETS = [
   "./",
   "./index.html",
