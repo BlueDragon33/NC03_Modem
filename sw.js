@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v23-login-structural-trace";
+const CACHE = "nc03-control-center-v24-login-payload-provenance";
 const ASSETS = [
   "./",
   "./index.html",

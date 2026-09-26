@@ -216,3 +216,11 @@ test("AUTH lab surfaces structural login trace and response-code mapping", () =>
   assert.match(app, /responseCodeMap/);
   assert.match(app, /Đã tìm thấy endpoint · shape pending/);
 });
+
+
+test("AUTH lab shows payload provenance and response semantics candidates", () => {
+  assert.match(app, /Payload provenance/);
+  assert.match(app, /RESPONSE SEMANTICS/);
+  assert.match(app, /responseCodeCandidates/);
+  assert.match(app, /responseSymbolValues/);
+});

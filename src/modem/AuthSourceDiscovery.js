@@ -1,4 +1,4 @@
-import { extractAuthNumericConstants, traceLoginStructure } from "./LoginStructuralTrace.js";
+import { extractAuthNumericConstants, resolveResponseCodeCandidates, traceLoginStructure } from "./LoginStructuralTrace.js";
 
 const ENDPOINT_RE = /["'](\/(?:action|goform)\/[A-Za-z0-9_./-]+)["']/g;
 const SCRIPT_LITERAL_RE = /["']([^"'<>\s]+\.js(?:\?[^"']*)?)["']/g;
@@ -250,6 +250,8 @@ function endpointCallsite(text, path, endpoint, index) {
     fields,
     transforms:uniq(transforms.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item)),
     structuralTrace:structural.payloadTrace,
+    payloadAliases:structural.payloadAliases,
+    payloadProvenance:structural.payloadProvenance,
     responseSignals:uniq(responseSignals),
     hasHmacMd5:/hex_hmac_md5\s*\(/i.test(around),
     statusLabel:"SOURCE_CALLSITE_CANDIDATE"
@@ -358,7 +360,12 @@ export function buildAuthSourceEvidence(sources = []) {
     ...Object.values(item.objectKeys ?? {}).flat()
   ]));
   const hasRequestShape = (item) => item.fields.length > 0 || item.directObjectKeys.length > 0 || Object.values(item.objectKeys ?? {}).some((keys) => keys.length > 0) || item.argumentShapes.some((shape) => shape.startsWith("json-stringify:") || shape.startsWith("object:{"));
-  const responseCodeMap = Object.fromEntries(numericAuthConstants.map((item) => [String(item.value), item.name]));
+  const numericSignals = uniq(loginCallsites.flatMap((item) => item.responseSignals).filter((value) => /^-?\d+$/.test(String(value))));
+  const symbolicSignals = uniq(loginCallsites.flatMap((item) => item.responseSignals).filter((value) => !/^-?\d+$/.test(String(value))));
+  const resolvedResponses = resolveResponseCodeCandidates(sources, numericSignals, symbolicSignals);
+  const responseCodeMap = Object.fromEntries(Object.entries(resolvedResponses.codeCandidates)
+    .filter(([, names]) => names.length === 1)
+    .map(([code, names]) => [code, names[0]]));
   const fixedKeys = uniq(analyses.map((item) => item.passwordCodec.fixedLoginKey).filter(Boolean));
   const hmacMd5 = analyses.some((item) => item.passwordCodec.hmacMd5);
 
@@ -369,7 +376,7 @@ export function buildAuthSourceEvidence(sources = []) {
   else if (authEndpoints.length || hmacMd5 || fixedKeys.length) status = "AUTH_SUPPORTING_EVIDENCE_ONLY";
 
   return {
-    schema:"nc03-auth-source-evidence/v5",
+    schema:"nc03-auth-source-evidence/v6",
     status,
     sourcesAnalyzed:analyses.map((item) => item.path),
     authEndpoints,
@@ -381,6 +388,8 @@ export function buildAuthSourceEvidence(sources = []) {
     loginCallsites,
     numericAuthConstants,
     responseCodeMap,
+    responseCodeCandidates:resolvedResponses.codeCandidates,
+    responseSymbolValues:resolvedResponses.symbolValues,
     passwordCodec:{
       fixedLoginKeyPresent:fixedKeys.length > 0,
       fixedLoginKeys:fixedKeys,
