@@ -717,6 +717,7 @@ const server = createServer(async (req, res) => {
       authProbeTransport:NC03_RUNTIME_PROTOCOL.authProbeTransport,
       authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
       writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
+      settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
       bootedAt:runtimeBootedAt,
       assetRoot:usingDist ? "dist" : "source",
       contractEndpoint:"/api/application-management/contract"
