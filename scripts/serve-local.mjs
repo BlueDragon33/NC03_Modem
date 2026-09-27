@@ -275,7 +275,7 @@ function publicLoginReadiness(runtime) {
       loginKey:Boolean(recipe.evidence?.loginKey),
       endpoint:Boolean(recipe.evidence?.endpoint),
       usernameHmac:Boolean(recipe.evidence?.usernameHmac),
-      usernameLiteral:Boolean(recipe.evidence?.usernameLiteral),
+      usernameSourceReady:Boolean(recipe.evidence?.usernameLiteral),
       passwordHmac:Boolean(recipe.evidence?.passwordHmac),
       passwordInput:Boolean(recipe.evidence?.passwordInput),
       successZero:Boolean(recipe.evidence?.successZero),
