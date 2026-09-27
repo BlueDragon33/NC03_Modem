@@ -311,3 +311,16 @@ test("session expiry takes priority over stale-data reconnect and rerenders logi
   assert.match(app, /authNavigationChanged/);
   assert.match(app, /Xác thực lại NC03/);
 });
+
+
+test("Write Readiness Lab remains read-only and prepares a reversible safe-charge capture", () => {
+  assert.match(app, /WRITE READINESS LAB/);
+  assert.match(app, /Long Life Charging · reversible write plan/);
+  assert.match(app, /\/api\/nc03\/write-readiness/);
+  assert.match(app, /writeEnabled=false/);
+  assert.match(app, /READY FOR REVERSIBLE HAR CAPTURE/);
+  assert.match(server, /async function writeReadiness/);
+  assert.match(server, /adapter\.getPowerSettings\(\)/);
+  assert.match(server, /buildWriteReadinessEvidence/);
+  assert.doesNotMatch(server, /adapter\.setLongLifeCharging\(/);
+});
