@@ -6,8 +6,8 @@ There are exactly **18** prompt projections in the current strict-serial plan.
 
 | # | Work Package | Prompt | State |
 |---:|---|---|---|
-| 00 | NC03-WP00 | [Constitutional reset and anti-patch baseline](./00-wp00.md) | ACTIVE |
-| 01 | NC03-WP01 | [Stock Web UI parity inventory](./01-wp01.md) | PLANNED |
+| 00 | NC03-WP00 | [Constitutional reset and anti-patch baseline](./00-wp00.md) | COMPLETE |
+| 01 | NC03-WP01 | [Stock Web UI parity inventory](./01-wp01.md) | ACTIVE |
 | 02 | NC03-WP02 | [Canonical settings and capability registry](./02-wp02.md) | PLANNED |
 | 03 | NC03-WP03 | [Architecture consolidation](./03-wp03.md) | PLANNED |
 | 04 | NC03-WP04 | [Authentication, session and credential lifecycle](./04-wp04.md) | PLANNED |
