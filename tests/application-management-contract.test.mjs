@@ -110,3 +110,18 @@ test("contract publishes stock-WebUI-style settings navigation without broad wri
   assert.deepEqual(contract.policy.settingsCategories, ["mobile","wifi","lan","connectivity","power","security","system"]);
   assert.equal(contract.policy.otherSettingsRemainReadOnly, true);
 });
+
+
+test("contract publishes Constitution-bound canonical Blueprint governance", () => {
+  assert.equal(contract.capabilities.canonicalBlueprintPromptSystem, true);
+  assert.equal(contract.capabilities.strictSerialWorkPackages, true);
+  assert.equal(contract.capabilities.constitutionBoundDevelopment, true);
+  assert.equal(contract.policy.blueprintLevel, "B4");
+  assert.equal(contract.policy.blueprintVersion, "1.0.0");
+  assert.equal(contract.policy.promptProjectionCount, 18);
+  assert.equal(contract.policy.promptExecutionMode, "strict-serial");
+  assert.equal(contract.policy.canonicalProjectState, ".blueprint/*");
+  assert.equal(contract.policy.promptProjectionIsSourceOfTruth, false);
+  assert.equal(contract.policy.rootCauseBeforePatch, true);
+  assert.equal(contract.policy.productionAuthoritySeparateFromMerge, true);
+});
