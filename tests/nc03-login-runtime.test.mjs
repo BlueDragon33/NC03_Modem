@@ -79,3 +79,47 @@ test("fails closed when recipe or transport is incomplete", () => {
   assert.equal(discoverNc03LoginRecipe('function login(){}').ready, false);
   assert.equal(discoverSaveAjaxTransport(['function saveAjaxJsonData(){}']).ready, false);
 });
+
+
+test("discovers indirection used by vendor login source without requiring a direct literal in the field assignment", () => {
+  const loginSource = [
+    'var g_resultSuccess=0;',
+    'var fixedUser="admin";',
+    'function login(){',
+    '  var passwordInput=$("#login_password").val();',
+    '  var _obj=new Object();',
+    '  _obj.username=hex_hmac_md5(loginKey,fixedUser);',
+    '  _obj.password=hex_hmac_md5(loginKey,passwordInput);',
+    '  var postdata=JSON.stringify(_obj);',
+    '  saveAjaxJsonData("/goform/login",postdata,function(obj){',
+    '    if(obj.retcode===g_resultSuccess){}',
+    '    if(obj.retcode===13){}',
+    '  });',
+    '}'
+  ].join("\n");
+  const support = [{path:"/js/common.js",source:'var loginKey="fixture-key";'}];
+
+  const recipe = discoverNc03LoginRecipe(loginSource, support);
+  assert.equal(recipe.ready, true);
+  assert.equal(recipe.endpoint, "/goform/login");
+  assert.equal(recipe.usernameLiteral, "admin");
+  assert.equal(recipe.passwordTransform, "HMAC-MD5");
+  assert.equal(recipe.evidence.passwordInput, true);
+});
+
+test("incomplete runtime recipe reports privacy-safe evidence flags instead of leaking values", () => {
+  const source = [
+    'function login(){',
+    '  var _obj=new Object();',
+    '  _obj.password=hex_hmac_md5(loginKey,$("#login_password").val());',
+    '  saveAjaxJsonData("/goform/login",JSON.stringify(_obj),function(obj){if(obj.retcode===0){}});',
+    '}'
+  ].join("\n");
+  const recipe = discoverNc03LoginRecipe(source);
+  assert.equal(recipe.ready, false);
+  assert.equal(recipe.code, "LOGIN_RECIPE_INCOMPLETE");
+  assert.equal(recipe.evidence.endpoint, true);
+  assert.equal(recipe.evidence.passwordHmac, false);
+  assert.equal(recipe.evidence.usernameLiteral, false);
+  assert.doesNotMatch(JSON.stringify(recipe.evidence), /fixture|admin|password-value/i);
+});
