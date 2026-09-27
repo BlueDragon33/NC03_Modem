@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.24"
+    "version": "0.7.25"
   },
   "capabilities": {
     "webLaunch": true,
@@ -69,7 +69,8 @@
     "writeReadinessLab": true,
     "reversibleWritePlanning": true,
     "safeChargeWriteCandidate": true,
-    "writeReadinessRuntimeProtocol": true
+    "writeReadinessRuntimeProtocol": true,
+    "pwaUpdateSelfHeal": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -143,7 +144,8 @@
     "writeReadinessNeverExecutesWrite": true,
     "writeRequiresHarRollbackPostcondition": true,
     "writeReadinessProtocol": "nc03-write-readiness/v1",
-    "runtimeProtocol": "nc03-local-runtime/v4"
+    "runtimeProtocol": "nc03-local-runtime/v4",
+    "pwaShellReloadsOpenClientsAfterUpgrade": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
