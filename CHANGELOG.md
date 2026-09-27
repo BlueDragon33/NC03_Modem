@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.30 — WebUI-style Settings Center
+
+- Rebuilt the Settings page around the same functional groups users expect from the stock modem Web UI: Mobile Network, Wi-Fi, LAN/DHCP, USB/Bridge, Power, Security, and System.
+- Added an internal settings navigation rail on desktop and horizontally scrollable category tabs on smaller screens.
+- Wi-Fi now has interactive AP profile tabs and form-style fields for SSID, security, frequency, channel, standard, bandwidth, max clients, AP state and SSID broadcast.
+- LAN/DHCP, mobile-network, connectivity, security, power and system data are now presented as real form controls instead of passive read-only stat cards.
+- Controls without a verified write path deliberately render disabled while still showing the current modem value and the discovered vendor route family.
+- Long Life Charging remains the only active guarded write control; its preflight/readback/rollback behavior is unchanged.
+- Current Wi-Fi PSK is never mirrored or prefilled. The password field intentionally stays blank until a verified change-password flow is implemented.
+- Settings now disclose write coverage explicitly instead of making the whole page appear writable.
+- Removed the duplicated Developer Tools panel from the old Settings layout.
+
 ## 0.7.29 — First guarded modem setting write
 
 - The Settings page is no longer completely read-only: the battery Safe Charge / Long Life path now has the first guarded write control.
