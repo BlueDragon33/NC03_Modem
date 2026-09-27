@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.23 — Reversible Write Readiness Lab
+
+- Added a read-only Write Readiness Lab for the first low-risk target: Long Life Charging / battery safe charge.
+- Maps vendor-JS evidence for `/action/device_set_battery_safe_charge` without registering or calling the write route.
+- Extracts transport helper, request-field candidates and safe toggle-like literal candidates with source/literal redaction.
+- Reads the current battery-safe-charge state using the already verified read-only power snapshot.
+- Builds an explicit reversible-capture checklist and keeps `writeEnabled=false`, `rollbackReady=false` until a real write HAR + rollback + post-condition are captured.
+- Added `POST /api/nc03/write-readiness`; endpoint performs only static-source reads and verified power-state reads.
+- WRITE remains fail-closed.
+
+
 ## 0.7.22 — AUTH startup and session lifecycle
 
 - Added an explicit startup handshake: runtime/schema gate → AUTH readiness → live session probe → first stable screen.

@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.22"
+    "version": "0.7.23"
   },
   "capabilities": {
     "webLaunch": true,
@@ -65,7 +65,10 @@
     "authSessionVerification": true,
     "authStartupHandshake": true,
     "authSessionExpiryRecovery": true,
-    "rememberPasswordOfflineVault": true
+    "rememberPasswordOfflineVault": true,
+    "writeReadinessLab": true,
+    "reversibleWritePlanning": true,
+    "safeChargeWriteCandidate": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -74,7 +77,8 @@
     "connectionDoctor": "/api/nc03/doctor",
     "authSourceProbe": "/api/nc03/auth-source-probe",
     "authReadiness": "/api/nc03/auth-readiness",
-    "login": "/api/nc03/login"
+    "login": "/api/nc03/login",
+    "writeReadiness": "/api/nc03/write-readiness"
   },
   "policy": {
     "remoteAdminReady": false,
@@ -133,7 +137,10 @@
     "credentialSavedOnlyAfterVerifiedLogin": true,
     "unknownLoginRetcodeGenericFailure": true,
     "authRequiredAlwaysRoutesToLogin": true,
-    "sessionExpiryRequiresReauthentication": true
+    "sessionExpiryRequiresReauthentication": true,
+    "writeReadinessReadOnly": true,
+    "writeReadinessNeverExecutesWrite": true,
+    "writeRequiresHarRollbackPostcondition": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,

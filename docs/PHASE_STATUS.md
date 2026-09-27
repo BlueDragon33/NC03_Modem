@@ -503,3 +503,27 @@ Next hardware gate:
 - verify the first real password login on firmware 8.00.42;
 - verify a forced/restarted modem session returns to re-authentication cleanly;
 - WRITE remains locked until a reversible write transaction is captured and verified.
+
+
+## Phase 2AB — REVERSIBLE WRITE READINESS
+
+Status: **IMPLEMENTED · WRITE STILL LOCKED**
+
+First target:
+- Long Life Charging / battery safe charge;
+- candidate endpoint: `/action/device_set_battery_safe_charge`;
+- verified readback keys: `device_bat_safe_charge_switch`, `device_charge_long_life`.
+
+Implemented:
+- static vendor-JS write-candidate mapping;
+- transport/request-field evidence;
+- current-state readback;
+- reversible HAR capture guidance;
+- explicit `writeEnabled=false` and `rollbackReady=false` safety state.
+
+Next hardware gate:
+1. capture exactly one stock-Web-UI Long Life Charging transition;
+2. confirm modem post-condition;
+3. immediately return to the original state;
+4. capture rollback transaction;
+5. only then consider promoting this single route to WRITE VERIFIED.

@@ -7,6 +7,7 @@ import { buildConnectionDoctorReport } from "../src/modem/ConnectionDoctor.js";
 import { buildAuthSourceEvidence } from "../src/modem/AuthSourceDiscovery.js";
 import { NC03_RUNTIME_PROTOCOL } from "../src/runtime/RuntimeProtocol.js";
 import { discoverNc03LoginRecipe, discoverSaveAjaxTransport, executeNc03Login } from "../src/modem/NC03LoginRuntime.js";
+import { buildWriteReadinessEvidence } from "../src/modem/WriteSourceDiscovery.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
@@ -105,6 +106,15 @@ const AUTH_SOURCE_SEEDS = Object.freeze([
   "/js/md5.js",
   "/js/rebootreset.js",
   "/js/systemadmin.js"
+]);
+
+const WRITE_SOURCE_SEEDS = Object.freeze([
+  "/index.html",
+  "/js/common.js",
+  "/js/tools.js",
+  "/js/systemadmin.js",
+  "/js/rebootreset.js",
+  "/js/encryption.js"
 ]);
 
 async function fetchStaticSource(baseUrl, path) {
@@ -316,6 +326,47 @@ async function modemLogin(req, res) {
   }
 }
 
+
+async function writeReadiness(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl);
+    const targetId = typeof body.targetId === "string" ? body.targetId : "long-life-charging";
+    const adapter = modemAdapter(baseUrl);
+    const login = await adapter.connect();
+    if (!login.authenticated) {
+      json(res, 401, { ok:false, code:"AUTHENTICATION_REQUIRED" });
+      return;
+    }
+
+    const [power, sourceResults] = await Promise.all([
+      adapter.getPowerSettings(),
+      Promise.all(WRITE_SOURCE_SEEDS.map((path) => fetchStaticSource(baseUrl, path)))
+    ]);
+    const sources = sourceResults.map((result) => result.item).filter(Boolean);
+    const diagnostics = sourceResults.map((result) => result.diagnostic);
+    const evidence = buildWriteReadinessEvidence(sources, { targetId, currentState:power });
+
+    json(res, 200, {
+      ok:true,
+      payload:{
+        evidence,
+        diagnostics:{
+          sourceCount:sources.length,
+          items:diagnostics,
+          summary:diagnostics.reduce((acc, item) => {
+            acc[item.status] = (acc[item.status] || 0) + 1;
+            return acc;
+          }, {})
+        }
+      }
+    });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "WRITE_READINESS_FAILED";
+    json(res, 502, { ok:false, code:/^[A-Z0-9_]+$/.test(code) ? code : "WRITE_READINESS_FAILED" });
+  }
+}
+
 async function modemDoctor(req, res) {
   try {
     const body = await readJsonBody(req);
@@ -420,6 +471,15 @@ const server = createServer(async (req, res) => {
       return;
     }
     await modemLogin(req, res);
+    return;
+  }
+
+  if (pathname === "/api/nc03/write-readiness") {
+    if (req.method !== "POST") {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await writeReadiness(req, res);
     return;
   }
 

@@ -46,6 +46,9 @@ let state = {
   authSourceEvidence: null,
   authSourceError: "",
   authSourceLoading: false,
+  writeReadiness: null,
+  writeReadinessError: "",
+  writeReadinessLoading: false,
   authReadiness: null,
   authReadinessError: "",
   loginLoading: false,
@@ -413,6 +416,9 @@ function renderDiscovery() {
   const sourceEvidence = state.authSourceEvidence?.evidence ?? null;
   const sourceDiagnostics = state.authSourceEvidence?.diagnostics ?? null;
   const sourceTone = sourceEvidence?.status === "LOGIN_SOURCE_CANDIDATE_READY" ? "ok" : sourceEvidence ? "warn" : "muted";
+  const writeReadiness = state.writeReadiness?.evidence ?? null;
+  const writeDiagnostics = state.writeReadiness?.diagnostics ?? null;
+  const writeReadinessTone = writeReadiness?.captureReady ? "warn" : writeReadiness ? "muted" : "muted";
   return `${renderTopbar("HAR Evidence Lab", "Advanced Developer Mode: phân tích HAR ngay trên thiết bị, không upload credential lên cloud.")}
   <section class="panel discovery-panel">
     <div class="panel-head"><div><span>LOCAL HAR ANALYZER</span><h2>Phân tích Web UI gốc NC03</h2></div>${statusPill(evidence ? `${evidence.entryCount} request` : "CHỜ HAR", evidence ? "ok" : "muted")}</div>
@@ -522,6 +528,44 @@ function renderDiscovery() {
     ` : `<div class="empty">Chạy probe khi máy đang kết nối NC03 để lấy evidence trực tiếp từ firmware local.</div>`}
     <div class="evidence-actions"><button id="runAuthSourceProbe" ${state.authSourceLoading ? "disabled" : ""}>${state.authSourceLoading ? "Đang quét…" : "Quét AUTH source trên modem"}</button></div>
     <div class="advanced-note"><strong>Fail-closed</strong><span>Probe đang truy từ postdata → request object → field/codec. Chỉ khi field password/transform và success/failure semantics khớp nhau mới mở NC03Auth.login() và ô Password thật.</span></div>
+  </section>
+
+  <section class="panel evidence-panel write-readiness-panel">
+    <div class="panel-head"><div><span>WRITE READINESS LAB</span><h2>Long Life Charging · reversible write plan</h2></div>${statusPill(writeReadiness?.status ?? (state.writeReadinessLoading ? "ĐANG QUÉT" : "CHƯA CHẠY"), writeReadinessTone)}</div>
+    <p class="body-copy">Chỉ đọc vendor JS + trạng thái power hiện tại để chuẩn bị capture write đầu tiên. Probe này không gọi endpoint ghi và không tự bật control.</p>
+    ${state.writeReadinessError ? `<div class="inline-error">${esc(state.writeReadinessError)}</div>` : ""}
+    ${writeReadiness ? `
+      <div class="evidence-summary">
+        <div><span>Endpoint</span><strong>${writeReadiness.endpointMapped ? "MAPPED" : "PENDING"}</strong><small>${esc(writeReadiness.target?.endpoint ?? "—")}</small></div>
+        <div><span>Request shape</span><strong>${writeReadiness.requestShapeMapped ? "MAPPED" : "PENDING"}</strong><small>${writeReadiness.fieldCandidates?.length ?? 0} field candidate</small></div>
+        <div><span>Readback</span><strong>${writeReadiness.currentReadbackPresent ? "READY" : "PENDING"}</strong><small>Trạng thái trước write</small></div>
+        <div><span>WRITE gate</span><strong>LOCKED</strong><small>writeEnabled=false</small></div>
+      </div>
+      <div class="write-readiness-grid">
+        <article><span>Transport helper</span><code>${esc(writeReadiness.transportHelpers?.join("\n") || "chưa map")}</code></article>
+        <article><span>Request fields</span><code>${esc(writeReadiness.fieldCandidates?.join("\n") || "chưa map")}</code></article>
+        <article><span>Safe value candidates</span><code>${esc(writeReadiness.safeLiteralCandidates?.join("\n") || "chưa đủ evidence")}</code></article>
+        <article><span>Current readback</span><code>${esc(Object.entries(writeReadiness.currentReadback ?? {}).map(([key,value])=>`${key} = ${value ?? "—"}`).join("\n") || "chưa đọc được")}</code></article>
+      </div>
+      <div class="write-gate-summary" data-ready="${writeReadiness.captureReady}">
+        <strong>${writeReadiness.captureReady ? "READY FOR REVERSIBLE HAR CAPTURE" : "SOURCE EVIDENCE INCOMPLETE"}</strong>
+        <span>Rollback ready: ${writeReadiness.rollbackReady ? "yes" : "no"} · Live write: LOCKED</span>
+      </div>
+      ${writeReadiness.callsites?.length ? `<div class="callsite-grid">${writeReadiness.callsites.map((call)=>`<article>
+        <div class="callsite-head"><strong>${esc(call.endpoint)}</strong><span>${esc(call.sourcePath)}</span></div>
+        <dl>
+          <div><dt>Function</dt><dd>${esc(call.functionName ?? "—")}</dd></div>
+          <div><dt>Transport</dt><dd>${esc(call.transportHelper ?? "—")}</dd></div>
+          <div><dt>Payload</dt><dd>${esc(call.payloadVariables?.join(", ") || "—")}</dd></div>
+        </dl>
+        <div class="call-shape-block"><span>Argument shape</span><code>${esc(call.argumentShapes?.join("\n") || "chưa tách được")}</code></div>
+        <div class="call-shape-block"><span>Fields</span><code>${esc(call.fields?.map((field)=>`${field.variable}.${field.field} ← ${field.skeleton}`).join("\n") || call.directObjectKeys?.join("\n") || "chưa tách được")}</code></div>
+      </article>`).join("")}</div>` : ""}
+      ${writeDiagnostics ? `<div class="probe-diagnostics"><div><span>WRITE PROBE DIAGNOSTICS</span><strong>${writeDiagnostics.sourceCount ?? 0} source</strong><small>${esc(Object.entries(writeDiagnostics.summary ?? {}).map(([k,v])=>`${k}: ${v}`).join(" · ") || "—")}</small></div></div>` : ""}
+      ${writeReadiness.guidance?.length ? `<ol class="write-guidance">${writeReadiness.guidance.map((step)=>`<li>${esc(step)}</li>`).join("")}</ol>` : ""}
+    ` : `<div class="empty">Đăng nhập modem trước, sau đó chạy probe để lập reversible write plan.</div>`}
+    <div class="evidence-actions"><button id="runWriteReadiness" ${state.writeReadinessLoading ? "disabled" : ""}>${state.writeReadinessLoading ? "Đang quét…" : "Quét WRITE readiness"}</button></div>
+    <div class="advanced-note"><strong>Không thực thi write</strong><span>Endpoint vẫn PARTIAL. Chỉ HAR write thật + rollback + post-condition mới được nâng lên WRITE VERIFIED.</span></div>
   </section>
 
   ${evidence ? `
@@ -805,6 +849,29 @@ async function runAuthSourceProbe() {
   }
 }
 
+async function runWriteReadiness() {
+  if (!state.developerMode || state.writeReadinessLoading) return;
+  state.writeReadinessLoading = true;
+  state.writeReadinessError = "";
+  page();
+  try {
+    await localHealth();
+    state.writeReadiness = await localRead("/api/nc03/write-readiness");
+    state.writeReadinessError = "";
+  } catch (error) {
+    state.writeReadiness = null;
+    const labels = {
+      AUTHENTICATION_REQUIRED:"Cần đăng nhập NC03 trước khi lập reversible write plan.",
+      LOCAL_BRIDGE_UNREACHABLE:"Local Bridge không phản hồi.",
+      WRITE_READINESS_FAILED:"Không phân tích được WRITE readiness từ firmware local."
+    };
+    state.writeReadinessError = labels[error?.code] || error?.code || "WRITE_READINESS_FAILED";
+  } finally {
+    state.writeReadinessLoading = false;
+    page();
+  }
+}
+
 async function runConnectionDoctor() {
   if (state.demoMode) {
     state.doctor = {
@@ -1009,6 +1076,9 @@ function bind() {
       state.authSourceEvidence = null;
       state.authSourceError = "";
       state.authSourceLoading = false;
+      state.writeReadiness = null;
+      state.writeReadinessError = "";
+      state.writeReadinessLoading = false;
       await ensureDemo();
       await refreshAll();
     }
@@ -1053,6 +1123,7 @@ function bind() {
   });
 
   document.querySelector("#runAuthSourceProbe")?.addEventListener("click", runAuthSourceProbe);
+  document.querySelector("#runWriteReadiness")?.addEventListener("click", runWriteReadiness);
   document.querySelector("#runConnectionDoctor")?.addEventListener("click", runConnectionDoctor);
   document.querySelector("#openDiagnosticReport")?.addEventListener("click", openDiagnosticReport);
   document.querySelector("#refreshNow")?.addEventListener("click", refreshAll);

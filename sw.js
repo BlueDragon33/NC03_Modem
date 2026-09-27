@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v31-auth-session-lifecycle";
+const CACHE = "nc03-control-center-v32-write-readiness-lab";
 const ASSETS = [
   "./",
   "./index.html",
@@ -16,6 +16,7 @@ const ASSETS = [
   "./src/modem/NC03Capabilities.js",
   "./src/modem/NC03Auth.js",
   "./src/modem/SecureCredentialVault.js",
+  "./src/modem/WriteSourceDiscovery.js",
   "./src/modem/NC03Api.js",
   "./src/modem/NC03Session.js",
   "./src/modem/NC03Parser.js",
