@@ -282,9 +282,23 @@ function renderDetailsNotice() {
 
 function renderLogin() {
   const ready = state.authReadiness?.ready === true;
+  const readinessEvidence = state.authReadiness?.evidence ?? {};
+  const missingReadiness = [
+    ["login function", readinessEvidence.loginFunction],
+    ["loginKey", readinessEvidence.loginKey],
+    ["endpoint", readinessEvidence.endpoint],
+    ["username HMAC", readinessEvidence.usernameHmac],
+    ["username source", readinessEvidence.usernameLiteral],
+    ["password HMAC", readinessEvidence.passwordHmac],
+    ["password input", readinessEvidence.passwordInput],
+    ["success=0", readinessEvidence.successZero],
+    ["transport", readinessEvidence.transport]
+  ].filter(([, ok]) => ok === false).map(([label]) => label);
   const readinessText = ready
     ? `AUTH READY · ${esc(state.authReadiness.recipe?.passwordTransform ?? "verified recipe")} · ${esc(state.authReadiness.transport?.method ?? "POST")}`
-    : esc(state.authReadinessError || state.authReadiness?.code || "Đang xác minh AUTH recipe/transport từ firmware local.");
+    : missingReadiness.length
+      ? `Thiếu bằng chứng runtime: ${esc(missingReadiness.join(", "))}. Có thể bấm Đăng nhập để app kiểm tra lại.`
+      : esc(state.authReadinessError || state.authReadiness?.code || "Đang xác minh AUTH recipe/transport từ firmware local.");
   const sessionExpired = state.connectionState === CONNECTION_STATE.SESSION_EXPIRED;
   const loginIntro = sessionExpired
     ? "Phiên đăng nhập modem đã hết hạn. Xác thực lại để tiếp tục dữ liệu live."
@@ -833,7 +847,7 @@ async function submitLogin() {
       LOGIN_REJECTED:"Mật khẩu không được modem chấp nhận.",
       AUTH_VERIFICATION_FAILED:"Modem trả success nhưng session chưa xác minh được.",
       LOGIN_TRANSPORT_UNRESOLVED:"Chưa xác minh được transport saveAjaxJsonData của firmware.",
-      LOGIN_RECIPE_INCOMPLETE:"AUTH recipe của firmware chưa đủ để đăng nhập an toàn.",
+      LOGIN_RECIPE_INCOMPLETE:"Cơ chế đăng nhập runtime chưa map đủ. Xem dòng 'Thiếu bằng chứng runtime' phía trên; app không gửi password khi recipe chưa đủ.",
       PASSWORD_REQUIRED:"Hãy nhập mật khẩu quản trị modem.",
       AUTH_NOT_READY:"Chưa xác minh được cơ chế đăng nhập của modem. Hãy kiểm tra kết nối tới NC03 rồi thử lại.",
       AUTH_READINESS_FAILED:"Không kiểm tra được cơ chế đăng nhập của modem.",
