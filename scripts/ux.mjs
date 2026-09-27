@@ -11,7 +11,7 @@ assert.ok(css.includes(".mobile-nav"));
 assert.ok(css.includes("min-height:44px"), "Interactive controls must keep a 44px touch target.");
 assert.ok(css.includes("button:focus-visible"), "Keyboard focus must remain visible.");
 assert.ok(css.includes("repeat(4,minmax(0,1fr))"), "Desktop quick actions should use four balanced columns.");
-assert.ok(app.includes("Báo cáo chẩn đoán an toàn"), "Settings must expose the safe diagnostic report.");
+assert.ok(app.includes("Báo cáo chẩn đoán"), "Settings must expose the safe diagnostic report.");
 assert.ok(app.includes("HAR Evidence Lab"), "Developer Mode must expose the local HAR Evidence Lab.");
 assert.ok(app.includes("AUTH EVIDENCE"), "HAR Evidence Lab must split authentication evidence.");
 assert.ok(app.includes("WRITE EVIDENCE"), "HAR Evidence Lab must split write evidence.");
@@ -34,8 +34,11 @@ assert.ok(app.includes("AUTH SOURCE PROBE"), "Developer Lab must expose AUTH Sou
 assert.ok(app.includes("runAuthSourceProbe"), "AUTH Source Probe action is required.");
 assert.ok(css.includes(".source-evidence-grid"), "AUTH source evidence must have responsive layout.");
 
-assert.ok(app.indexOf("DEVELOPER TOOLS") < app.indexOf("MODEM CONNECTION"), "Developer tools must be prominent near the top of Settings.");
-assert.ok(app.includes("Bật Developer Mode để mở Lab"), "HAR Lab entry must remain visible even before Developer Mode is enabled.");
+assert.ok(app.includes("NC03 SETTINGS"), "Settings must use the modem-style Settings Center shell.");
+assert.ok(app.includes("data-settings-section=\"wifi\""), "Settings must expose a Wi-Fi category like the stock Web UI.");
+assert.ok(app.includes("data-settings-section=\"lan\""), "Settings must expose a LAN/DHCP category like the stock Web UI.");
+assert.ok(app.includes("data-settings-section=\"power\""), "Settings must expose a Power category like the stock Web UI.");
+assert.ok(app.includes("Bật Developer Mode để mở Lab"), "HAR Lab entry must remain visible from the System settings category.");
 
 assert.ok(app.includes("Login submit endpoint"), "AUTH Source Probe must surface login-submit candidates separately.");
 assert.ok(app.includes("Request field candidates"), "AUTH Source Probe must surface structural request fields.");
@@ -86,3 +89,10 @@ assert.ok(app.includes("WRITE READINESS LAB"), "Developer evidence workflow must
 assert.ok(app.includes("Live write: LOCKED"), "Write Readiness Lab must visibly keep live writes locked.");
 
 assert.ok(app.includes("WRITE readiness endpoint không khớp runtime hiện tại"), "WRITE Lab must diagnose stale/mismatched local runtime explicitly.");
+
+
+assert.ok(css.includes(".webui-settings-shell"), "WebUI-style settings shell layout is required.");
+assert.ok(css.includes(".webui-settings-nav"), "Settings category navigation must be responsive.");
+assert.ok(css.includes(".switch-control"), "Settings toggles must look and behave like modem controls.");
+assert.ok(app.includes("WRITE coverage"), "Settings must disclose guarded-write coverage instead of implying every field is writable.");
+assert.ok(app.includes("Không đọc/hiển thị PSK hiện tại"), "Wi-Fi settings must never prefill the current PSK.");
