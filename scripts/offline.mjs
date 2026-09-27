@@ -14,6 +14,7 @@ const requiredDist = [
   "report.js",
   "src/modem/NC03Adapter.js",
   "src/modem/HarDiscovery.js",
+  "src/modem/SecureCredentialVault.js",
   "src/ui/NavigationModel.js"
 ];
 
@@ -30,7 +31,7 @@ assert.ok(Array.isArray(manifest.icons) && manifest.icons.length > 0, "PWA manif
 assert.equal(manifest.icons[0].src, "./icon.svg");
 
 const sw = fs.readFileSync("sw.js", "utf8");
-for (const asset of ["./index.html","./app.js","./styles.css","./manifest.webmanifest","./icon.svg","./report.html","./report.css","./report.js","./src/ui/DiagnosticReport.js"]) {
+for (const asset of ["./index.html","./app.js","./styles.css","./manifest.webmanifest","./icon.svg","./report.html","./report.css","./report.js","./src/ui/DiagnosticReport.js","./src/modem/SecureCredentialVault.js"]) {
   assert.ok(sw.includes(`"${asset}"`), `Service worker cache is missing ${asset}`);
 }
 assert.match(sw, /caches\.open\(CACHE\)/);
