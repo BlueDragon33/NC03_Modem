@@ -1,17 +1,16 @@
 import { UnsupportedCapabilityError } from "./NC03Adapter.js";
-import { executeNc03Login } from "./NC03LoginRuntime.js";
 
 export class NC03Auth {
-  constructor({ baseUrl = "http://192.168.0.1", fetchImpl = globalThis.fetch, session, recipe, transport } = {}) {
+  constructor({ baseUrl = "http://192.168.0.1", session, recipe, transport, loginExecutor } = {}) {
     this.baseUrl = baseUrl;
-    this.fetchImpl = fetchImpl;
     this.session = session;
     this.recipe = recipe;
     this.transport = transport;
+    this.loginExecutor = loginExecutor;
   }
 
   supportsPersistentPassword() {
-    return Boolean(this.recipe?.ready && this.transport?.ready);
+    return Boolean(this.recipe?.ready && this.transport?.ready && typeof this.loginExecutor === "function");
   }
 
   clearLocalSession() {
@@ -19,15 +18,14 @@ export class NC03Auth {
   }
 
   async login({ password } = {}) {
-    if (!this.recipe?.ready || !this.transport?.ready) {
+    if (!this.supportsPersistentPassword()) {
       throw new UnsupportedCapabilityError("login");
     }
-    return executeNc03Login({
+    return this.loginExecutor({
       baseUrl:this.baseUrl,
       password,
       recipe:this.recipe,
-      transport:this.transport,
-      fetchImpl:this.fetchImpl
+      transport:this.transport
     });
   }
 
