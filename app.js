@@ -299,9 +299,9 @@ function renderLogin() {
         <label>Mật khẩu<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu quản trị modem" /></label>
       </div>
       <div class="login-options">
-        <label class="remember-option"><input id="rememberPassword" type="checkbox" ${state.rememberPassword ? "checked" : ""} /><span><strong>Ghi nhớ mật khẩu</strong><small>Chỉ mã hóa và lưu cục bộ sau khi đăng nhập thành công.</small></span></label>
+        <label class="remember-option"><input id="rememberPassword" type="checkbox" ${state.rememberPassword ? "checked" : ""} /><span><strong>Ghi nhớ mật khẩu</strong><small>Mã hóa cục bộ AES-GCM, chỉ lưu sau khi đăng nhập thành công.</small></span></label>
       </div>
-      <div class="auth-readiness" data-ready="${ready}"><strong>${ready ? "CƠ CHẾ ĐĂNG NHẬP SẴN SÀNG" : "ĐANG KIỂM TRA CƠ CHẾ ĐĂNG NHẬP"}</strong><span>${readinessText}</span></div>
+      <div class="auth-readiness" data-ready="${ready}"><strong>${ready ? "CƠ CHẾ ĐĂNG NHẬP SẴN SÀNG · AUTH VERIFIED" : "ĐANG KIỂM TRA CƠ CHẾ ĐĂNG NHẬP"}</strong><span>${readinessText}</span></div>
       ${state.addressError ? `<div class="inline-error">${esc(state.addressError)}</div>` : ""}
       ${state.loginError ? `<div class="inline-error">${esc(state.loginError)}</div>` : ""}
       <div class="login-actions">
