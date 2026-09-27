@@ -48,3 +48,13 @@ test("release contract stays synchronized with package version and resilient tel
   assert.equal(contract.policy.modemSecretsInControlPlane, false);
   assert.equal(contract.policy.modemCommandsFromCloud, false);
 });
+
+
+test("contract publishes the WRITE readiness runtime boundary without promoting live write", () => {
+  assert.equal(contract.capabilities.writeReadinessLab, true);
+  assert.equal(contract.capabilities.writeReadinessRuntimeProtocol, true);
+  assert.equal(contract.endpoints.writeReadiness, "/api/nc03/write-readiness");
+  assert.equal(contract.policy.writeReadinessReadOnly, true);
+  assert.equal(contract.policy.writeReadinessNeverExecutesWrite, true);
+  assert.equal(contract.policy.writeRequiresHarRollbackPostcondition, true);
+});
