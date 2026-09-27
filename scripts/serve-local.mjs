@@ -214,6 +214,7 @@ async function authSourceProbe(req, res) {
           authEvidenceSchema:NC03_RUNTIME_PROTOCOL.authEvidenceSchema,
           authProbeTransport:NC03_RUNTIME_PROTOCOL.authProbeTransport,
           authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
+          writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
           sourceVersion,
           bootedAt:runtimeBootedAt
         },
@@ -329,8 +330,8 @@ async function modemLogin(req, res) {
 
 async function writeReadiness(req, res) {
   try {
-    const body = await readJsonBody(req);
-    const baseUrl = normalizeModemBaseUrl(body.baseUrl);
+    const body = req.method === "GET" ? {} : await readJsonBody(req);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl || DEFAULT_MODEM_BASE_URL);
     const targetId = typeof body.targetId === "string" ? body.targetId : "long-life-charging";
     const adapter = modemAdapter(baseUrl);
     const login = await adapter.connect();
@@ -475,7 +476,7 @@ const server = createServer(async (req, res) => {
   }
 
   if (pathname === "/api/nc03/write-readiness") {
-    if (req.method !== "POST") {
+    if (!["GET","POST"].includes(req.method || "GET")) {
       json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
       return;
     }
@@ -518,6 +519,7 @@ const server = createServer(async (req, res) => {
       authEvidenceSchema:NC03_RUNTIME_PROTOCOL.authEvidenceSchema,
       authProbeTransport:NC03_RUNTIME_PROTOCOL.authProbeTransport,
       authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
+      writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
       bootedAt:runtimeBootedAt,
       assetRoot:usingDist ? "dist" : "source",
       contractEndpoint:"/api/application-management/contract"
