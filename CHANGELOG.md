@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.24 — WRITE readiness runtime gate
+
+- Fixed a frontend/backend skew where the v0.7.23 WRITE Readiness UI could run against an older v0.7.22 Local Bridge because both still advertised runtime protocol v3.
+- Runtime protocol is now `nc03-local-runtime/v4`.
+- Added dedicated `nc03-write-readiness/v1` identity in health/runtime metadata.
+- Frontend refuses WRITE readiness calls when the Local Bridge does not advertise the matching WRITE protocol.
+- Read-only WRITE readiness probe accepts GET/POST for compatibility; production UI continues to use POST.
+- `METHOD_NOT_ALLOWED` now explains that the Local Bridge is stale/mismatched instead of looking like a modem write rejection.
+- Live WRITE remains locked; this change only fixes the evidence/readiness transport.
+
+
 ## 0.7.23 — Reversible Write Readiness Lab
 
 - Added a read-only Write Readiness Lab for the first low-risk target: Long Life Charging / battery safe charge.
