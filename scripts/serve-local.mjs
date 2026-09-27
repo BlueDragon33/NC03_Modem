@@ -203,6 +203,7 @@ async function authSourceProbe(req, res) {
           protocolId:NC03_RUNTIME_PROTOCOL.id,
           authEvidenceSchema:NC03_RUNTIME_PROTOCOL.authEvidenceSchema,
           authProbeTransport:NC03_RUNTIME_PROTOCOL.authProbeTransport,
+          authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
           sourceVersion,
           bootedAt:runtimeBootedAt
         },
@@ -456,6 +457,7 @@ const server = createServer(async (req, res) => {
       runtimeProtocol:NC03_RUNTIME_PROTOCOL.id,
       authEvidenceSchema:NC03_RUNTIME_PROTOCOL.authEvidenceSchema,
       authProbeTransport:NC03_RUNTIME_PROTOCOL.authProbeTransport,
+      authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
       bootedAt:runtimeBootedAt,
       assetRoot:usingDist ? "dist" : "source",
       contractEndpoint:"/api/application-management/contract"
