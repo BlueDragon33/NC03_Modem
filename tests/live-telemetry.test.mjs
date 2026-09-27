@@ -106,13 +106,14 @@ test("freshness timestamps and advanced snapshot staleness are explicit", () => 
   assert.match(app, /retryDetails/);
 });
 
-test("remember-password UX is disabled until runtime AUTH readiness is verified", () => {
+test("login form accepts password immediately while persistence still requires verified success", () => {
   assert.match(app, /Ghi nhớ mật khẩu/);
   assert.match(app, /id="rememberPassword"/);
-  assert.match(app, /\$\{ready \? "" : "disabled"\}/);
-  assert.match(app, /state\.authReadiness\?\.ready === true/);
+  assert.match(app, /id="loginPassword" type="password" autocomplete="current-password"/);
+  assert.doesNotMatch(app, /id="loginPassword"[^>]*disabled/);
   assert.match(app, /rememberPassword"\)\?\.addEventListener\("change"/);
   assert.match(app, /credentialVault\.save/);
+  assert.match(app, /state\.authReadiness\?\.ready/);
 });
 
 test("manual modem address errors are shown instead of silently resetting the address", () => {
@@ -273,18 +274,18 @@ test("frontend refuses AUTH probe when Local Bridge runtime protocol/schema is s
 });
 
 
-test("real login UI is gated by runtime AUTH readiness", () => {
+test("real login submit preflights runtime AUTH readiness without locking password entry", () => {
   assert.match(app, /authReadiness/);
   assert.match(app, /\/api\/nc03\/auth-readiness/);
   assert.match(app, /\/api\/nc03\/login/);
   assert.match(app, /id="loginPassword"/);
-  assert.match(app, /AUTH VERIFIED/);
+  assert.match(app, /CƠ CHẾ ĐĂNG NHẬP SẴN SÀNG/);
+  assert.match(app, /if \(!state\.authReadiness\?\.ready\) \{/);
+  assert.match(app, /await refreshAuthReadiness\(\{ render:false \}\)/);
   assert.match(app, /credentialVault\.save/);
   assert.match(app, /body:JSON\.stringify\(\{ baseUrl:state\.baseUrl, password \}\)/);
   assert.match(server, /async function authReadiness/);
   assert.match(server, /async function modemLogin/);
-  assert.match(server, /\/api\/nc03\/auth-readiness/);
-  assert.match(server, /\/api\/nc03\/login/);
   assert.match(server, /AUTH_VERIFICATION_FAILED/);
 });
 
@@ -295,12 +296,14 @@ test("runtime login bridge never returns firmware login key or username literal"
 });
 
 
-test("startup handshake resolves AUTH readiness before the first stable screen", () => {
+test("startup always renders Login first and never restores Demo automatically", () => {
+  assert.match(app, /view: "login"/);
+  assert.match(app, /demoMode: false/);
   assert.match(app, /async function bootstrapRuntime\(\)/);
+  assert.match(app, /state\.view = "login";[\s\S]*state\.demoMode = false;[\s\S]*page\(\);/);
   assert.match(app, /await refreshAuthReadiness\(\{ render:false \}\);[\s\S]*await refreshLive\(\{ render:false \}\);/);
+  assert.match(app, /Do not auto-enter Home from a detected modem session/);
   assert.match(app, /await bootstrapRuntime\(\);/);
-  assert.match(app, /state\.view = "login"/);
-  assert.match(app, /state\.view = "home"/);
 });
 
 test("session expiry takes priority over stale-data reconnect and rerenders login immediately", () => {
@@ -344,4 +347,11 @@ test("PWA upgrade self-heals an already-open stale frontend", () => {
   assert.match(worker, /self\.clients\.matchAll\(\{ type:"window", includeUncontrolled:true \}\)/);
   assert.match(worker, /client\.navigate\(client\.url\)/);
   assert.match(worker, /if \(!staleKeys\.length\) return/);
+});
+
+
+test("login uses the address currently typed in the login form", () => {
+  assert.match(app, /const addressInput = document\.querySelector\("#loginBaseUrl"\)/);
+  assert.match(app, /state\.baseUrl = normalizeModemAddress\(addressInput\?\.value \|\| state\.baseUrl\)/);
+  assert.match(app, /persist\(\)/);
 });

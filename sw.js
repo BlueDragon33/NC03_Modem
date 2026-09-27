@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v34-pwa-self-heal-v0725";
+const CACHE = "nc03-control-center-v35-login-first-v0726";
 const ASSETS = [
   "./",
   "./index.html",
