@@ -598,3 +598,20 @@ Fix:
 - publish only boolean readiness evidence to the browser so missing gates are visible without exposing secrets;
 - keep login fail-closed when the runtime evidence is genuinely incomplete;
 - keep WRITE independently locked.
+
+
+## Phase 2AG — LOCAL MODEM SESSION CONTINUITY
+
+Status: **IMPLEMENTED**
+
+Observed live failure:
+- firmware returned login success;
+- immediate post-login `get_login_info` still reported unauthenticated;
+- the Local Bridge used independent stateless Node fetch calls, so a modem `Set-Cookie` session was not replayed for verification.
+
+Fix:
+- add an in-memory cookie jar per normalized modem origin;
+- use the same cookie-aware fetch transport for login, verification and later read-only adapter calls;
+- clear stale session cookies before a fresh login and after failed login/verification;
+- do not expose cookie/session values through browser APIs, logs, contracts or persistent storage;
+- WRITE remains independently locked.
