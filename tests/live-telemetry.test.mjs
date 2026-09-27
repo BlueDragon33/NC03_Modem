@@ -375,3 +375,15 @@ test("real login and post-login verification share one in-memory modem session t
   assert.match(server, /const verified = await modemAdapter\(baseUrl\)\.connect\(\)/);
   assert.match(server, /session\.jar\.clear\(\)/);
 });
+
+
+test("settings exposes guarded Long Life Charging write with postcondition and rollback", () => {
+  assert.match(app, /toggleLongLifeCharging/);
+  assert.match(app, /\/api\/nc03\/settings\/long-life-charging/);
+  assert.match(app, /readback → rollback/);
+  assert.match(server, /async function writeLongLifeCharging/);
+  assert.match(server, /verifyPowerReadback/);
+  assert.match(server, /executeRollback/);
+  assert.match(server, /WRITE_POSTCONDITION_FAILED/);
+  assert.match(server, /settingsWriteProtocol:NC03_RUNTIME_PROTOCOL\.settingsWriteProtocol/);
+});
