@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.28"
+    "version": "0.7.29"
   },
   "capabilities": {
     "webLaunch": true,
@@ -75,7 +75,10 @@
     "passwordEntryBeforeAuthReadiness": true,
     "runtimeLoginRecipeIndirection": true,
     "authReadinessEvidence": true,
-    "localModemSessionCookies": true
+    "localModemSessionCookies": true,
+    "guardedSettingsWrite": true,
+    "longLifeChargingWrite": true,
+    "reversibleWriteRollback": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -85,7 +88,8 @@
     "authSourceProbe": "/api/nc03/auth-source-probe",
     "authReadiness": "/api/nc03/auth-readiness",
     "login": "/api/nc03/login",
-    "writeReadiness": "/api/nc03/write-readiness"
+    "writeReadiness": "/api/nc03/write-readiness",
+    "longLifeCharging": "/api/nc03/settings/long-life-charging"
   },
   "policy": {
     "remoteAdminReady": false,
@@ -149,14 +153,19 @@
     "writeReadinessNeverExecutesWrite": true,
     "writeRequiresHarRollbackPostcondition": true,
     "writeReadinessProtocol": "nc03-write-readiness/v1",
-    "runtimeProtocol": "nc03-local-runtime/v4",
+    "runtimeProtocol": "nc03-local-runtime/v5",
     "pwaShellReloadsOpenClientsAfterUpgrade": true,
     "loginScreenFirstOnLaunch": true,
     "passwordEntryNotBlockedByReadiness": true,
     "demoModeNeverAutoRestoredOnLaunch": true,
     "authReadinessEvidenceNoSecrets": true,
     "modemSessionCookiesMemoryOnly": true,
-    "loginVerificationSharesSessionTransport": true
+    "loginVerificationSharesSessionTransport": true,
+    "settingsWriteProtocol": "nc03-settings-write/v1",
+    "longLifeChargingWriteRequiresPreflight": true,
+    "longLifeChargingWriteRequiresReadback": true,
+    "longLifeChargingWriteAutoRollbackOnMismatch": true,
+    "otherSettingsRemainReadOnly": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
