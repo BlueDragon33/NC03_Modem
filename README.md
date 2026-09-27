@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.21 — Verified Real Modem Login
+## Phase 2 · v0.7.21 — Runtime-Gated Real Login
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -105,3 +105,12 @@ Không coi release là PASS nếu một gate trong pipeline thất bại.
 Mỗi push vào `main` tạo verified artifact `nc03-control-center-site` sau khi `npm run verify` PASS.
 
 GitHub Pages chỉ deploy live khi repository đã bật **Settings → Pages → Build and deployment → GitHub Actions**.
+
+
+### Runtime-gated real login
+
+- Local Bridge reads the login recipe and vendor transport from the modem firmware at runtime.
+- Login controls unlock only when both recipe and transport are resolved.
+- Session success is verified again before the app treats AUTH as connected.
+- Unknown login retcodes remain generic failures.
+- WRITE remains a separate fail-closed capability gate.
