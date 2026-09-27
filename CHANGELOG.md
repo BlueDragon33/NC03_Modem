@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.21 — Runtime-gated modem login
+
+- Promoted firmware 8.00.42 AUTH from source discovery to a real login flow after live evidence confirmed the request field, input path, HMAC-MD5 transform and success code 0.
+- Added runtime discovery for the login recipe and the vendor `saveAjaxJsonData` transport.
+- Added `/api/nc03/auth-readiness` and `/api/nc03/login`.
+- The Local Bridge performs the transform locally and verifies the resulting modem session before reporting success.
+- Unknown retcode 13 remains a generic rejection; no unsupported meaning is invented.
+- Login controls remain locked unless recipe and transport are both resolved.
+- Local encrypted remember-login storage is written only after verified success.
+- Runtime protocol bumped to `nc03-local-runtime/v3`; WRITE capabilities remain independently locked.
+
+
 ## 0.7.21 — Verified real modem login
 
 - Promoted firmware 8.00.42 AUTH from source discovery to a runtime-gated real login flow after live evidence confirmed request-object field evidence, password input, HMAC-MD5 and success retcode 0.
