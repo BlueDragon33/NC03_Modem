@@ -459,3 +459,29 @@ Implemented:
 - frontend blocks mismatched protocol/schema with `LOCAL_BRIDGE_RESTART_REQUIRED`;
 - misleading zero/default password-recipe results are no longer accepted as valid evidence.
 
+
+
+## Phase 2Z — RUNTIME-GATED REAL LOGIN
+
+Status: **IMPLEMENTED · CI/LIVE HARDWARE VERIFICATION PENDING**
+
+Live evidence already confirmed:
+- `/goform/login`;
+- `login()` + `saveAjaxJsonData`;
+- request field evidence;
+- input call observed;
+- HMAC-MD5 confirmed;
+- success retcode `0` confirmed;
+- retcode `13` observed but intentionally left unmapped.
+
+Implemented:
+- runtime recipe discovery;
+- runtime vendor-transport discovery;
+- browser-safe `NC03Auth` gate;
+- local login bridge;
+- post-login session verification;
+- login form unlock only at AUTH READY;
+- local encrypted remember-login storage only after verified success;
+- runtime protocol v3.
+
+WRITE remains independently fail-closed.
