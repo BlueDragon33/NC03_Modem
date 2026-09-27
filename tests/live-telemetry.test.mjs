@@ -293,3 +293,21 @@ test("runtime login bridge never returns firmware login key or username literal"
   assert.doesNotMatch(server, /publicLoginReadiness[\s\S]{0,1800}usernameLiteral:/);
   assert.doesNotMatch(server, /publicLoginReadiness[\s\S]{0,1800}\bkey:/);
 });
+
+
+test("startup handshake resolves AUTH readiness before the first stable screen", () => {
+  assert.match(app, /async function bootstrapRuntime\(\)/);
+  assert.match(app, /await refreshAuthReadiness\(\{ render:false \}\);[\s\S]*await refreshLive\(\{ render:false \}\);/);
+  assert.match(app, /await bootstrapRuntime\(\);/);
+  assert.match(app, /state\.view = "login"/);
+  assert.match(app, /state\.view = "home"/);
+});
+
+test("session expiry takes priority over stale-data reconnect and rerenders login immediately", () => {
+  assert.match(app, /CONNECTION_STATE\.SESSION_EXPIRED/);
+  assert.match(app, /const hadVerifiedSession = state\.connectionState === CONNECTION_STATE\.CONNECTED \|\| Boolean\(state\.lastLiveSuccessAt\)/);
+  assert.match(app, /const previousView = state\.view/);
+  assert.match(app, /const previousConnectionState = state\.connectionState/);
+  assert.match(app, /authNavigationChanged/);
+  assert.match(app, /Xác thực lại NC03/);
+});
