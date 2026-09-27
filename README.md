@@ -1,135 +1,151 @@
 # NC03 Control Center
 
-Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-first.
+Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng **local-first**, mục tiêu thay thế trải nghiệm Web UI gốc bằng giao diện hiện đại nhưng vẫn giữ đúng chức năng quản trị thực tế của modem.
 
-## Nguyên tắc
+## Current baseline
 
-**Discover → Map → Implement → Test → Fix → Verify → Release**
+- Release line: **v0.8.0**
+- Blueprint: **1.0.0**
+- Classification: **B4 PLATFORM**
+- Universal Constitution: **blueprint-os:universal-century-grade@1.1.0**
+- Reference firmware: **NC03_8.00.42**
+- Execution mode: **strict serial Work Packages**
+- Active Work Package: **NC03-WP00 — Constitutional reset and anti-patch baseline**
+- Prompt projections: **18 prompts, 00–17**
 
-- Không tự bịa endpoint modem.
-- Không sửa firmware NC03.
-- UI không gọi endpoint modem trực tiếp; mọi giao tiếp production đi qua `NC03Adapter`.
-- Read/write capability được gate độc lập với HTTP method.
-- Không gửi mật khẩu/session/token modem lên cloud.
-- Không lưu password plaintext.
-- Không commit HAR thô chứa thông tin riêng.
-- Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
+The previous v0.7.x line remains valuable historical evidence, but it is no longer the planning model.
 
-## Phase 2 · v0.7.30 — WebUI-style Settings Center
+## Product mission
 
-Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
+NC03 Control Center is not a telemetry-only dashboard.
 
-- % pin chính xác luôn hiển thị trên mọi màn hình;
-- trạng thái Internet/WAN, 4G/5G, nhà mạng và chất lượng sóng định tính luôn hiển thị;
-- telemetry trên tự động cập nhật **10 giây/lần**, chỉ cập nhật DOM tại chỗ để không làm mất focus/vị trí cuộn;
-- nếu một lần poll bị lỗi tạm thời, app **giữ % pin/sóng/mạng gần nhất** và đánh dấu `Đang kết nối lại / Dữ liệu gần nhất`, không làm các chỉ số nhảy về `—`;
-- trạng thái stale vẫn đúng khi chuyển tab; sidebar/Home/Network không được phép tự hiện xanh lại chỉ vì đang giữ snapshot cũ;
-- thanh live hiển thị **giờ cập nhật thành công gần nhất**; Advanced snapshot cũng có trạng thái `LIVE READ / LAST GOOD / WAITING` và nút tải lại khi lỗi;
-- Local Bridge `/api/nc03/snapshot` giải quyết đường đọc modem từ website local mà không đưa password lên cloud;
-- Advanced read snapshot thêm network settings, Mobile Data, SIM PIN state, Cloud SIM auto-switch, 4 Wi-Fi AP, clients, data usage, DHCP, USB/Cradle, IP Passthrough, security/filter/DMZ, NTP, power/display, firmware/FOTA và **chỉ số lượng** DHCP reservation/port-forward/packet-filter rule;
-- PSK Wi-Fi, IMEI/serial, ICCID/EID/eSIM profile và APN profile cố ý không mirror vào dashboard;
-- HAR hiện có vẫn không chứa write request thực tế, vì vậy mọi write action tiếp tục fail-closed;
-- Home không còn gọi client/data cũ là dữ liệu hiện tại khi Advanced snapshot đã stale;
-- giá trị pin ngoài miền 0–100 bị từ chối thay vì hiển thị như phần trăm hợp lệ;
-- Settings có **Báo cáo chẩn đoán an toàn** dạng A4, có thể In/Lưu PDF, chỉ xuất các trường read-only được chọn rõ ràng và loại trừ credential/secret/identifier nhạy cảm;
-- báo cáo phân biệt rõ **0** với **không có dữ liệu (`—`)**, hiển thị riêng độ mới của Live/Advanced snapshot, chuẩn hóa 4G/5G và chất lượng sóng sang nhãn dễ đọc;
-- HAR analyzer nhận diện JSON/form login, chỉ giữ **tên field và metadata bằng chứng**, redaction mật khẩu/token/session/cookie, và mọi auth/write finding đều giữ `CANDIDATE_ONLY`;
-- **HAR Evidence Lab** nằm ngay trong Advanced Developer Mode: chọn HAR local, tách AUTH/WRITE evidence, xem request map, xóa phiên phân tích và xuất `nc03-evidence.json` đã khử bí mật mà không upload file lên cloud;
-- **Capture Quality Guard** tự phát hiện modem host trong HAR, phân biệt `get_login_info` status probe với login transaction thật, và cảnh báo `AUTHENTICATED_SESSION_ONLY` khi HAR bắt đầu sau lúc đã đăng nhập;
-- **Connection Doctor** trong Settings chẩn đoán Local Bridge → modem → phiên đăng nhập → firmware/profile → live read, hoàn toàn read-only và không đưa credential/session vào kết quả;
-- **AUTH Source Probe** đọc cục bộ các static JS/HTML của modem đã được HAR chứng minh tồn tại, trích endpoint/function/password-codec candidate nhưng không trả raw source và không tự bật production login;
-- **login-page deep probe** đọc trực tiếp `/common/login.html`, lần theo script tương đối và tách login-submit candidate khỏi logout/status endpoint;
-- **AUTH probe diagnostics** kiểm tra Local Bridge trước khi quét và hiển thị trạng thái từng đường dẫn mà không lộ raw source;
-- **login callsite mapping** cô lập `/goform/login` trong `/js/login.js`, tách helper/payload/field/codec/response symbols theo đúng call-site.
-- **Developer Tools luôn hiện rõ trong Settings**, HAR Evidence Lab không còn bị giấu ở cuối trang.
-- **AUTH Source Probe tương thích runtime/PWA lệch phiên bản**: current UI dùng POST, Local Bridge vẫn chấp nhận GET legacy read-only để không còn `METHOD_NOT_ALLOWED` sau cập nhật.
-- **PWA shell dùng network-first + cache fallback**, nên khi Local Bridge đã lên bản mới thì `app.js`/module cũng ưu tiên lấy bản mới thay vì trả cache cũ trước.
-- **PWA update self-heal**: khi service worker mới thay thế một shell NC03 cũ, worker tự claim và reload đúng các tab NC03 đang mở một lần; vì vậy tab cũ không còn tiếp tục chạy `app.js` cũ rồi hiện raw `METHOD_NOT_ALLOWED`.
-- **runtime protocol/schema gate** chặn AUTH probe nếu frontend mới đang nói chuyện với Local Bridge cũ còn nằm trong RAM; UI yêu cầu restart thay vì hiển thị evidence mặc định sai.
-- **login-first UX**: mỗi lần mở app đều vào màn hình Đăng nhập NC03 trước; ô Password luôn nhập được. Khi bấm Đăng nhập, app mới preflight recipe + transport rồi thực hiện login an toàn; login key/username literal không trả ra browser.
-- **runtime login resolver** theo dõi indirection an toàn của `loginKey`, fixed username và password input alias trong firmware JS; nếu chưa đủ, form hiển thị chính xác gate nào đang thiếu bằng boolean evidence, không trả literal/credential ra browser.
-- **session continuity**: login POST, `get_login_info` verification và các read request dùng chung cookie jar chỉ tồn tại trong RAM của Local Bridge; cookie/session không trả về browser và không ghi xuống đĩa.
-- **guarded settings write**: Safe Charge / Long Life Charging là setting đầu tiên có control ghi thật. Mỗi lần ghi đều preflight mapping → gửi lệnh bằng session local → đọc lại post-condition → tự rollback về trạng thái cũ nếu readback không khớp. Các setting khác vẫn khóa riêng.
-- **Settings Center kiểu Web UI modem**: chia Mạng di động / Wi‑Fi / LAN-DHCP / USB-Bridge / Pin-Nguồn / Bảo mật / Hệ thống; các giá trị đọc thật được đưa vào control form tương ứng. Control chưa VERIFY WRITE vẫn hiện đúng chỗ nhưng bị khóa, giúp giao diện và logic cài đặt tiến dần tới Web UI gốc mà không giả vờ đã ghi được.
-- **Secure Credential Vault** chỉ ghi password sau khi modem trả success và session được `get_login_info` xác minh lại; WRITE vẫn khóa riêng.
-- **Request object dependency trace** lần ngược `postdata = JSON.stringify(_obj)` sang chính `_obj`, field assignments và codec của từng field mà không trả literal/password.
-- **Nested AUTH transform** giữ được outer call như `hex_hmac_md5(loginKey, $(...).val())`, tránh nhầm password chỉ là `val()`.
-- **Response code map** chỉ giữ mã/symbol thực sự xuất hiện trong nhánh response của login, loại các constant không liên quan trong cùng `login.js`.
+The target product must:
+- login to the real modem;
+- read current modem state reliably;
+- expose the settings/jobs genuinely supported by the stock Web UI;
+- apply verified settings back to the modem;
+- validate post-condition and recover/rollback when appropriate;
+- remain local-first and installable as a PWA;
+- work deliberately on desktop, tablet/iPad and phone;
+- integrate with Application Management without transferring modem credential/session authority.
 
-App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. `Ghi nhớ mật khẩu` có thể chọn ngay trên form, nhưng credential chỉ được mã hóa và lưu sau khi modem xác nhận đăng nhập thành công.
+Canonical requirements: `docs/NC03-REQUIREMENTS-BASELINE.md`.
 
-## Chạy local
+## Engineering law
 
-Local runtime tự phát hiện `dist/` cũ: nếu version trong `dist/control/application-management.contract.json` không khớp `package.json`, app tự phục vụ source hiện tại thay vì âm thầm chạy bản cũ.
+Development now follows:
 
+`CONSTITUTION → PROJECT PROFILE → BLUEPRINT → WORK PACKAGE → PROMPT PROJECTION → IMPLEMENT → TEST → GATE → EVIDENCE → NEXT PACKAGE`
 
-```bash
-npm run serve:local
+Prime rules:
+- **Root cause before patch.**
+- **Contracts before components.**
+- **Canonical state before prompt projection.**
+- **One source of truth per concept.**
+- **Do not invent modem endpoints or request semantics.**
+- **Do not start Prompt N+1 before Prompt N is COMPLETE with evidence.**
+- **Green CI is necessary, not sufficient for product PASS.**
+
+Project law: `docs/NC03-PROJECT-CONSTITUTION.md`.
+
+## Canonical source of truth
+
+- `.blueprint/constitution-adoption.json` — Universal Constitution adoption.
+- `.blueprint/project-profile.json` — project identity, constraints and intent.
+- `.blueprint/blueprint.json` — target architecture and required gates.
+- `.blueprint/work-packages.json` — canonical execution graph and status.
+- `docs/NC03-ARCHITECTURE-BLUEPRINT.md` — readable architecture projection.
+- `docs/NC03-PROMPT-EXECUTION-PROTOCOL.md` — prompt execution law.
+- `prompts/README.md` — ordered prompt index.
+
+Prompt files are execution projections only; they never outrank `.blueprint/*`.
+
+## Architecture direction
+
+Stable dependency direction:
+
+`Product UI → Application Use-Cases → Canonical Settings/Capability Registry → Domain Contracts → Firmware Adapter/Profile → Local Bridge → Physical Modem`
+
+The UI must not contain raw modem transport/write logic.
+
+Firmware-specific endpoint/field semantics live in profiles/adapters so future firmware support does not require duplicating the product.
+
+## Current verified baseline from v0.7.x
+
+The existing implementation already provides useful evidence to preserve during consolidation:
+- login-first NC03 authentication;
+- runtime login recipe discovery for firmware 8.00.42;
+- in-memory modem session continuity;
+- optional encrypted local credential vault;
+- live/read snapshot path through Local Bridge;
+- privacy-safe HAR/source analysis tools;
+- PWA/runtime version coherence protections;
+- modem-style Settings Center;
+- first guarded Long Life Charging write path;
+- Application Management local-first contract.
+
+These are **baseline behaviors to audit and migrate**, not permission to keep every existing implementation path unchanged.
+
+## Planned execution sequence
+
+The canonical plan contains exactly 18 Work Packages:
+
+00. Constitution / anti-patch baseline  
+01. Stock Web UI parity inventory  
+02. Canonical settings & capability registry  
+03. Architecture consolidation  
+04. Authentication/session lifecycle  
+05. Read-plane normalization  
+06. Guarded write engine v2  
+07. Wi-Fi parity  
+08. LAN/DHCP/routing parity  
+09. USB/Bridge/Ethernet parity  
+10. Power/battery/display parity  
+11. Security/WPS/firewall/DMZ parity  
+12. Mobile network/SIM/APN/band parity  
+13. System/time/firmware/admin operations  
+14. Device/client administration parity  
+15. Product UX/design-system acceptance  
+16. Reliability/security/ecosystem integration  
+17. Real-hardware acceptance & release evidence
+
+See `prompts/README.md`.
+
+## Local run
+
+PowerShell:
+
+```powershell
+npm.cmd run serve:local
 ```
 
-Mặc định mở `http://127.0.0.1:3006`. Khi chạy từ Application Management bằng `npm run run:all`, NC03 dùng `http://127.0.0.1:3010`.
+Default standalone runtime:
 
-Local Bridge hiện là transport local production cho read-path. Bridge và UI dùng chung một policy: chỉ nhận modem origin là **IPv4 RFC1918** (`10/8`, `172.16/12`, `192.168/16`), không nhận localhost/loopback/public host. Giá trị lưu cũ không hợp lệ tự trở về `192.168.0.1`. Direct browser → modem vẫn là tùy chọn nghiên cứu, không phải đường chính.
+`http://127.0.0.1:3006`
 
-## Phân tích HAR cục bộ
+When launched by Application Management, the configured local runtime may use another port such as `3010`; always use the address printed by the runtime.
 
-Sau khi export HAR từ Web UI gốc:
+## Verification
 
-```bash
-npm run analyze:har -- capture.har
+```powershell
+npm.cmd run verify
 ```
 
-Nếu modem dùng IP khác:
+The verification chain includes the canonical Blueprint/prompt drift check.
 
-```bash
-npm run analyze:har -- capture.har --host=192.168.1.1
-```
+Universal Constitution compliance also runs through the repository workflow backed by Software-Blueprint-Hub.
 
-Report chỉ chứa evidence đã khử bí mật. Xem quy trình chi tiết tại `docs/AUTH_DISCOVERY.md`.
+## Privacy and trust boundaries
 
-## Kiểm tra
+- Modem password/session/cookie are never sent to cloud control planes.
+- Current Wi-Fi PSK is not mirrored into ordinary app state.
+- Raw private HAR is not committed.
+- Local Bridge owns modem transport/session continuity.
+- Application Management is metadata/control-plane integration only.
+- Production release remains a separate explicit decision.
 
-```bash
-npm run verify
-```
+## Historical development record
 
-Không coi release là PASS nếu một gate trong pipeline thất bại.
+The detailed v0.7.x discovery/fix chronology remains in `docs/PHASE_STATUS.md` as **legacy evidence history**.
 
-## Bước tiếp theo
-
-Ưu tiên Phase 2B theo đúng evidence gate:
-
-1. capture **login transaction** thật của firmware;
-2. chạy `npm run analyze:har -- <file.har>` để tạo evidence report an toàn;
-3. map request/response/session semantics vào `NC03Auth`;
-4. chỉ sau AUTH VERIFIED mới nối credential vault vào kết quả đăng nhập thành công;
-5. mở rộng guarded write từ Safe Charge / Long Life sang Wi-Fi, DHCP, Bridge, Security... theo từng route; chỉ route đã có request mapping + readback + rollback mới được mở control.
-
-## Publish
-
-Mỗi push vào `main` tạo verified artifact `nc03-control-center-site` sau khi `npm run verify` PASS.
-
-GitHub Pages chỉ deploy live khi repository đã bật **Settings → Pages → Build and deployment → GitHub Actions**.
-
-
-### Runtime-gated real login
-
-- Local Bridge reads the login recipe and vendor transport from the modem firmware at runtime.
-- Password entry is available immediately; pressing Login first resolves recipe + transport and only proceeds when that preflight is ready.
-- Session success is verified again before the app treats AUTH as connected.
-- Unknown login retcodes remain generic failures.
-- WRITE remains a separate fail-closed capability gate.
-
-
-### AUTH startup & session lifecycle
-
-- the first stable screen is always the NC03 Login screen;
-- AUTH readiness runs in the background and again on submit when needed, but never disables password entry;
-- expired sessions switch to SESSION_EXPIRED and open re-authentication immediately;
-- encrypted remember-password vault is part of the offline PWA shell;
-- WRITE remains a separate fail-closed gate.
-
-
-### WRITE readiness runtime gate
-
-The WRITE Readiness Lab is read-only. v0.7.25 keeps the v0.7.24 runtime gate and adds stale-tab PWA recovery. v0.7.24 introduced runtime v4 plus `writeReadinessProtocol = nc03-write-readiness/v1` so a newer frontend cannot call the readiness endpoint on an older in-memory Local Bridge. This prevents stale-runtime `METHOD_NOT_ALLOWED` errors from being mistaken for modem behavior. Live WRITE remains locked.
+Do not extend that history with new symptom-numbered phases. New work belongs to canonical Work Packages.
