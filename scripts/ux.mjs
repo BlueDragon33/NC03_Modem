@@ -35,9 +35,9 @@ assert.ok(app.includes("runAuthSourceProbe"), "AUTH Source Probe action is requi
 assert.ok(css.includes(".source-evidence-grid"), "AUTH source evidence must have responsive layout.");
 
 assert.ok(app.includes("NC03 SETTINGS"), "Settings must use the modem-style Settings Center shell.");
-assert.ok(app.includes("data-settings-section=\"wifi\""), "Settings must expose a Wi-Fi category like the stock Web UI.");
-assert.ok(app.includes("data-settings-section=\"lan\""), "Settings must expose a LAN/DHCP category like the stock Web UI.");
-assert.ok(app.includes("data-settings-section=\"power\""), "Settings must expose a Power category like the stock Web UI.");
+assert.ok(app.includes('["wifi","Wi-Fi"'), "Settings must expose a Wi-Fi category like the stock Web UI.");
+assert.ok(app.includes('["lan","LAN / DHCP"'), "Settings must expose a LAN/DHCP category like the stock Web UI.");
+assert.ok(app.includes('["power","Pin / Nguồn"'), "Settings must expose a Power category like the stock Web UI.");
 assert.ok(app.includes("Bật Developer Mode để mở Lab"), "HAR Lab entry must remain visible from the System settings category.");
 
 assert.ok(app.includes("Login submit endpoint"), "AUTH Source Probe must surface login-submit candidates separately.");
