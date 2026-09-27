@@ -640,3 +640,25 @@ Next live gate:
 2. confirm the stock Web UI shows the same resulting state;
 3. if success + readback agree, promote this single route to WRITE VERIFIED;
 4. then map the next settings family instead of enabling all vendor writes at once.
+
+
+## Phase 2AI — WEBUI-STYLE SETTINGS CENTER
+
+Status: **IMPLEMENTED**
+
+Goal:
+- now that login/session/readback are stable, move from a telemetry-oriented Settings page to a modem-administration experience shaped like the stock Web UI.
+
+Implemented:
+- category navigation for Mobile Network, Wi-Fi, LAN/DHCP, USB/Bridge, Power, Security and System;
+- form-style controls populated from current real modem readback;
+- interactive Wi-Fi AP profile tabs;
+- discovered vendor write-route families shown beside the matching settings group;
+- locked controls remain visually present but disabled until their own write mapping is verified;
+- Long Life Charging remains the only active guarded write control;
+- current Wi-Fi PSK is never mirrored or prefilled;
+- responsive desktop/tablet/mobile layout;
+- duplicated Developer Tools block removed and developer tooling moved into the System category.
+
+Next:
+- use this UI shell as the stable target while promoting settings families one by one from locked → guarded write after runtime request mapping + readback + rollback are verified.
