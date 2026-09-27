@@ -664,7 +664,8 @@ async function localHealth() {
       throw codedError("LOCAL_BRIDGE_HEALTH_FAILED");
     }
     if (payload.runtimeProtocol !== NC03_RUNTIME_PROTOCOL.id
-      || payload.authEvidenceSchema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema) {
+      || payload.authEvidenceSchema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema
+      || payload.authLoginProtocol !== NC03_RUNTIME_PROTOCOL.authLoginProtocol) {
       throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
     }
     return payload;
