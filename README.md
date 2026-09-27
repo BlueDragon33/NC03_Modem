@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.28 — Local Modem Session Continuity
+## Phase 2 · v0.7.29 — Guarded Settings Write
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -49,6 +49,7 @@ Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng
 - **login-first UX**: mỗi lần mở app đều vào màn hình Đăng nhập NC03 trước; ô Password luôn nhập được. Khi bấm Đăng nhập, app mới preflight recipe + transport rồi thực hiện login an toàn; login key/username literal không trả ra browser.
 - **runtime login resolver** theo dõi indirection an toàn của `loginKey`, fixed username và password input alias trong firmware JS; nếu chưa đủ, form hiển thị chính xác gate nào đang thiếu bằng boolean evidence, không trả literal/credential ra browser.
 - **session continuity**: login POST, `get_login_info` verification và các read request dùng chung cookie jar chỉ tồn tại trong RAM của Local Bridge; cookie/session không trả về browser và không ghi xuống đĩa.
+- **guarded settings write**: Safe Charge / Long Life Charging là setting đầu tiên có control ghi thật. Mỗi lần ghi đều preflight mapping → gửi lệnh bằng session local → đọc lại post-condition → tự rollback về trạng thái cũ nếu readback không khớp. Các setting khác vẫn khóa riêng.
 - **Secure Credential Vault** chỉ ghi password sau khi modem trả success và session được `get_login_info` xác minh lại; WRITE vẫn khóa riêng.
 - **Request object dependency trace** lần ngược `postdata = JSON.stringify(_obj)` sang chính `_obj`, field assignments và codec của từng field mà không trả literal/password.
 - **Nested AUTH transform** giữ được outer call như `hex_hmac_md5(loginKey, $(...).val())`, tránh nhầm password chỉ là `val()`.
@@ -101,7 +102,7 @@ Không coi release là PASS nếu một gate trong pipeline thất bại.
 2. chạy `npm run analyze:har -- <file.har>` để tạo evidence report an toàn;
 3. map request/response/session semantics vào `NC03Auth`;
 4. chỉ sau AUTH VERIFIED mới nối credential vault vào kết quả đăng nhập thành công;
-5. capture một write operation ít rủi ro kèm rollback để nâng từng capability từ PARTIAL → WRITE VERIFIED.
+5. mở rộng guarded write từ Safe Charge / Long Life sang Wi-Fi, DHCP, Bridge, Security... theo từng route; chỉ route đã có request mapping + readback + rollback mới được mở control.
 
 ## Publish
 
