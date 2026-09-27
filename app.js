@@ -20,8 +20,8 @@ let vaultCredential = null;
 let vaultHydrated = false;
 
 let state = {
-  view: "home",
-  demoMode: prefs.demoMode,
+  view: "login",
+  demoMode: false,
   developerMode: prefs.developerMode,
   uiMode: prefs.uiMode,
   baseUrl: prefs.baseUrl,
@@ -296,17 +296,17 @@ function renderLogin() {
       ${renderAlwaysOnStatus()}
       <div class="login-form">
         <label>Địa chỉ modem<input id="loginBaseUrl" value="${esc(state.baseUrl)}" inputmode="url" autocomplete="url" placeholder="192.168.0.1" /></label>
-        <label>Mật khẩu<input id="loginPassword" type="password" ${ready ? "" : "disabled"} autocomplete="current-password" placeholder="${ready ? "Nhập mật khẩu quản trị modem" : "Đang chờ AUTH READY"}" /></label>
+        <label>Mật khẩu<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu quản trị modem" /></label>
       </div>
       <div class="login-options">
-        <label class="remember-option"><input id="rememberPassword" type="checkbox" ${state.rememberPassword ? "checked" : ""} ${ready ? "" : "disabled"} /><span><strong>Ghi nhớ mật khẩu</strong><small>Mã hóa cục bộ AES-GCM sau khi đăng nhập thành công.</small></span></label>
+        <label class="remember-option"><input id="rememberPassword" type="checkbox" ${state.rememberPassword ? "checked" : ""} /><span><strong>Ghi nhớ mật khẩu</strong><small>Chỉ mã hóa và lưu cục bộ sau khi đăng nhập thành công.</small></span></label>
       </div>
-      <div class="auth-readiness" data-ready="${ready}"><strong>${ready ? "AUTH VERIFIED" : "AUTH LOCKED"}</strong><span>${readinessText}</span></div>
+      <div class="auth-readiness" data-ready="${ready}"><strong>${ready ? "CƠ CHẾ ĐĂNG NHẬP SẴN SÀNG" : "ĐANG KIỂM TRA CƠ CHẾ ĐĂNG NHẬP"}</strong><span>${readinessText}</span></div>
       ${state.addressError ? `<div class="inline-error">${esc(state.addressError)}</div>` : ""}
       ${state.loginError ? `<div class="inline-error">${esc(state.loginError)}</div>` : ""}
       <div class="login-actions">
         <button id="saveLoginAddress" class="secondary-action">Lưu địa chỉ</button>
-        <button id="loginSubmit" ${ready && !state.loginLoading ? "" : "disabled"}>${state.loginLoading ? "Đang đăng nhập…" : "Đăng nhập"}</button>
+        <button id="loginSubmit" ${state.loginLoading ? "disabled" : ""}>${state.loginLoading ? "Đang đăng nhập…" : "Đăng nhập"}</button>
         <button id="openStockUi">Mở Web UI gốc</button>
       </div>
       <div class="write-lock"><strong>AUTH có gate riêng; WRITE vẫn khóa.</strong><span>Đăng nhập thành công chỉ mở session đọc. Mọi thao tác ghi modem vẫn yêu cầu WRITE VERIFIED riêng.</span></div>
@@ -766,9 +766,22 @@ async function refreshAuthReadiness({ render = true } = {}) {
 }
 
 async function submitLogin() {
-  if (!state.authReadiness?.ready || state.loginLoading) return;
+  if (state.loginLoading) return;
+
+  const addressInput = document.querySelector("#loginBaseUrl");
   const passwordInput = document.querySelector("#loginPassword");
   const password = passwordInput?.value ?? "";
+
+  try {
+    state.baseUrl = normalizeModemAddress(addressInput?.value || state.baseUrl);
+    state.addressError = "";
+    persist();
+  } catch {
+    state.addressError = "Địa chỉ không hợp lệ. Chỉ dùng IP mạng nội bộ RFC1918, ví dụ 192.168.0.1.";
+    page();
+    return;
+  }
+
   if (!password) {
     state.loginError = "Hãy nhập mật khẩu quản trị modem.";
     page();
@@ -777,8 +790,20 @@ async function submitLogin() {
 
   state.loginLoading = true;
   state.loginError = "";
-  page();
+  const submitButton = document.querySelector("#loginSubmit");
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "Đang đăng nhập…";
+  }
+
   try {
+    if (!state.authReadiness?.ready) {
+      await refreshAuthReadiness({ render:false });
+      if (!state.authReadiness?.ready) {
+        throw codedError(state.authReadinessError || state.authReadiness?.code || "AUTH_NOT_READY");
+      }
+    }
+
     const response = await fetch("/api/nc03/login", {
       method:"POST",
       cache:"no-store",
@@ -809,12 +834,20 @@ async function submitLogin() {
       AUTH_VERIFICATION_FAILED:"Modem trả success nhưng session chưa xác minh được.",
       LOGIN_TRANSPORT_UNRESOLVED:"Chưa xác minh được transport saveAjaxJsonData của firmware.",
       LOGIN_RECIPE_INCOMPLETE:"AUTH recipe của firmware chưa đủ để đăng nhập an toàn.",
-      PASSWORD_REQUIRED:"Hãy nhập mật khẩu quản trị modem."
+      PASSWORD_REQUIRED:"Hãy nhập mật khẩu quản trị modem.",
+      AUTH_NOT_READY:"Chưa xác minh được cơ chế đăng nhập của modem. Hãy kiểm tra kết nối tới NC03 rồi thử lại.",
+      AUTH_READINESS_FAILED:"Không kiểm tra được cơ chế đăng nhập của modem.",
+      LOCAL_BRIDGE_UNREACHABLE:"Local Bridge không phản hồi. Hãy chạy lại NC03 local runtime.",
+      LOCAL_BRIDGE_RESTART_REQUIRED:"Local Bridge đang chạy bản cũ. Hãy restart runtime rồi thử lại."
     };
     state.loginError = labels[error?.code] || error?.code || "LOGIN_FAILED";
   } finally {
     state.loginLoading = false;
     page();
+    if (state.view === "login") {
+      const restoredPassword = document.querySelector("#loginPassword");
+      if (restoredPassword) restoredPassword.value = password;
+    }
   }
 }
 
@@ -1178,22 +1211,23 @@ function bind() {
 }
 
 async function bootstrapRuntime() {
-  await ensureDemo();
-  if (state.demoMode) {
-    page();
-    return;
-  }
+  // Login-first UX: every fresh launch starts at the NC03 login screen.
+  // A previously persisted Developer Demo must never bypass modem authentication.
+  state.view = "login";
+  state.demoMode = false;
+  persist();
+  page();
 
   await refreshAuthReadiness({ render:false });
   await refreshLive({ render:false });
 
-  if (state.connectionState === CONNECTION_STATE.CONNECTED) {
-    if (state.live) await refreshDetails({ render:false });
-    if (state.view === "login") state.view = "home";
-  } else if ([CONNECTION_STATE.AUTHENTICATION_REQUIRED, CONNECTION_STATE.SESSION_EXPIRED].includes(state.connectionState)) {
-    state.view = "login";
+  if (state.connectionState === CONNECTION_STATE.CONNECTED && state.live) {
+    await refreshDetails({ render:false });
   }
 
+  // Do not auto-enter Home from a detected modem session. The user explicitly
+  // enters NC03 Control Center by submitting the login form (or choosing Demo).
+  state.view = "login";
   page();
 }
 
