@@ -47,12 +47,9 @@ for(const row of inv.rows){
   if(row.writeEvidence?.state==="VERIFIED" || row.writeEvidence?.state==="CANDIDATE" || row.writeEvidence?.state==="GUARDED_PENDING_HARDWARE_ACCEPTANCE"){
     assert.ok(row.writeEvidence.route || row.writeEvidence.routes,`write evidence missing route ${row.id}`);
   }
-  const readKeys=[
-    ...(Array.isArray(row.readEvidence?.keys) ? row.readEvidence.keys : []),
-    row.readEvidence?.keyTemplate ?? ""
-  ].join(" ").toLowerCase();
-  for(const forbidden of ["wifi_psk","password","passwd","sim_pin_value","iccid","imei","meid","esim_eid"]){
-    assert.equal(readKeys.includes(forbidden),false,`secret-bearing read key leaked into inventory: ${row.id} / ${forbidden}`);
+  for(const forbiddenField of ["value","currentValue","sample","literal","secretValue","credential","cookie","session"]){
+    assert.equal(Object.prototype.hasOwnProperty.call(row.readEvidence ?? {},forbiddenField),false,`evidence must name fields/routes, never retain sensitive values: ${row.id} / ${forbiddenField}`);
+    assert.equal(Object.prototype.hasOwnProperty.call(row.writeEvidence ?? {},forbiddenField),false,`write evidence must name shape/routes, never retain sensitive values: ${row.id} / ${forbiddenField}`);
   }
 }
 for(const [family,count] of familyCounts) assert.ok(count>0,`empty family ${family}`);
