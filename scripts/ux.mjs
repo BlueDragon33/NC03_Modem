@@ -84,3 +84,5 @@ assert.ok(app.includes("Xác thực lại NC03"), "Expired modem sessions need a
 
 assert.ok(app.includes("WRITE READINESS LAB"), "Developer evidence workflow must expose reversible write planning.");
 assert.ok(app.includes("Live write: LOCKED"), "Write Readiness Lab must visibly keep live writes locked.");
+
+assert.ok(app.includes("WRITE readiness endpoint không khớp runtime hiện tại"), "WRITE Lab must diagnose stale/mismatched local runtime explicitly.");

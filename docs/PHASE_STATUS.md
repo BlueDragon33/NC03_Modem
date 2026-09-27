@@ -527,3 +527,20 @@ Next hardware gate:
 3. immediately return to the original state;
 4. capture rollback transaction;
 5. only then consider promoting this single route to WRITE VERIFIED.
+
+
+## Phase 2AC — WRITE READINESS RUNTIME GATE
+
+Status: **IMPLEMENTED**
+
+Observed failure:
+- WRITE Readiness UI from v0.7.23 could be served while a v0.7.22 Local Bridge remained in RAM;
+- both used runtime v3, so the generic runtime gate could not detect the missing `/api/nc03/write-readiness` route;
+- the old bridge therefore returned `METHOD_NOT_ALLOWED`.
+
+Fix:
+- runtime bumped to `nc03-local-runtime/v4`;
+- dedicated `nc03-write-readiness/v1` identity added to health/runtime metadata;
+- frontend blocks readiness probing when the WRITE protocol is missing/mismatched;
+- readiness remains read-only and accepts GET/POST compatibility;
+- live WRITE stays locked until HAR write + rollback + post-condition are verified.

@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.23 — Reversible Write Readiness Lab
+## Phase 2 · v0.7.24 — WRITE Readiness Runtime Gate
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -123,3 +123,8 @@ GitHub Pages chỉ deploy live khi repository đã bật **Settings → Pages �
 - expired sessions switch to SESSION_EXPIRED and open re-authentication immediately;
 - encrypted remember-password vault is part of the offline PWA shell;
 - WRITE remains a separate fail-closed gate.
+
+
+### WRITE readiness runtime gate
+
+The WRITE Readiness Lab is read-only. v0.7.24 introduces runtime v4 plus `writeReadinessProtocol = nc03-write-readiness/v1` so a newer frontend cannot call the readiness endpoint on an older in-memory Local Bridge. This prevents stale-runtime `METHOD_NOT_ALLOWED` errors from being mistaken for modem behavior. Live WRITE remains locked.
