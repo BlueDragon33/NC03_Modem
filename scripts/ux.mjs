@@ -67,3 +67,14 @@ assert.ok(app.includes("Password field dataflow"), "AUTH lab must surface passwo
 assert.ok(app.includes("Password recipe status"), "AUTH lab must show password recipe readiness.");
 
 assert.ok(app.includes("LOCAL_BRIDGE_RESTART_REQUIRED"), "AUTH lab must diagnose stale Local Bridge process state.");
+
+assert.ok(app.includes("AUTH VERIFIED"), "Login UI must visibly show the verified AUTH gate.");
+assert.ok(app.includes('id="loginSubmit"'), "Verified AUTH must expose a real login action.");
+assert.ok(app.includes("Mã hóa cục bộ AES-GCM"), "Remember-password UX must disclose local encrypted storage.");
+assert.ok(css.includes(".auth-readiness"), "AUTH readiness state needs visible styling.");
+assert.ok(css.includes(".remember-option"), "Remember-password control needs explicit styling.");
+
+assert.ok(app.includes("AUTH VERIFIED"), "Login UI must visibly show the verified AUTH gate.");
+assert.ok(app.includes('id="loginSubmit"'), "Verified AUTH must expose a real login action.");
+assert.ok(css.includes(".auth-readiness"), "AUTH readiness state needs visible styling.");
+assert.ok(css.includes(".remember-option"), "Remember option needs explicit styling.");

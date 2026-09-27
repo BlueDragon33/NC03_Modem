@@ -106,11 +106,13 @@ test("freshness timestamps and advanced snapshot staleness are explicit", () => 
   assert.match(app, /retryDetails/);
 });
 
-test("remember-password UX cannot look enabled before real auth is verified", () => {
+test("remember-password UX is disabled until runtime AUTH readiness is verified", () => {
   assert.match(app, /Ghi nhớ mật khẩu/);
-  assert.match(app, /Chưa hoạt động · sẽ bật mặc định sau khi AUTH VERIFIED/);
-  assert.doesNotMatch(app, /id="rememberPassword"/);
-  assert.doesNotMatch(app, /rememberPassword"\)\?\.addEventListener\("change"/);
+  assert.match(app, /id="rememberPassword"/);
+  assert.match(app, /\$\{ready \? "" : "disabled"\}/);
+  assert.match(app, /state\.authReadiness\?\.ready === true/);
+  assert.match(app, /rememberPassword"\)\?\.addEventListener\("change"/);
+  assert.match(app, /credentialVault\.save/);
 });
 
 test("manual modem address errors are shown instead of silently resetting the address", () => {
@@ -268,4 +270,26 @@ test("frontend refuses AUTH probe when Local Bridge runtime protocol/schema is s
   assert.match(app, /LOCAL_BRIDGE_RESTART_REQUIRED/);
   assert.match(app, /payload\.runtimeProtocol !== NC03_RUNTIME_PROTOCOL\.id/);
   assert.match(app, /probe\?\.evidence\?\.schema !== NC03_RUNTIME_PROTOCOL\.authEvidenceSchema/);
+});
+
+
+test("real login UI is gated by runtime AUTH readiness", () => {
+  assert.match(app, /authReadiness/);
+  assert.match(app, /\/api\/nc03\/auth-readiness/);
+  assert.match(app, /\/api\/nc03\/login/);
+  assert.match(app, /id="loginPassword"/);
+  assert.match(app, /AUTH VERIFIED/);
+  assert.match(app, /credentialVault\.save/);
+  assert.match(app, /body:JSON\.stringify\(\{ baseUrl:state\.baseUrl, password \}\)/);
+  assert.match(server, /async function authReadiness/);
+  assert.match(server, /async function modemLogin/);
+  assert.match(server, /\/api\/nc03\/auth-readiness/);
+  assert.match(server, /\/api\/nc03\/login/);
+  assert.match(server, /AUTH_VERIFICATION_FAILED/);
+});
+
+test("runtime login bridge never returns firmware login key or username literal", () => {
+  assert.match(server, /function publicLoginReadiness/);
+  assert.doesNotMatch(server, /publicLoginReadiness[\s\S]{0,1800}usernameLiteral:/);
+  assert.doesNotMatch(server, /publicLoginReadiness[\s\S]{0,1800}\bkey:/);
 });

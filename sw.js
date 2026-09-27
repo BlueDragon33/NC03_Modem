@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v29-runtime-schema-gate";
+const CACHE = "nc03-control-center-v30-real-login-gate";
 const ASSETS = [
   "./",
   "./index.html",

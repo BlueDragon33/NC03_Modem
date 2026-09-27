@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.20"
+    "version": "0.7.21"
   },
   "capabilities": {
     "webLaunch": true,
@@ -58,14 +58,20 @@
     "passwordExpressionSkeleton": true,
     "passwordFieldDataflow": true,
     "runtimeProtocolSchemaGate": true,
-    "runtimeBootIdentity": true
+    "runtimeBootIdentity": true,
+    "authRuntimeReadiness": true,
+    "authRealLogin": true,
+    "secureCredentialVault": true,
+    "authSessionVerification": true
   },
   "endpoints": {
     "status": "/api/control/status",
     "liveTelemetry": "/api/nc03/snapshot",
     "advancedRead": "/api/nc03/details",
     "connectionDoctor": "/api/nc03/doctor",
-    "authSourceProbe": "/api/nc03/auth-source-probe"
+    "authSourceProbe": "/api/nc03/auth-source-probe",
+    "authReadiness": "/api/nc03/auth-readiness",
+    "login": "/api/nc03/login"
   },
   "policy": {
     "remoteAdminReady": false,
@@ -92,7 +98,7 @@
     "reportMissingDataNeverCoercedToZero": true,
     "reportLiveAndAdvancedFreshnessExplicit": true,
     "reportBatteryPercentageValidated": true,
-    "authDiscoveryEvidenceOnly": true,
+    "authDiscoveryEvidenceOnly": false,
     "writeCandidateNeverAutoVerified": true,
     "harAnalysisLocalOnly": true,
     "harEvidenceExportRedacted": true,
@@ -118,7 +124,11 @@
     "responseCodeMapObservedSignalsOnly": true,
     "loginNestedCallNoLiteralValues": true,
     "passwordExpressionLiteralRedaction": true,
-    "authProbeRequiresMatchingRuntimeSchema": true
+    "authProbeRequiresMatchingRuntimeSchema": true,
+    "authLoginRequiresRuntimeRecipe": true,
+    "authLoginRequiresTransportDiscovery": true,
+    "credentialSavedOnlyAfterVerifiedLogin": true,
+    "unknownLoginRetcodeGenericFailure": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,

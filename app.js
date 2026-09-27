@@ -8,12 +8,16 @@ import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
 import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
 import { buildDiagnosticReport } from "./src/ui/DiagnosticReport.js";
 import { NC03_RUNTIME_PROTOCOL } from "./src/runtime/RuntimeProtocol.js";
+import { SecureCredentialVault } from "./src/modem/SecureCredentialVault.js";
 
 const app = document.querySelector("#app");
 const prefs = loadPreferences();
 const LIVE_REFRESH_MS = 10_000;
 let liveTimer = null;
 let liveRefreshInFlight = false;
+const credentialVault = new SecureCredentialVault();
+let vaultCredential = null;
+let vaultHydrated = false;
 
 let state = {
   view: "home",
@@ -42,6 +46,10 @@ let state = {
   authSourceEvidence: null,
   authSourceError: "",
   authSourceLoading: false,
+  authReadiness: null,
+  authReadinessError: "",
+  loginLoading: false,
+  loginError: "",
   demo: null
 };
 
@@ -270,19 +278,31 @@ function renderDetailsNotice() {
 }
 
 function renderLogin() {
+  const ready = state.authReadiness?.ready === true;
+  const readinessText = ready
+    ? `AUTH READY · ${esc(state.authReadiness.recipe?.passwordTransform ?? "verified recipe")} · ${esc(state.authReadiness.transport?.method ?? "POST")}`
+    : esc(state.authReadinessError || state.authReadiness?.code || "Đang xác minh AUTH recipe/transport từ firmware local.");
   return `<section class="login-shell">
     <div class="login-card">
       <div class="login-brand"><div class="brand-mark">N3</div><div><small>HYBRID Wi-Fi 5G</small><strong>NC03 Control Center</strong></div></div>
-      <div class="login-copy"><span class="eyebrow">LOCAL MODEM ACCESS</span><h1>Kết nối NC03</h1><p>Địa chỉ modem có thể thay đổi. HAR mới vẫn chưa chứa request nhập mật khẩu, nên app không tự bịa thuật toán đăng nhập.</p></div>
+      <div class="login-copy"><span class="eyebrow">LOCAL MODEM ACCESS</span><h1>Đăng nhập NC03</h1><p>Recipe đăng nhập được Local Bridge đọc trực tiếp từ firmware local. Password không gửi lên cloud.</p></div>
       ${renderAlwaysOnStatus()}
       <div class="login-form">
         <label>Địa chỉ modem<input id="loginBaseUrl" value="${esc(state.baseUrl)}" inputmode="url" autocomplete="url" placeholder="192.168.0.1" /></label>
-        <label>Mật khẩu<input id="loginPassword" type="password" disabled autocomplete="current-password" placeholder="Sẽ mở sau khi AUTH request được xác minh" /></label>
+        <label>Mật khẩu<input id="loginPassword" type="password" ${ready ? "" : "disabled"} autocomplete="current-password" placeholder="${ready ? "Nhập mật khẩu quản trị modem" : "Đang chờ AUTH READY"}" /></label>
       </div>
-      <div class="login-options"><div class="locked-option"><strong>Ghi nhớ mật khẩu</strong><span>Chưa hoạt động · sẽ bật mặc định sau khi AUTH VERIFIED.</span></div></div>
+      <div class="login-options">
+        <label class="remember-option"><input id="rememberPassword" type="checkbox" ${state.rememberPassword ? "checked" : ""} ${ready ? "" : "disabled"} /><span><strong>Ghi nhớ mật khẩu</strong><small>Mã hóa cục bộ AES-GCM sau khi đăng nhập thành công.</small></span></label>
+      </div>
+      <div class="auth-readiness" data-ready="${ready}"><strong>${ready ? "AUTH VERIFIED" : "AUTH LOCKED"}</strong><span>${readinessText}</span></div>
       ${state.addressError ? `<div class="inline-error">${esc(state.addressError)}</div>` : ""}
-      <div class="login-actions"><button id="saveLoginAddress" class="secondary-action">Lưu địa chỉ</button><button id="openStockUi">Mở Web UI gốc</button></div>
-      <div class="write-lock"><strong>Read path đã hoạt động qua Local Bridge.</strong><span>Sau khi bạn đăng nhập Web UI gốc, app tự kiểm tra lại mỗi 10 giây. Write API vẫn khóa.</span></div>
+      ${state.loginError ? `<div class="inline-error">${esc(state.loginError)}</div>` : ""}
+      <div class="login-actions">
+        <button id="saveLoginAddress" class="secondary-action">Lưu địa chỉ</button>
+        <button id="loginSubmit" ${ready && !state.loginLoading ? "" : "disabled"}>${state.loginLoading ? "Đang đăng nhập…" : "Đăng nhập"}</button>
+        <button id="openStockUi">Mở Web UI gốc</button>
+      </div>
+      <div class="write-lock"><strong>AUTH có gate riêng; WRITE vẫn khóa.</strong><span>Đăng nhập thành công chỉ mở session đọc. Mọi thao tác ghi modem vẫn yêu cầu WRITE VERIFIED riêng.</span></div>
       <div class="login-safe-actions"><button id="enterDemo">Mở Developer Demo</button></div>
     </div>
   </section>`;
@@ -644,7 +664,8 @@ async function localHealth() {
       throw codedError("LOCAL_BRIDGE_HEALTH_FAILED");
     }
     if (payload.runtimeProtocol !== NC03_RUNTIME_PROTOCOL.id
-      || payload.authEvidenceSchema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema) {
+      || payload.authEvidenceSchema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema
+      || payload.authLoginProtocol !== NC03_RUNTIME_PROTOCOL.authLoginProtocol) {
       throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
     }
     return payload;
@@ -675,6 +696,77 @@ async function localRead(path) {
     throw codedError("MALFORMED_LOCAL_RESPONSE");
   }
   return payload.payload;
+}
+
+async function refreshAuthReadiness({ render = true } = {}) {
+  if (state.demoMode) return;
+  try {
+    await localHealth();
+    state.authReadiness = await localRead("/api/nc03/auth-readiness");
+    state.authReadinessError = "";
+    if (state.authReadiness?.ready && state.rememberPassword && !vaultHydrated) {
+      vaultHydrated = true;
+      vaultCredential = await credentialVault.load().catch(() => null);
+      if (vaultCredential?.baseUrl && vaultCredential.baseUrl !== state.baseUrl) vaultCredential = null;
+    }
+  } catch (error) {
+    state.authReadiness = null;
+    state.authReadinessError = error?.code || "AUTH_READINESS_FAILED";
+  }
+  if (render) page();
+}
+
+async function submitLogin() {
+  if (!state.authReadiness?.ready || state.loginLoading) return;
+  const passwordInput = document.querySelector("#loginPassword");
+  const password = passwordInput?.value ?? "";
+  if (!password) {
+    state.loginError = "Hãy nhập mật khẩu quản trị modem.";
+    page();
+    return;
+  }
+
+  state.loginLoading = true;
+  state.loginError = "";
+  page();
+  try {
+    const response = await fetch("/api/nc03/login", {
+      method:"POST",
+      cache:"no-store",
+      headers:{ "content-type":"application/json" },
+      body:JSON.stringify({ baseUrl:state.baseUrl, password }),
+      signal:AbortSignal.timeout(12000)
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || body.ok !== true || body.payload?.authenticated !== true) {
+      throw codedError(body.code || `HTTP_${response.status}`);
+    }
+
+    if (state.rememberPassword) {
+      await credentialVault.save({ baseUrl:state.baseUrl, password });
+      vaultCredential = { baseUrl:state.baseUrl, password };
+    } else {
+      await credentialVault.clear().catch(() => {});
+      vaultCredential = null;
+    }
+
+    state.connectionState = CONNECTION_STATE.CONNECTED;
+    state.view = "home";
+    state.loginError = "";
+    await refreshAll();
+  } catch (error) {
+    const labels = {
+      LOGIN_REJECTED:"Mật khẩu không được modem chấp nhận.",
+      AUTH_VERIFICATION_FAILED:"Modem trả success nhưng session chưa xác minh được.",
+      LOGIN_TRANSPORT_UNRESOLVED:"Chưa xác minh được transport saveAjaxJsonData của firmware.",
+      LOGIN_RECIPE_INCOMPLETE:"AUTH recipe của firmware chưa đủ để đăng nhập an toàn.",
+      PASSWORD_REQUIRED:"Hãy nhập mật khẩu quản trị modem."
+    };
+    state.loginError = labels[error?.code] || error?.code || "LOGIN_FAILED";
+  } finally {
+    state.loginLoading = false;
+    page();
+  }
 }
 
 async function runAuthSourceProbe() {
@@ -743,13 +835,17 @@ async function refreshLive({ render = true } = {}) {
   } catch (error) {
     state.liveStale = Boolean(state.live);
     state.liveError = error?.code === "AUTHENTICATION_REQUIRED"
-      ? "Modem yêu cầu đăng nhập. Mở Web UI gốc, đăng nhập một lần; app sẽ tự thử lại sau tối đa 10 giây."
+      ? "Modem yêu cầu đăng nhập. NC03 Control Center đang xác minh AUTH recipe để mở form Password."
       : "Không kết nối được NC03 qua Local Bridge.";
     state.connectionState = state.liveStale
       ? CONNECTION_STATE.RECONNECTING
       : error?.code === "AUTHENTICATION_REQUIRED"
         ? CONNECTION_STATE.AUTHENTICATION_REQUIRED
         : CONNECTION_STATE.NC03_UNAVAILABLE;
+    if (error?.code === "AUTHENTICATION_REQUIRED") {
+      await refreshAuthReadiness({ render:false });
+      if (state.authReadiness?.ready) state.view = "login";
+    }
   }
   if (render) page();
 }
@@ -843,7 +939,27 @@ function bind() {
       return;
     }
     persist();
+    vaultHydrated = false;
+    vaultCredential = null;
+    await refreshAuthReadiness({ render:false });
     await refreshAll();
+  });
+
+  const loginPasswordInput = document.querySelector("#loginPassword");
+  if (loginPasswordInput && vaultCredential?.password && state.rememberPassword) {
+    loginPasswordInput.value = vaultCredential.password;
+  }
+  document.querySelector("#rememberPassword")?.addEventListener("change", (event) => {
+    state.rememberPassword = event.currentTarget.checked;
+    persist();
+    if (!state.rememberPassword) {
+      credentialVault.clear().catch(() => {});
+      vaultCredential = null;
+    }
+  });
+  document.querySelector("#loginSubmit")?.addEventListener("click", submitLogin);
+  document.querySelector("#loginPassword")?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") submitLogin();
   });
 
   document.querySelector("#enterDemo")?.addEventListener("click", async () => {

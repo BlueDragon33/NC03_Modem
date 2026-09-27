@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.20 — Runtime Schema Gate
+## Phase 2 · v0.7.21 — Runtime-Gated Real Login
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -45,6 +45,8 @@ Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng
 - **AUTH Source Probe tương thích runtime/PWA lệch phiên bản**: current UI dùng POST, Local Bridge vẫn chấp nhận GET legacy read-only để không còn `METHOD_NOT_ALLOWED` sau cập nhật.
 - **PWA shell dùng network-first + cache fallback**, nên khi Local Bridge đã lên bản mới thì `app.js`/module cũng ưu tiên lấy bản mới thay vì trả cache cũ trước.
 - **runtime protocol/schema gate** chặn AUTH probe nếu frontend mới đang nói chuyện với Local Bridge cũ còn nằm trong RAM; UI yêu cầu restart thay vì hiển thị evidence mặc định sai.
+- **runtime-gated real login** chỉ mở Password khi Local Bridge tự đọc được recipe + transport từ firmware 8.00.42; login key/username literal không trả ra browser.
+- **Secure Credential Vault** chỉ ghi password sau khi modem trả success và session được `get_login_info` xác minh lại; WRITE vẫn khóa riêng.
 - **Request object dependency trace** lần ngược `postdata = JSON.stringify(_obj)` sang chính `_obj`, field assignments và codec của từng field mà không trả literal/password.
 - **Nested AUTH transform** giữ được outer call như `hex_hmac_md5(loginKey, $(...).val())`, tránh nhầm password chỉ là `val()`.
 - **Response code map** chỉ giữ mã/symbol thực sự xuất hiện trong nhánh response của login, loại các constant không liên quan trong cùng `login.js`.
@@ -103,3 +105,12 @@ Không coi release là PASS nếu một gate trong pipeline thất bại.
 Mỗi push vào `main` tạo verified artifact `nc03-control-center-site` sau khi `npm run verify` PASS.
 
 GitHub Pages chỉ deploy live khi repository đã bật **Settings → Pages → Build and deployment → GitHub Actions**.
+
+
+### Runtime-gated real login
+
+- Local Bridge reads the login recipe and vendor transport from the modem firmware at runtime.
+- Login controls unlock only when both recipe and transport are resolved.
+- Session success is verified again before the app treats AUTH as connected.
+- Unknown login retcodes remain generic failures.
+- WRITE remains a separate fail-closed capability gate.
