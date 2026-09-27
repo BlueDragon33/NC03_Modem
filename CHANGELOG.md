@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0 — Constitution-bound Blueprint & Prompt System
+
+- Adopted the existing Universal Constitution v1.1 / B4 project classification as the active engineering authority.
+- Added canonical Project Profile, Blueprint and strict-serial Work Package graph under `.blueprint/`.
+- Froze the original NC03 product intent and stock-Web-UI parity target in a canonical Requirements Baseline.
+- Added a project-specific Constitution: root cause before patch, one source of truth per concept, stable device-control authority boundaries and one shared guarded-write lifecycle.
+- Replaced ad-hoc phase growth with exactly 18 dependency-ordered Work Packages and 18 corresponding prompt projections.
+- Added a Blueprint/prompt drift checker to `npm run verify`.
+- Rewrote README as the current product/governance overview instead of continuing a symptom-by-symptom patch diary.
+- v0.7.x remains preserved as historical evidence in `docs/PHASE_STATUS.md`; new development must use Work Package IDs.
+
 ## 0.7.30 — WebUI-style Settings Center
 
 - Rebuilt the Settings page around the same functional groups users expect from the stock modem Web UI: Mobile Network, Wi-Fi, LAN/DHCP, USB/Bridge, Power, Security, and System.
