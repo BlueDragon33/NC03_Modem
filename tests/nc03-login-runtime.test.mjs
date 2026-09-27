@@ -6,6 +6,7 @@ import {
   buildNc03LoginPayload,
   executeNc03Login
 } from "../src/modem/NC03LoginRuntime.js";
+import { createCookieAwareFetch, NC03LocalCookieJar } from "../src/modem/NC03LocalCookieJar.js";
 
 const LOGIN_SOURCE = [
   'var loginKey="fixture-key";',
@@ -122,4 +123,65 @@ test("incomplete runtime recipe reports privacy-safe evidence flags instead of l
   assert.equal(recipe.evidence.passwordHmac, false);
   assert.equal(recipe.evidence.usernameLiteral, false);
   assert.doesNotMatch(JSON.stringify(recipe.evidence), /fixture|admin|password-value/i);
+});
+
+
+test("local bridge cookie transport replays modem session cookie after login", async () => {
+  const calls = [];
+  const baseFetch = async (url, init = {}) => {
+    const path = new URL(url).pathname;
+    const headers = new Headers();
+    calls.push({ path, cookie:init.headers instanceof Headers ? init.headers.get("cookie") : null });
+
+    if (path === "/goform/login") {
+      headers.append("set-cookie", "SessionID=fixture-session; Path=/; HttpOnly");
+      return { ok:true, status:200, headers, json:async()=>({retcode:0}) };
+    }
+
+    if (path === "/goform/get_login_info") {
+      return {
+        ok:true,
+        status:200,
+        headers,
+        json:async()=>({retcode:0, loginStatus:init.headers.get("cookie") === "SessionID=fixture-session" ? 1 : 0})
+      };
+    }
+
+    throw new Error("Unexpected path");
+  };
+
+  const session = createCookieAwareFetch({ fetchImpl:baseFetch });
+  const recipe = discoverNc03LoginRecipe(LOGIN_SOURCE);
+  const transport = discoverSaveAjaxTransport([TOOL_SOURCE]);
+
+  const login = await executeNc03Login({
+    baseUrl:"http://192.168.0.1",
+    password:"fixture-password",
+    recipe,
+    transport,
+    fetchImpl:session.fetchImpl
+  });
+  assert.equal(login.ok, true);
+  assert.equal(session.jar.size, 1);
+
+  const verify = await session.fetchImpl("http://192.168.0.1/goform/get_login_info", {
+    method:"POST",
+    headers:{ Accept:"application/json" }
+  });
+  assert.equal((await verify.json()).loginStatus, 1);
+  assert.equal(calls.at(-1).cookie, "SessionID=fixture-session");
+});
+
+test("cookie jar stays memory-only and drops expired modem cookies", () => {
+  const jar = new NC03LocalCookieJar();
+  const headers = new Headers();
+  headers.append("set-cookie", "SessionID=one; Path=/");
+  jar.absorb(headers);
+  assert.equal(jar.header(), "SessionID=one");
+
+  const expired = new Headers();
+  expired.append("set-cookie", "SessionID=; Max-Age=0; Path=/");
+  jar.absorb(expired);
+  assert.equal(jar.header(), "");
+  assert.equal(jar.size, 0);
 });
