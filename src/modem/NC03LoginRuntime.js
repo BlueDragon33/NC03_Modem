@@ -2,8 +2,15 @@ import { createHmac } from "node:crypto";
 
 function findFunctionBody(source, name) {
   const text = String(source ?? "");
+  const escapedName = name.replace(/[.*+?^$()|[\\]\\\\]/g, "\\function findFunctionBody(source, name) {
+  const text = String(source ?? "");
   const re = new RegExp("function\\s+" + name.replace(/[.*+?^$()|[\\]\\\\]/g, "\\$&") + "\\s*\\(([^)]*)\\)\\s*\\{");
-  const match = re.exec(text);
+  const match = re.exec(text);");
+  const patterns = [
+    new RegExp("function\\s+" + escapedName + "\\s*\\(([^)]*)\\)\\s*\\{"),
+    new RegExp("(?:var\\s+)?" + escapedName + "\\s*=\\s*function\\s*\\(([^)]*)\\)\\s*\\{")
+  ];
+  const match = patterns.map((pattern) => pattern.exec(text)).find(Boolean);
   if (!match) return null;
   const open = (match.index ?? 0) + match[0].lastIndexOf("{");
   let depth = 1;
@@ -31,8 +38,9 @@ function hmacMd5(key, value) {
   return createHmac("md5", String(key)).update(String(value)).digest("hex");
 }
 
-export function discoverNc03LoginRecipe(loginSource = "") {
+export function discoverNc03LoginRecipe(loginSource = "", supportingSources = []) {
   const source = String(loginSource ?? "");
+  const supportText = [source, ...supportingSources.map((item)=>String(item?.source ?? item ?? ""))].join("\n");
   const login = findFunctionBody(source, "login");
   if (!login) return { ready:false, code:"LOGIN_FUNCTION_NOT_FOUND" };
 
@@ -41,7 +49,7 @@ export function discoverNc03LoginRecipe(loginSource = "") {
   const username = login.body.match(/_obj\.username\s*=\s*hex_hmac_md5\s*\(\s*loginKey\s*,\s*["']([^"']+)["']\s*\)/i)?.[1] ?? null;
   const passwordHmac = /_obj\.password\s*=\s*hex_hmac_md5\s*\(\s*loginKey\s*,[\s\S]{0,400}?\.val\s*\(\s*\)\s*\)/i.test(login.body);
   const successZero = /retcode\s*(?:===|==)\s*(?:0|g_resultSuccess)\b/i.test(login.body)
-    && (/\bg_resultSuccess\s*=\s*0\b/.test(source) || /retcode\s*(?:===|==)\s*0\b/.test(login.body));
+    && (/\bg_resultSuccess\s*=\s*0\b/.test(supportText) || /retcode\s*(?:===|==)\s*0\b/.test(login.body));
   const genericFailure13 = /retcode\s*(?:===|==)\s*13\b/.test(login.body);
 
   if (!key || !endpoint || !username || !passwordHmac || !successZero) {
