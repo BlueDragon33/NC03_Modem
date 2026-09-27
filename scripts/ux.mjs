@@ -81,3 +81,6 @@ assert.ok(css.includes(".remember-option"), "Remember option needs explicit styl
 
 assert.ok(app.includes("bootstrapRuntime"), "App startup must perform the AUTH/runtime handshake before settling the first screen.");
 assert.ok(app.includes("Xác thực lại NC03"), "Expired modem sessions need an explicit re-authentication UX.");
+
+assert.ok(app.includes("WRITE READINESS LAB"), "Developer evidence workflow must expose reversible write planning.");
+assert.ok(app.includes("Live write: LOCKED"), "Write Readiness Lab must visibly keep live writes locked.");
