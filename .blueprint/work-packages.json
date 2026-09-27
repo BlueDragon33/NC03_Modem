@@ -9,16 +9,22 @@
       "id": "NC03-WP00",
       "sequence": 0,
       "title": "Constitutional reset and anti-patch baseline",
-      "status": "ACTIVE",
+      "status": "COMPLETE",
       "dependsOn": [],
       "purpose": "Adopt canonical project state, serial prompt execution and anti-patch governance.",
-      "prompt": "prompts/00-wp00.md"
+      "prompt": "prompts/00-wp00.md",
+      "completionEvidence": [
+        "Universal Constitution Compliance",
+        "NC03 CI / npm run verify",
+        "scripts/check-blueprint-prompt-system.mjs",
+        "PR #50"
+      ]
     },
     {
       "id": "NC03-WP01",
       "sequence": 1,
       "title": "Stock Web UI parity inventory",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "dependsOn": [
         "NC03-WP00"
       ],
