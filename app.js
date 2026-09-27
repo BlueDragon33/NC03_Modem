@@ -49,6 +49,9 @@ let state = {
   writeReadiness: null,
   writeReadinessError: "",
   writeReadinessLoading: false,
+  settingsWriteLoading: false,
+  settingsWriteError: "",
+  settingsWriteResult: null,
   authReadiness: null,
   authReadinessError: "",
   loginLoading: false,
@@ -141,6 +144,13 @@ function onOff(value) {
   if (["enable","enabled","open","on","1","true","wps_enable"].includes(raw)) return "Bật";
   if (["disable","disabled","close","off","0","false","acl_disable","disablefilter"].includes(raw)) return "Tắt";
   return value ?? "—";
+}
+
+function toggleBoolean(value) {
+  const raw = String(value ?? "").toLowerCase();
+  if (["enable","enabled","open","on","1","true"].includes(raw)) return true;
+  if (["disable","disabled","close","off","0","false"].includes(raw)) return false;
+  return null;
 }
 
 function formatBytes(value) {
@@ -645,8 +655,18 @@ function renderSettings() {
   <section class="panel"><div class="panel-head"><div><span>HAR2 · CONNECTIVITY</span><h2>USB / Bridge / Ethernet</h2></div>${statusPill("READ ONLY")}</div>
     <div class="spec-grid">${settingCard("IP Passthrough", onOff(usb.bridgeState))}${settingCard("USB tether", onOff(usb.tethering))}${settingCard("USB speed", usb.speed)}${settingCard("Ethernet", usb.ethernetType)}</div>
   </section>
-  <section class="panel"><div class="panel-head"><div><span>HAR2 · POWER</span><h2>Pin / nguồn / màn hình</h2></div>${statusPill("READ ONLY")}</div>
-    <div class="spec-grid">${settingCard("Long Life Charging", onOff(power.device_charge_long_life))}${settingCard("Safe charge", onOff(power.device_bat_safe_charge_switch))}${settingCard("Power mode", power.device_power_saving_mode)}${settingCard("Tắt LCD", power.device_turnoff_lcd_time ? `${power.device_turnoff_lcd_time} phút` : "—")}</div>
+  <section class="panel power-settings-panel"><div class="panel-head"><div><span>HAR2 · POWER</span><h2>Pin / nguồn / màn hình</h2></div>${statusPill("GUARDED WRITE", "ok")}</div>
+    <div class="spec-grid">${settingCard("Safe charge", onOff(power.device_bat_safe_charge_switch))}${settingCard("Power mode", power.device_power_saving_mode)}${settingCard("Tắt LCD", power.device_turnoff_lcd_time ? `${power.device_turnoff_lcd_time} phút` : "—")}${settingCard("Long Life Charging", onOff(power.device_charge_long_life))}</div>
+    <div class="setting-write-row">
+      <div><strong>Long Life Charging</strong><span>Thao tác ghi đầu tiên được bảo vệ bằng preflight → write → readback → rollback khi post-condition sai.</span></div>
+      <div class="setting-write-actions">
+        <span class="setting-current">Hiện tại: ${esc(onOff(power.device_charge_long_life))}</span>
+        <button id="toggleLongLifeCharging" ${state.settingsWriteLoading || toggleBoolean(power.device_charge_long_life) === null ? "disabled" : ""} data-next="${toggleBoolean(power.device_charge_long_life) === true ? "false" : "true"}>${state.settingsWriteLoading ? "Đang áp dụng…" : toggleBoolean(power.device_charge_long_life) === true ? "Tắt Long Life" : "Bật Long Life"}</button>
+      </div>
+    </div>
+    ${state.settingsWriteError ? `<div class="inline-error">${esc(state.settingsWriteError)}</div>` : ""}
+    ${state.settingsWriteResult ? `<div class="write-success"><strong>Đã xác minh trên modem</strong><span>${state.settingsWriteResult.changed === false ? "Trạng thái đã đúng từ trước." : "Lệnh đã được modem chấp nhận và readback khớp."}</span></div>` : ""}
+    <div class="advanced-note"><strong>WRITE mở theo từng setting</strong><span>Hiện chỉ Long Life Charging có guarded write. Wi-Fi, DHCP, Bridge, Security và các mục khác vẫn read-only cho tới khi request + readback/rollback của từng mục được map.</span></div>
   </section>
   <section class="panel"><div class="panel-head"><div><span>HAR2 · SECURITY</span><h2>WPS / Filter / DMZ</h2></div>${statusPill("READ ONLY")}</div>
     <div class="spec-grid">${settingCard("WPS", onOff(security.wifi_wps_enable_state))}${settingCard("Wi-Fi MAC filter", onOff(security.wifi_macfilter_mode))}${settingCard("IP filter", onOff(security.rt_ipfilter_type))}${settingCard("DMZ", onOff(security.rt_dmz_switch))}</div>
@@ -728,7 +748,8 @@ async function localHealth() {
     if (payload.runtimeProtocol !== NC03_RUNTIME_PROTOCOL.id
       || payload.authEvidenceSchema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema
       || payload.authLoginProtocol !== NC03_RUNTIME_PROTOCOL.authLoginProtocol
-      || payload.writeReadinessProtocol !== NC03_RUNTIME_PROTOCOL.writeReadinessProtocol) {
+      || payload.writeReadinessProtocol !== NC03_RUNTIME_PROTOCOL.writeReadinessProtocol
+      || payload.settingsWriteProtocol !== NC03_RUNTIME_PROTOCOL.settingsWriteProtocol) {
       throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
     }
     return payload;
@@ -759,6 +780,55 @@ async function localRead(path) {
     throw codedError("MALFORMED_LOCAL_RESPONSE");
   }
   return payload.payload;
+}
+
+async function writeLongLifeCharging(enabled) {
+  if (state.demoMode || state.settingsWriteLoading || typeof enabled !== "boolean") return;
+  const action = enabled ? "bật" : "tắt";
+  if (!window.confirm(`Xác nhận ${action} Long Life Charging trên modem NC03? App sẽ kiểm tra readback sau lệnh và tự rollback nếu trạng thái không khớp.`)) return;
+
+  state.settingsWriteLoading = true;
+  state.settingsWriteError = "";
+  state.settingsWriteResult = null;
+  page();
+
+  try {
+    await localHealth();
+    const response = await fetch("/api/nc03/settings/long-life-charging", {
+      method:"POST",
+      cache:"no-store",
+      headers:{ "content-type":"application/json" },
+      body:JSON.stringify({ baseUrl:state.baseUrl, enabled }),
+      signal:AbortSignal.timeout(20000)
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || body.ok !== true) {
+      const error = codedError(body.code || `HTTP_${response.status}`);
+      error.payload = body.payload;
+      throw error;
+    }
+
+    state.settingsWriteResult = body.payload ?? { enabled, verified:true };
+    await refreshDetails({ render:false });
+    await refreshLive({ render:false });
+  } catch (error) {
+    const labels = {
+      WRITE_MAPPING_INCOMPLETE:"Firmware hiện tại chưa map đủ request để ghi an toàn.",
+      WRITE_READBACK_UNMAPPED:"Không xác định được trạng thái gốc để tạo rollback.",
+      WRITE_FIELD_AMBIGUOUS:"Có nhiều field write ứng viên; app từ chối đoán.",
+      WRITE_TRANSPORT_UNRESOLVED:"Chưa xác minh được transport ghi của firmware.",
+      WRITE_REJECTED:"Modem từ chối lệnh thay đổi.",
+      WRITE_POSTCONDITION_FAILED:error?.payload?.rollbackVerified
+        ? "Thay đổi không đạt post-condition; app đã rollback và xác minh trạng thái cũ."
+        : "Thay đổi không đạt post-condition. Rollback chưa xác minh được; hãy kiểm tra Web UI gốc.",
+      AUTHENTICATION_REQUIRED:"Phiên đăng nhập modem đã hết hạn. Hãy đăng nhập lại.",
+      LOCAL_BRIDGE_RESTART_REQUIRED:"Local Bridge đang chạy bản cũ. Hãy restart runtime."
+    };
+    state.settingsWriteError = labels[error?.code] || error?.code || "SETTINGS_WRITE_FAILED";
+  } finally {
+    state.settingsWriteLoading = false;
+    page();
+  }
 }
 
 async function refreshAuthReadiness({ render = true } = {}) {
@@ -1174,6 +1244,9 @@ function bind() {
 
   document.querySelector("#runAuthSourceProbe")?.addEventListener("click", runAuthSourceProbe);
   document.querySelector("#runWriteReadiness")?.addEventListener("click", runWriteReadiness);
+  document.querySelector("#toggleLongLifeCharging")?.addEventListener("click", (event) => {
+    writeLongLifeCharging(event.currentTarget.dataset.next === "true");
+  });
   document.querySelector("#runConnectionDoctor")?.addEventListener("click", runConnectionDoctor);
   document.querySelector("#openDiagnosticReport")?.addEventListener("click", openDiagnosticReport);
   document.querySelector("#refreshNow")?.addEventListener("click", refreshAll);

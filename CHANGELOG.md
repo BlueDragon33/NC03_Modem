@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.29 — First guarded modem setting write
+
+- The Settings page is no longer completely read-only: the battery Safe Charge / Long Life path now has the first guarded write control.
+- The Local Bridge preflights the firmware write endpoint, request shape, transport and current readback before sending any state-changing request.
+- The write uses the already-authenticated in-memory modem session from v0.7.28.
+- After the modem accepts the request, the bridge polls the verified power readback and only reports success when the requested state is observed.
+- If the post-condition does not match, the bridge automatically sends the inverse/original value and verifies rollback.
+- Ambiguous fields, unknown toggle encodings, missing readback or unresolved transport fail closed instead of guessing.
+- Wi-Fi, DHCP, Bridge, Security and the remaining settings stay read-only until their own request + post-condition + rollback mapping is implemented.
+
 ## 0.7.28 — Local modem session continuity
 
 - Fixed the live `AUTH_VERIFICATION_FAILED` path where the modem returned login success but the following `get_login_info` verification was sent without the modem session cookie.

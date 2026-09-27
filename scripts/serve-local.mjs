@@ -9,6 +9,7 @@ import { NC03_RUNTIME_PROTOCOL } from "../src/runtime/RuntimeProtocol.js";
 import { discoverNc03LoginRecipe, discoverSaveAjaxTransport, executeNc03Login } from "../src/modem/NC03LoginRuntime.js";
 import { createCookieAwareFetch } from "../src/modem/NC03LocalCookieJar.js";
 import { buildWriteReadinessEvidence } from "../src/modem/WriteSourceDiscovery.js";
+import { buildReversibleTogglePlan, executeJsonToggleWrite, executeRollback, readbackMatches } from "../src/modem/NC03SafeWriteRuntime.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
@@ -125,9 +126,13 @@ const AUTH_SOURCE_SEEDS = Object.freeze([
 
 const WRITE_SOURCE_SEEDS = Object.freeze([
   "/index.html",
+  "/common/settings.html",
   "/js/common.js",
   "/js/tools.js",
   "/js/systemadmin.js",
+  "/js/power.js",
+  "/js/battery.js",
+  "/js/device.js",
   "/js/rebootreset.js",
   "/js/encryption.js"
 ]);
@@ -411,6 +416,146 @@ async function writeReadiness(req, res) {
   }
 }
 
+async function wait(ms) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function verifyPowerReadback(adapter, key, enabled) {
+  for (const delay of [0, 250, 500, 900]) {
+    if (delay) await wait(delay);
+    const power = await adapter.getPowerSettings();
+    if (readbackMatches(power?.[key], enabled)) {
+      return { ok:true, power };
+    }
+  }
+  return { ok:false, power:await adapter.getPowerSettings().catch(() => ({})) };
+}
+
+async function writeLongLifeCharging(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl || DEFAULT_MODEM_BASE_URL);
+    const enabled = body.enabled;
+    if (typeof enabled !== "boolean") {
+      json(res, 400, { ok:false, code:"WRITE_VALUE_INVALID" });
+      return;
+    }
+
+    const adapter = modemAdapter(baseUrl);
+    const login = await adapter.connect();
+    if (!login.authenticated) {
+      json(res, 401, { ok:false, code:"AUTHENTICATION_REQUIRED" });
+      return;
+    }
+
+    const [currentPower, sourceResults] = await Promise.all([
+      adapter.getPowerSettings(),
+      Promise.all(WRITE_SOURCE_SEEDS.map((path) => fetchStaticSource(baseUrl, path)))
+    ]);
+    const sources = sourceResults.map((result) => result.item).filter(Boolean);
+    const evidence = buildWriteReadinessEvidence(sources, {
+      targetId:"long-life-charging",
+      currentState:currentPower
+    });
+    const plan = buildReversibleTogglePlan({
+      evidence,
+      currentState:currentPower,
+      desiredEnabled:enabled
+    });
+
+    if (!plan.ready) {
+      json(res, 409, {
+        ok:false,
+        code:plan.code || "WRITE_MAPPING_INCOMPLETE",
+        payload:{
+          target:"long-life-charging",
+          mapping:{
+            endpointMapped:evidence.endpointMapped,
+            requestShapeMapped:evidence.requestShapeMapped,
+            transportMapped:evidence.transportMapped,
+            currentReadbackPresent:evidence.currentReadbackPresent,
+            fieldCandidates:evidence.fieldCandidates
+          }
+        }
+      });
+      return;
+    }
+
+    if (plan.originalEnabled === enabled) {
+      json(res, 200, {
+        ok:true,
+        payload:{
+          target:"long-life-charging",
+          changed:false,
+          enabled,
+          verified:true,
+          rollbackUsed:false,
+          message:"ALREADY_IN_REQUESTED_STATE"
+        }
+      });
+      return;
+    }
+
+    const transport = discoverSaveAjaxTransport(sources);
+    if (!transport.ready || !evidence.transportHelpers.includes("saveAjaxJsonData")) {
+      json(res, 409, { ok:false, code:"WRITE_TRANSPORT_UNRESOLVED" });
+      return;
+    }
+
+    const session = modemSessionTransport(baseUrl);
+    const result = await executeJsonToggleWrite({
+      baseUrl,
+      plan,
+      transport,
+      fetchImpl:session.fetchImpl
+    });
+    if (!result.ok) {
+      json(res, 502, { ok:false, code:result.code, retcode:result.retcode ?? null });
+      return;
+    }
+
+    const post = await verifyPowerReadback(adapter, plan.readbackKey, enabled);
+    if (post.ok) {
+      json(res, 200, {
+        ok:true,
+        payload:{
+          target:"long-life-charging",
+          changed:true,
+          enabled,
+          verified:true,
+          rollbackUsed:false,
+          readbackKey:plan.readbackKey
+        }
+      });
+      return;
+    }
+
+    const rollback = await executeRollback({
+      baseUrl,
+      plan,
+      transport,
+      fetchImpl:session.fetchImpl
+    });
+    const rollbackVerify = rollback.ok
+      ? await verifyPowerReadback(adapter, plan.readbackKey, plan.originalEnabled)
+      : { ok:false };
+
+    json(res, 502, {
+      ok:false,
+      code:"WRITE_POSTCONDITION_FAILED",
+      payload:{
+        target:"long-life-charging",
+        rollbackAttempted:true,
+        rollbackAccepted:Boolean(rollback.ok),
+        rollbackVerified:Boolean(rollbackVerify.ok)
+      }
+    });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "SETTINGS_WRITE_FAILED";
+    json(res, 502, { ok:false, code:/^[A-Z0-9_]+$/.test(code) ? code : "SETTINGS_WRITE_FAILED" });
+  }
+}
+
 async function modemDoctor(req, res) {
   try {
     const body = await readJsonBody(req);
@@ -527,6 +672,15 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === "/api/nc03/settings/long-life-charging") {
+    if (req.method !== "POST") {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await writeLongLifeCharging(req, res);
+    return;
+  }
+
   if (pathname === "/api/nc03/doctor") {
     if (req.method !== "POST") {
       json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
@@ -563,6 +717,7 @@ const server = createServer(async (req, res) => {
       authProbeTransport:NC03_RUNTIME_PROTOCOL.authProbeTransport,
       authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
       writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
+      settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
       bootedAt:runtimeBootedAt,
       assetRoot:usingDist ? "dist" : "source",
       contractEndpoint:"/api/application-management/contract"
