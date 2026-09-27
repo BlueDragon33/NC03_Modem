@@ -365,3 +365,13 @@ test("login readiness exposes missing runtime evidence without exposing login se
   assert.match(app, /username source/);
   assert.match(app, /password input/);
 });
+
+
+test("real login and post-login verification share one in-memory modem session transport", () => {
+  assert.match(server, /const modemSessions = new Map\(\)/);
+  assert.match(server, /createCookieAwareFetch/);
+  assert.match(server, /const session = modemSessionTransport\(baseUrl\)/);
+  assert.match(server, /fetchImpl:session\.fetchImpl/);
+  assert.match(server, /const verified = await modemAdapter\(baseUrl\)\.connect\(\)/);
+  assert.match(server, /session\.jar\.clear\(\)/);
+});
