@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v32-write-readiness-lab";
+const CACHE = "nc03-control-center-v33-write-readiness-runtime-v4";
 const ASSETS = [
   "./",
   "./index.html",
