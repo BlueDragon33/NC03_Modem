@@ -76,3 +76,11 @@ test("contract publishes runtime login indirection and privacy-safe readiness ev
   assert.equal(contract.policy.authReadinessEvidenceNoSecrets, true);
   assert.equal(contract.policy.credentialSavedOnlyAfterVerifiedLogin, true);
 });
+
+
+test("contract publishes local modem session continuity without cloud credential ownership", () => {
+  assert.equal(contract.capabilities.localModemSessionCookies, true);
+  assert.equal(contract.policy.modemSessionCookiesMemoryOnly, true);
+  assert.equal(contract.policy.loginVerificationSharesSessionTransport, true);
+  assert.equal(contract.boundary.applicationManagementOwnsModemCredentials, false);
+});
