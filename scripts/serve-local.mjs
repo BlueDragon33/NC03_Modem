@@ -226,7 +226,7 @@ async function discoverLoginRuntime(baseUrl) {
   const results = await Promise.all(paths.map((path) => fetchStaticSource(baseUrl, path)));
   const sources = results.map((result) => result.item).filter(Boolean);
   const loginSource = sources.find((item) => item.path === "/js/login.js")?.source ?? "";
-  const recipe = discoverNc03LoginRecipe(loginSource);
+  const recipe = discoverNc03LoginRecipe(loginSource, sources);
   const transport = discoverSaveAjaxTransport(sources);
   return { recipe, transport };
 }
