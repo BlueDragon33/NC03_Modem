@@ -84,3 +84,16 @@ test("contract publishes local modem session continuity without cloud credential
   assert.equal(contract.policy.loginVerificationSharesSessionTransport, true);
   assert.equal(contract.boundary.applicationManagementOwnsModemCredentials, false);
 });
+
+
+test("contract publishes guarded Long Life Charging write without promoting unrelated settings", () => {
+  assert.equal(contract.capabilities.guardedSettingsWrite, true);
+  assert.equal(contract.capabilities.longLifeChargingWrite, true);
+  assert.equal(contract.capabilities.reversibleWriteRollback, true);
+  assert.equal(contract.endpoints.longLifeCharging, "/api/nc03/settings/long-life-charging");
+  assert.equal(contract.policy.settingsWriteProtocol, "nc03-settings-write/v1");
+  assert.equal(contract.policy.longLifeChargingWriteRequiresPreflight, true);
+  assert.equal(contract.policy.longLifeChargingWriteRequiresReadback, true);
+  assert.equal(contract.policy.longLifeChargingWriteAutoRollbackOnMismatch, true);
+  assert.equal(contract.policy.otherSettingsRemainReadOnly, true);
+});
