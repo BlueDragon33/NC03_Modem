@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.28 — Local modem session continuity
+
+- Fixed the live `AUTH_VERIFICATION_FAILED` path where the modem returned login success but the following `get_login_info` verification was sent without the modem session cookie.
+- Added an in-memory cookie jar owned only by the Local Bridge.
+- The login POST, post-login verification, and later read-only modem requests now share the same local modem session transport.
+- Session cookies are never returned to the browser, never written to disk, and are cleared before a new login attempt and after failed authentication/verification.
+- No WRITE capability is enabled by this change.
+
 ## 0.7.27 — Runtime login recipe resolver
 
 - Fixed the real-device `LOGIN_RECIPE_INCOMPLETE` path shown after v0.7.26 login-first UX.
