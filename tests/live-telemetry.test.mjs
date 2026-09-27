@@ -387,3 +387,18 @@ test("settings exposes guarded Long Life Charging write with postcondition and r
   assert.match(server, /WRITE_POSTCONDITION_FAILED/);
   assert.match(server, /settingsWriteProtocol:NC03_RUNTIME_PROTOCOL\.settingsWriteProtocol/);
 });
+
+
+test("Settings Center mirrors stock Web UI groups while locked controls stay non-writing", () => {
+  assert.match(app, /NC03 SETTINGS/);
+  for (const group of ["mobile","wifi","lan","connectivity","power","security","system"]) {
+    assert.ok(app.includes(`["${group}"`), group);
+  }
+  assert.match(app, /data-settings-section=/);
+  assert.match(app, /data-write="locked"/);
+  assert.match(app, /switch-control/);
+  assert.match(app, /Mật khẩu Wi-Fi/);
+  assert.match(app, /Không đọc\/hiển thị PSK hiện tại/);
+  assert.match(app, /toggleLongLifeChargingSwitch/);
+  assert.match(app, /data-settings-ap/);
+});

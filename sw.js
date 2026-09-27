@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v37-guarded-settings-v0729";
+const CACHE = "nc03-control-center-v38-webui-settings-v0730";
 const ASSETS = [
   "./",
   "./index.html",

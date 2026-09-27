@@ -69,3 +69,52 @@
 .setting-write-actions{display:flex;gap:10px;align-items:center;flex-shrink:0}.setting-current{font-size:11px;color:#aebbc6}.setting-write-actions button{min-height:44px;border:1px solid #4ee09e55;border-radius:12px;padding:10px 14px;background:#123127;color:#e5fff2;cursor:pointer}.setting-write-actions button:disabled{opacity:.45;cursor:not-allowed}
 .write-success{margin-top:12px;padding:12px 14px;border:1px solid #4ee09e44;border-radius:13px;background:#4ee09e0a}.write-success strong,.write-success span{display:block}.write-success strong{font-size:11px;color:var(--ok)}.write-success span{margin-top:4px;color:#aebbc6;font-size:11px}
 @media(max-width:760px){.setting-write-row{display:block}.setting-write-actions{margin-top:12px;justify-content:space-between;flex-wrap:wrap}.setting-write-actions button{width:100%}}
+
+
+/* v0.7.30 · WebUI-style Settings Center */
+.webui-settings-shell{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start}
+.webui-settings-nav{position:sticky;top:18px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,#101a22,#0b1218);overflow:hidden}
+.webui-settings-nav-head{padding:18px;border-bottom:1px solid var(--line)}
+.webui-settings-nav-head span,.webui-settings-nav-head strong,.webui-settings-nav-head small{display:block}
+.webui-settings-nav-head span{font-size:9px;letter-spacing:.14em;color:var(--accent);font-weight:800}
+.webui-settings-nav-head strong{margin-top:5px;font-size:16px}
+.webui-settings-nav-head small{margin-top:4px;color:var(--muted);font-size:10px}
+.webui-settings-nav nav{display:grid;padding:8px}
+.webui-settings-nav nav button{display:grid;gap:3px;text-align:left;border:0;border-radius:12px;padding:11px 12px;background:transparent;color:#c7d3db;cursor:pointer}
+.webui-settings-nav nav button:hover{background:#14212b}
+.webui-settings-nav nav button[data-active=true]{background:#173042;color:#fff;box-shadow:inset 3px 0 0 var(--accent)}
+.webui-settings-nav nav button strong{font-size:12px}.webui-settings-nav nav button span{font-size:9px;color:#738794}
+.webui-settings-coverage{padding:14px 18px;border-top:1px solid var(--line);background:#0b141b}
+.webui-settings-coverage span,.webui-settings-coverage strong,.webui-settings-coverage small{display:block}
+.webui-settings-coverage span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.webui-settings-coverage strong{margin-top:5px;color:var(--ok);font-size:13px}.webui-settings-coverage small{margin-top:3px;color:#7f929f;font-size:9px}
+.webui-settings-content{min-width:0}
+.webui-settings-toolbar{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:center;margin-bottom:12px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:#0c141b}
+.webui-settings-toolbar>div span,.webui-settings-toolbar>div strong{display:block}
+.webui-settings-toolbar>div span{font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.webui-settings-toolbar>div strong{margin-top:3px;font-size:11px}.webui-settings-toolbar button{border:1px solid var(--line);border-radius:11px;background:#152532;color:#fff;padding:9px 12px;cursor:pointer}
+.webui-settings-card{border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,var(--panel),#0c131a);padding:22px}
+.webui-section-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}
+.webui-section-head>div{min-width:0}.webui-section-head span{display:block;color:var(--accent);font-size:9px;letter-spacing:.14em;font-weight:800}
+.webui-section-head h2{margin:5px 0 4px;font-size:21px}.webui-section-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.6;max-width:720px}
+.webui-toggle-list{display:grid;gap:9px}.webui-toggle-list.compact{margin-top:10px}
+.webui-toggle-row{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:#0b131a}
+.webui-toggle-row>div{min-width:0}.webui-toggle-row strong,.webui-toggle-row span{display:block}.webui-toggle-row strong{font-size:12px}.webui-toggle-row span{margin-top:4px;color:var(--muted);font-size:10px;line-height:1.5}
+.webui-toggle-row[data-write=guarded]{border-color:#4ee09e44;background:#4ee09e09}.webui-toggle-row[data-write=locked]{opacity:.88}
+.switch-control{position:relative;display:inline-flex;width:46px;height:26px;flex:0 0 46px}
+.switch-control input{position:absolute;opacity:0;pointer-events:none}.switch-control i{position:absolute;inset:0;border-radius:999px;border:1px solid #3a4a55;background:#121c24;transition:.18s}
+.switch-control i:after{content:"";position:absolute;width:20px;height:20px;left:2px;top:2px;border-radius:50%;background:#73838f;transition:.18s}
+.switch-control input:checked+i{background:#194b3b;border-color:#4ee09e77}.switch-control input:checked+i:after{transform:translateX(20px);background:#76efb2}
+.switch-control.guarded{cursor:pointer}.switch-control input:disabled+i{opacity:.65}
+.webui-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.webui-field{display:grid;gap:6px;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:#0b131a}
+.webui-field>span{font-size:10px;color:#b8c5cd}.webui-field input,.webui-field select{width:100%;border:1px solid #263946;border-radius:10px;background:#0a1117;color:#dbe6ec;padding:10px 11px;outline:none}
+.webui-field input:disabled,.webui-field select:disabled{opacity:.8;color:#aebbc6;cursor:not-allowed}.webui-field small{font-size:9px;color:#6f808c;line-height:1.45}
+.webui-ap-tabs{display:flex;gap:8px;overflow:auto;margin:12px 0}.webui-ap-tabs button{min-width:120px;border:1px solid var(--line);border-radius:12px;background:#0b131a;color:#d3dfe6;padding:10px;text-align:left}.webui-ap-tabs button[data-active=true]{border-color:#3d7594;background:#102432}.webui-ap-tabs strong,.webui-ap-tabs small{display:block}.webui-ap-tabs small{margin-top:3px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.webui-ap-panel{padding:14px;border:1px solid #263846;border-radius:16px;background:#0b1218;margin-top:10px}
+.webui-mini-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}.webui-mini-stats>div{padding:13px;border:1px solid var(--line);border-radius:13px;background:#0b131a}.webui-mini-stats span,.webui-mini-stats strong{display:block}.webui-mini-stats span{font-size:9px;color:var(--muted)}.webui-mini-stats strong{margin-top:4px;font-size:15px}
+.webui-route-note{display:grid;gap:5px;margin-top:14px;padding:12px 14px;border:1px dashed #314653;border-radius:13px;background:#0a1218}.webui-route-note strong{font-size:10px;color:#cceeff}.webui-route-note code{font-size:9px;color:#8fcbe8;white-space:normal;overflow-wrap:anywhere}.webui-route-note span{font-size:9px;color:var(--muted);line-height:1.5}
+.webui-subcard{margin-top:14px;padding:15px;border:1px solid var(--line);border-radius:15px;background:#0b131a}.webui-subcard .webui-settings-card{border:0;padding:0;background:transparent}.webui-subcard-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px}.webui-subcard-head strong,.webui-subcard-head span{display:block}.webui-subcard-head strong{font-size:12px}.webui-subcard-head>div>span{margin-top:4px;color:var(--muted);font-size:10px}
+@media(max-width:980px){.webui-settings-shell{grid-template-columns:1fr}.webui-settings-nav{position:static}.webui-settings-nav nav{display:flex;overflow:auto}.webui-settings-nav nav button{min-width:145px}.webui-settings-coverage{display:none}.webui-settings-toolbar{grid-template-columns:1fr 1fr}.webui-settings-toolbar button{width:100%}.webui-mini-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.webui-settings-toolbar{grid-template-columns:1fr}.webui-section-head{display:block}.webui-section-head>.pill{margin-top:10px}.webui-form-grid{grid-template-columns:1fr}.webui-mini-stats{grid-template-columns:1fr 1fr}.webui-settings-card{padding:16px}.webui-toggle-row{align-items:flex-start}.webui-subcard-head{display:block}.webui-subcard-head>.pill{margin-top:8px}}
+@media(max-width:430px){.webui-mini-stats{grid-template-columns:1fr}.webui-settings-nav nav button{min-width:130px}}

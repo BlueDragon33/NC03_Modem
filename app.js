@@ -52,6 +52,8 @@ let state = {
   settingsWriteLoading: false,
   settingsWriteError: "",
   settingsWriteResult: null,
+  settingsSection: "wifi",
+  settingsApIndex: 0,
   authReadiness: null,
   authReadinessError: "",
   loginLoading: false,
@@ -614,12 +616,29 @@ function settingCard(label, value) {
   return `<div><span>${esc(label)}</span><strong>${esc(value ?? "—")}</strong></div>`;
 }
 
+function lockedTextSetting(label, value, note = "Chưa mở WRITE cho mục này") {
+  return `<label class="webui-field" data-write="locked"><span>${esc(label)}</span><input value="${esc(value ?? "")}" disabled /><small>${esc(note)}</small></label>`;
+}
+
+function lockedSelectSetting(label, value, options = [], note = "Chưa mở WRITE cho mục này") {
+  const current = String(value ?? "");
+  const rows = [...new Set([current, ...options.map(String)].filter(Boolean))];
+  return `<label class="webui-field" data-write="locked"><span>${esc(label)}</span><select disabled>${rows.length ? rows.map((item)=>`<option ${item === current ? "selected" : ""}>${esc(item)}</option>`).join("") : `<option>—</option>`}</select><small>${esc(note)}</small></label>`;
+}
+
+function lockedToggleSetting(label, value, note = "Chưa mở WRITE cho mục này") {
+  const enabled = toggleBoolean(value);
+  return `<div class="webui-toggle-row" data-write="locked"><div><strong>${esc(label)}</strong><span>${esc(note)}</span></div><label class="switch-control"><input type="checkbox" ${enabled === true ? "checked" : ""} disabled /><i></i></label></div>`;
+}
+
+function webuiSectionHeader(eyebrow, title, description, status = "READ ONLY", tone = "muted") {
+  return `<div class="webui-section-head"><div><span>${esc(eyebrow)}</span><h2>${esc(title)}</h2><p>${esc(description)}</p></div>${statusPill(status, tone)}</div>`;
+}
 
 function renderConnectionDoctor() {
   const report = state.doctor;
   const tone = report?.status === "OK" ? "ok" : report ? "warn" : "muted";
-  return `<section class="panel doctor-panel"><div class="panel-head"><div><span>CONNECTION DOCTOR</span><h2>Chẩn đoán kết nối NC03</h2></div>${statusPill(report?.status ?? "CHƯA KIỂM TRA", tone)}</div>
-    <p class="body-copy">Kiểm tra Local Bridge → modem → phiên đăng nhập → firmware/profile → live read mà không gửi credential hoặc session lên cloud.</p>
+  return `<section class="webui-settings-card doctor-panel">${webuiSectionHeader("CONNECTION DOCTOR", "Chẩn đoán kết nối NC03", "Kiểm tra Local Bridge → modem → phiên đăng nhập → firmware/profile → live read.", report?.status ?? "CHƯA KIỂM TRA", tone)}
     ${report ? `<div class="doctor-summary"><strong>${esc(report.message)}</strong><small>${esc(formatClock(report.checkedAt) || "—")} · ${esc(report.baseUrl ?? state.baseUrl)}</small></div>
       <div class="doctor-checks">${(report.checks ?? []).map((check)=>`<article data-ok="${check.ok}"><span>${check.ok ? "✓" : "!"}</span><div><strong>${esc(check.label)}</strong><small>${esc(check.detail)}</small></div></article>`).join("")}</div>` : `<div class="empty">Chưa có kết quả chẩn đoán.</div>`}
     ${state.doctorError ? `<div class="inline-error">${esc(state.doctorError)}</div>` : ""}
@@ -628,84 +647,214 @@ function renderConnectionDoctor() {
   </section>`;
 }
 
-function renderSettings() {
-  const d = state.details ?? {};
-  const usb = d.usb ?? {};
-  const power = d.power ?? {};
-  const security = d.security ?? {};
-  const time = d.time ?? {};
-  const firmware = d.firmware ?? {};
-  const mobileService = d.mobileService ?? {};
-  const ruleInventory = d.ruleInventory ?? {};
-  const developerPanel = `
-    <section class="panel developer-tools-panel">
-      <div class="panel-head"><div><span>DEVELOPER TOOLS</span><h2>HAR Evidence Lab</h2></div>${statusPill(state.developerMode ? "ENABLED" : "OFF", state.developerMode ? "warn" : "muted")}</div>
-      <p class="body-copy">Công cụ phân tích HAR, AUTH Source Probe và Mock Mode. Không bật API ghi.</p>
-      <label class="developer-toggle"><input id="developerToggle" type="checkbox" ${state.developerMode ? "checked" : ""}/><span><strong>Bật Advanced Developer Mode</strong><small>Cho phép mở HAR Evidence Lab và các công cụ reverse-engineering local.</small></span></label>
-      <div class="settings-actions">
-        <button id="openDiscovery" ${state.developerMode ? "" : "disabled"}>${state.developerMode ? "Mở HAR Evidence Lab" : "Bật Developer Mode để mở Lab"}</button>
-        ${state.developerMode ? `<label class="demo-switch"><input id="demoToggle" type="checkbox" ${state.demoMode ? "checked" : ""}/><span>Mock Mode · DEMO DATA</span></label>` : ""}
-      </div>
-    </section>`;
+function renderSettingsMobile(d) {
+  const mobile = d.mobileService ?? {};
+  const network = d.networkSettings ?? {};
+  return `<section class="webui-settings-card">
+    ${webuiSectionHeader("MOBILE NETWORK", "Mạng di động", "Bố cục theo Web UI gốc: dữ liệu di động, SIM, roaming và chế độ mạng.", "READ + MAP WRITE", "warn")}
+    <div class="webui-toggle-list">
+      ${lockedToggleSetting("Mobile Data · Dữ liệu di động", mobile.mobileData, "Candidate write chưa được post-condition xác minh")}
+      ${lockedToggleSetting("Roaming", network.dialup_roamswitch, "Sẽ mở sau khi map route + rollback")}
+      ${lockedToggleSetting("SIM PIN protect", mobile.pinProtection, "Hiện chỉ đọc trạng thái bảo vệ PIN")}
+      ${lockedToggleSetting("Cloud SIM auto-switch", mobile.cloudSimAutoSwitch)}
+      ${lockedToggleSetting("Thông báo Cloud SIM", mobile.cloudSimNotification)}
+    </div>
+    <div class="webui-form-grid">
+      ${lockedSelectSetting("Khe SIM", mobile.simSlot)}
+      ${lockedSelectSetting("Chế độ giao tiếp", network.mnet_com_mode)}
+      ${lockedSelectSetting("Acquisition order", network.mnet_acqorder)}
+      ${lockedSelectSetting("5G config", network.mnet_nr5g_config_mode)}
+      ${lockedSelectSetting("Band", network.mnet_band)}
+      ${lockedSelectSetting("Band lock", network.mnet_band_lock_type)}
+    </div>
+  </section>`;
+}
 
-  const advanced = state.uiMode === UI_MODE.ADVANCED ? `
-  <section class="panel"><div class="panel-head"><div><span>HAR2 · MOBILE SERVICE</span><h2>SIM / dữ liệu / Cloud SIM</h2></div>${statusPill("READ ONLY")}</div>
-    <div class="spec-grid">${settingCard("Mobile Data", onOff(mobileService.mobileData))}${settingCard("SIM PIN protect", onOff(mobileService.pinProtection))}${settingCard("PIN tries còn lại", mobileService.pinRemainingTries)}${settingCard("Cloud SIM auto-switch", onOff(mobileService.cloudSimAutoSwitch))}${settingCard("Cloud SIM notification", onOff(mobileService.cloudSimNotification))}${settingCard("No-service threshold", mobileService.cloudSimNoServiceMinutes === null || mobileService.cloudSimNoServiceMinutes === undefined ? "—" : `${mobileService.cloudSimNoServiceMinutes} phút`)}</div>
-  </section>
-  <section class="panel"><div class="panel-head"><div><span>HAR2 · CONNECTIVITY</span><h2>USB / Bridge / Ethernet</h2></div>${statusPill("READ ONLY")}</div>
-    <div class="spec-grid">${settingCard("IP Passthrough", onOff(usb.bridgeState))}${settingCard("USB tether", onOff(usb.tethering))}${settingCard("USB speed", usb.speed)}${settingCard("Ethernet", usb.ethernetType)}</div>
-  </section>
-  <section class="panel power-settings-panel"><div class="panel-head"><div><span>HAR2 · POWER</span><h2>Pin / nguồn / màn hình</h2></div>${statusPill("GUARDED WRITE", "ok")}</div>
-    <div class="spec-grid">${settingCard("Safe charge", onOff(power.device_bat_safe_charge_switch))}${settingCard("Power mode", power.device_power_saving_mode)}${settingCard("Tắt LCD", power.device_turnoff_lcd_time ? `${power.device_turnoff_lcd_time} phút` : "—")}${settingCard("Long Life Charging", onOff(power.device_charge_long_life))}</div>
-    <div class="setting-write-row">
-      <div><strong>Long Life Charging</strong><span>Thao tác ghi đầu tiên được bảo vệ bằng preflight → write → readback → rollback khi post-condition sai.</span></div>
-      <div class="setting-write-actions">
-        <span class="setting-current">Hiện tại: ${esc(onOff(power.device_charge_long_life))}</span>
-        <button id="toggleLongLifeCharging" ${state.settingsWriteLoading || toggleBoolean(power.device_charge_long_life) === null ? "disabled" : ""} data-next="${toggleBoolean(power.device_charge_long_life) === true ? "false" : "true"}>${state.settingsWriteLoading ? "Đang áp dụng…" : toggleBoolean(power.device_charge_long_life) === true ? "Tắt Long Life" : "Bật Long Life"}</button>
+function renderSettingsWifi(d) {
+  const wifi = d.wifi ?? {};
+  const aps = wifi.aps ?? [];
+  const activeAp = aps.find((ap)=>ap.index === state.settingsApIndex) ?? aps[0] ?? null;
+  if (activeAp) state.settingsApIndex = activeAp.index;
+  return `<section class="webui-settings-card">
+    ${webuiSectionHeader("WI-FI", "Wi-Fi", "Các profile AP được bố trí như trang quản trị modem: trạng thái, SSID, bảo mật, kênh và giới hạn client.", "READ + WRITE CANDIDATE", "warn")}
+    <div class="webui-toggle-list">
+      ${lockedToggleSetting("Wi-Fi tổng", wifi.workStatus ?? (wifi.enabled ? "enable" : "disable"), "/action/wifi_set_basic_params đã thấy trong firmware; chưa mở cho tới khi map rollback")}
+    </div>
+    <div class="webui-ap-tabs">${aps.length ? aps.map((ap)=>`<button type="button" data-settings-ap="${ap.index}" data-active="${ap.index === activeAp?.index}">AP ${ap.index + 1}<small>${esc(ap.ssid || "Không tên")}</small></button>`).join("") : `<span>Chưa tải được profile AP.</span>`}</div>
+    ${activeAp ? `<div class="webui-ap-panel">
+      <div class="webui-form-grid">
+        ${lockedTextSetting("Tên Wi-Fi (SSID)", activeAp.ssid)}
+        ${lockedTextSetting("Mật khẩu Wi-Fi", "", "Không đọc/hiển thị PSK hiện tại; khi mở WRITE sẽ nhập mật khẩu mới")}
+        ${lockedSelectSetting("Bảo mật", activeAp.security)}
+        ${lockedSelectSetting("Tần số", activeAp.frequency)}
+        ${lockedSelectSetting("Kênh", activeAp.channel)}
+        ${lockedSelectSetting("Chuẩn 802.11", activeAp.mode)}
+        ${lockedSelectSetting("Bandwidth", activeAp.bandwidth)}
+        ${lockedTextSetting("Số thiết bị tối đa", activeAp.maxClients)}
       </div>
+      <div class="webui-toggle-list compact">
+        ${lockedToggleSetting("Bật AP", activeAp.state)}
+        ${lockedToggleSetting("Phát SSID", activeAp.broadcast)}
+      </div>
+    </div>` : `<div class="empty">Không có cấu hình Wi-Fi để hiển thị.</div>`}
+    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/wifi_set_ap_params · /action/wifi_set_ap_txpower · /action/wifi_set_basic_params</code><span>UI đã sẵn form, nhưng nút Apply chỉ mở khi từng request shape + readback + rollback được xác minh.</span></div>
+  </section>`;
+}
+
+function renderSettingsLan(d) {
+  const dhcp = d.dhcp ?? {};
+  const rules = d.ruleInventory ?? {};
+  return `<section class="webui-settings-card">
+    ${webuiSectionHeader("LAN / DHCP", "LAN & DHCP", "Thông số LAN/DHCP và rule inventory được gom giống khu vực Network/LAN của Web UI gốc.", "READ + WRITE CANDIDATE", "warn")}
+    <div class="webui-toggle-list">${lockedToggleSetting("DHCP Server", dhcp.rt_dhcp_v4_switch, "/action/router_set_dhcp_params đã phát hiện; chưa VERIFY WRITE")}</div>
+    <div class="webui-form-grid">
+      ${lockedTextSetting("Gateway", dhcp.rt_dhcp_v4_gw)}
+      ${lockedTextSetting("Subnet mask", dhcp.rt_dhcp_v4_mask)}
+      ${lockedTextSetting("DHCP bắt đầu", dhcp.rt_dhcp_v4_start)}
+      ${lockedTextSetting("DHCP kết thúc", dhcp.rt_dhcp_v4_end)}
+      ${lockedTextSetting("Lease time", dhcp.rt_dhcp_lease_time)}
+      ${lockedTextSetting("DNS", dhcp.rt_dhcp_dns_addr)}
+    </div>
+    <div class="webui-mini-stats">
+      ${settingCard("DHCP reservations", rules.dhcpReservations)}
+      ${settingCard("Port forwarding", rules.portForwardingRules)}
+      ${settingCard("IPv4 packet filters", rules.ipv4PacketFilterRules)}
+      ${settingCard("IPv6 packet filters", rules.ipv6PacketFilterRules)}
+    </div>
+    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/router_set_dhcp_params · /action/router_set_ip_mac_bind_params</code><span>Chỉ thống kê số lượng. Rule raw không mirror sang dashboard cho tới khi editor an toàn được map.</span></div>
+  </section>`;
+}
+
+function renderSettingsConnectivity(d) {
+  const usb = d.usb ?? {};
+  return `<section class="webui-settings-card">
+    ${webuiSectionHeader("CONNECTIVITY", "USB / Bridge / Ethernet", "Các cài đặt kết nối vật lý và IP Passthrough theo nhóm của Web UI gốc.", "READ + WRITE CANDIDATE", "warn")}
+    <div class="webui-toggle-list">
+      ${lockedToggleSetting("IP Passthrough / Bridge", usb.bridgeState, "Write chưa xác minh")}
+      ${lockedToggleSetting("USB tethering", usb.tethering, "/action/device_set_usb_tethering đã thấy trong firmware")}
+    </div>
+    <div class="webui-form-grid">
+      ${lockedSelectSetting("Bridge LAN type", usb.bridgeLanType)}
+      ${lockedSelectSetting("USB speed", usb.speed)}
+      ${lockedSelectSetting("Ethernet type", usb.ethernetType)}
+      ${lockedSelectSetting("Cradle screen saver", usb.cradleScreenSaver)}
+    </div>
+    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/device_set_usb_tethering · /action/device_set_usb_speed_type</code><span>Bridge write sẽ chỉ mở khi route cụ thể của firmware 8.00.42 được xác minh.</span></div>
+  </section>`;
+}
+
+function renderSettingsPower(d) {
+  const power = d.power ?? {};
+  const longLife = toggleBoolean(power.device_charge_long_life);
+  return `<section class="webui-settings-card power-settings-panel">
+    ${webuiSectionHeader("POWER", "Pin / nguồn / màn hình", "Khu vực power giống Web UI gốc; Long Life là control WRITE đầu tiên đang có guarded runtime.", "1 GUARDED WRITE", "ok")}
+    <div class="webui-toggle-list">
+      <div class="webui-toggle-row" data-write="guarded"><div><strong>Long Life Charging</strong><span>Preflight → WRITE → readback → rollback nếu post-condition sai.</span></div><label class="switch-control guarded"><input id="toggleLongLifeChargingSwitch" type="checkbox" ${longLife === true ? "checked" : ""} ${state.settingsWriteLoading || longLife === null ? "disabled" : ""}/><i></i></label></div>
+      ${lockedToggleSetting("Safe charge", power.device_bat_safe_charge_switch, "Đọc được; route cùng family nhưng chưa tách semantics độc lập")}
+      ${lockedToggleSetting("AC auto-start", power.device_ac_autostart)}
+      ${lockedToggleSetting("Eco display", power.lcd_eco_display_time_state)}
+    </div>
+    <div class="webui-form-grid">
+      ${lockedSelectSetting("Power mode", power.device_power_saving_mode)}
+      ${lockedTextSetting("Auto sleep", power.device_as_timer)}
+      ${lockedTextSetting("Tắt LCD sau", power.device_turnoff_lcd_time)}
     </div>
     ${state.settingsWriteError ? `<div class="inline-error">${esc(state.settingsWriteError)}</div>` : ""}
-    ${state.settingsWriteResult ? `<div class="write-success"><strong>Đã xác minh trên modem</strong><span>${state.settingsWriteResult.changed === false ? "Trạng thái đã đúng từ trước." : "Lệnh đã được modem chấp nhận và readback khớp."}</span></div>` : ""}
-    <div class="advanced-note"><strong>WRITE mở theo từng setting</strong><span>Hiện chỉ Long Life Charging có guarded write. Wi-Fi, DHCP, Bridge, Security và các mục khác vẫn read-only cho tới khi request + readback/rollback của từng mục được map.</span></div>
-  </section>
-  <section class="panel"><div class="panel-head"><div><span>HAR2 · SECURITY</span><h2>WPS / Filter / DMZ</h2></div>${statusPill("READ ONLY")}</div>
-    <div class="spec-grid">${settingCard("WPS", onOff(security.wifi_wps_enable_state))}${settingCard("Wi-Fi MAC filter", onOff(security.wifi_macfilter_mode))}${settingCard("IP filter", onOff(security.rt_ipfilter_type))}${settingCard("DMZ", onOff(security.rt_dmz_switch))}</div>
-  </section>
-  <section class="panel"><div class="panel-head"><div><span>HAR2 · RULE INVENTORY</span><h2>Rule đã cấu hình</h2></div>${statusPill("COUNT ONLY")}</div>
-    <div class="spec-grid">${settingCard("DHCP reservations", ruleInventory.dhcpReservations)}${settingCard("Port forwarding", ruleInventory.portForwardingRules)}${settingCard("IPv4 packet filters", ruleInventory.ipv4PacketFilterRules)}${settingCard("IPv6 packet filters", ruleInventory.ipv6PacketFilterRules)}</div>
-    <div class="advanced-note"><strong>Chỉ thống kê số lượng</strong><span>App không mirror raw IP/MAC/port/filter rule từ modem sang dashboard.</span></div>
-  </section>
-  <section class="panel"><div class="panel-head"><div><span>HAR2 · SYSTEM</span><h2>Thời gian / Firmware</h2></div>${statusPill("READ ONLY")}</div>
-    <div class="spec-grid">${settingCard("NTP", onOff(time.ntp_enable_state))}${settingCard("NTP sync", time.ntp_sync_state)}${settingCard("Firmware", firmware.firmware)}${settingCard("FOTA", firmware.fotaStatus)}</div>
-    <div class="advanced-note"><strong>Dữ liệu nhạy cảm không mirror</strong><span>HAR có PSK Wi-Fi, IMEI/serial, ICCID/EID/eSIM profile và APN profile. App cố ý không đưa các trường đó vào snapshot/UI.</span></div>
-  </section>` : "";
+    ${state.settingsWriteResult ? `<div class="write-success"><strong>Đã xác minh trên modem</strong><span>${state.settingsWriteResult.changed === false ? "Trạng thái đã đúng từ trước." : "Modem đã nhận lệnh và readback khớp."}</span></div>` : ""}
+    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/device_set_battery_safe_charge · /action/device_set_power_saving_mode · /action/device_set_autosleep · /action/device_set_turnoff_lcd_time · /action/device_set_ac_autostart</code><span>Mỗi setting sẽ được mở độc lập, không bật hàng loạt chỉ vì cùng module Power.</span></div>
+  </section>`;
+}
 
-  return `${renderTopbar("Cài đặt", "Basic gọn; Advanced hiển thị các nhóm read-only mới được HAR xác minh.")}
-  ${renderDetailsNotice()}
-  <section class="panel"><div class="panel-head"><div><span>INTERFACE MODE</span><h2>Chế độ giao diện</h2></div>${statusPill(state.uiMode === UI_MODE.ADVANCED ? "ADVANCED" : "BASIC")}</div>
-    <div class="mode-selector"><button data-ui-mode="basic" data-active="${state.uiMode === UI_MODE.BASIC}"><strong>Basic Mode</strong><span>Pin · Internet · Sóng · Wi-Fi · Devices</span></button><button data-ui-mode="advanced" data-active="${state.uiMode === UI_MODE.ADVANCED}"><strong>Advanced Mode</strong><span>Network · USB · Bridge · Security · NTP · Power · FOTA</span></button></div>
-  </section>
-  ${developerPanel}
-  <section class="panel"><div class="panel-head"><div><span>MODEM CONNECTION</span><h2>Địa chỉ NC03</h2></div>${statusPill("LOCAL ONLY")}</div>
-    <div class="form-grid"><label>Địa chỉ modem<input id="baseUrl" value="${esc(state.baseUrl)}" inputmode="url" placeholder="192.168.0.1" /></label><label>Tự làm mới<strong>10 giây/lần</strong></label></div>
-    ${state.addressError ? `<div class="inline-error">${esc(state.addressError)}</div>` : ""}
-    <div class="settings-actions"><button id="saveBaseUrl">Lưu địa chỉ</button><button id="refreshNow">Cập nhật ngay</button><button id="openStockUi">Mở Web UI gốc</button></div>
-    <div class="security-note"><strong>Credential policy</strong><span>${esc(SECURITY_NOTE)}</span></div>
-  </section>
-  ${advanced}
-  ${renderConnectionDoctor()}
-  <section class="panel report-panel"><div class="panel-head"><div><span>DIAGNOSTIC REPORT</span><h2>Báo cáo chẩn đoán an toàn</h2></div>${statusPill(state.live || state.details ? "READY" : "WAITING", state.live || state.details ? "ok" : "muted")}</div>
-    <p class="body-copy">Tạo bản báo cáo A4 gọn, chuyên nghiệp từ snapshot read-only hiện có. Báo cáo không chứa password, token/session, IMEI/serial, ICCID/EID/eSIM profile, APN profile hoặc raw rule.</p>
-    <div class="report-preview-grid">
-      <div><span>Live telemetry</span><strong>${esc(state.demoMode ? "DEMO DATA" : state.liveStale && state.live ? "LAST GOOD" : state.live ? "LIVE READ" : "UNAVAILABLE")}</strong></div>
-      <div><span>Advanced snapshot</span><strong>${esc(detailsFreshnessLabel())}</strong></div>
-      <div><span>Live gần nhất</span><strong>${esc(formatClock(state.lastLiveSuccessAt) || "—")}</strong></div>
-      <div><span>Advanced gần nhất</span><strong>${esc(formatClock(state.lastDetailsSuccessAt) || "—")}</strong></div>
+function renderSettingsSecurity(d) {
+  const security = d.security ?? {};
+  return `<section class="webui-settings-card">
+    ${webuiSectionHeader("SECURITY", "Bảo mật / WPS / Firewall", "Các công tắc bảo mật được gom theo bố cục Web UI, nhưng vẫn fail-closed khi chưa có WRITE VERIFIED.", "READ + WRITE CANDIDATE", "warn")}
+    <div class="webui-toggle-list">
+      ${lockedToggleSetting("WPS", security.wifi_wps_enable_state, "/action/wifi_set_wps_status đã phát hiện")}
+      ${lockedToggleSetting("Security protection", security.rt_security_protection_switch, "/action/router_set_security_protection đã phát hiện")}
+      ${lockedToggleSetting("DMZ", security.rt_dmz_switch)}
     </div>
-    <div class="settings-actions"><button id="openDiagnosticReport" ${state.demoMode || state.live || state.details ? "" : "disabled"}>Mở báo cáo · In / Lưu PDF</button></div>
-    <div class="advanced-note"><strong>Privacy-first</strong><span>Chỉ xuất trường đã chọn rõ ràng. Không spread toàn bộ payload modem vào báo cáo.</span></div>
-  </section>
-  ${developerPanel}`;
+    <div class="webui-form-grid">
+      ${lockedSelectSetting("WPS mode", security.wifi_wps_mode)}
+      ${lockedSelectSetting("Wi-Fi MAC filter", security.wifi_macfilter_mode)}
+      ${lockedSelectSetting("MAC filter type", security.rt_macfilter_type)}
+      ${lockedSelectSetting("IP filter type", security.rt_ipfilter_type)}
+    </div>
+    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/wifi_set_wps_status · /action/wifi_set_macfilter_params · /action/router_set_security_protection · /action/router_set_privacy_separator_params</code></div>
+  </section>`;
+}
+
+function renderSettingsSystem(d) {
+  const time = d.time ?? {};
+  const firmware = d.firmware ?? {};
+  const developerPanel = `<div class="webui-subcard">
+    <div class="webui-subcard-head"><div><strong>Developer Tools</strong><span>HAR Evidence Lab, AUTH/WRITE mapping và Mock Mode.</span></div>${statusPill(state.developerMode ? "ENABLED" : "OFF", state.developerMode ? "warn" : "muted")}</div>
+    <label class="developer-toggle"><input id="developerToggle" type="checkbox" ${state.developerMode ? "checked" : ""}/><span><strong>Bật Advanced Developer Mode</strong><small>Chỉ dành cho reverse-engineering local.</small></span></label>
+    <div class="settings-actions"><button id="openDiscovery" ${state.developerMode ? "" : "disabled"}>${state.developerMode ? "Mở HAR Evidence Lab" : "Bật Developer Mode để mở Lab"}</button>${state.developerMode ? `<label class="demo-switch"><input id="demoToggle" type="checkbox" ${state.demoMode ? "checked" : ""}/><span>Mock Mode</span></label>` : ""}</div>
+  </div>`;
+
+  return `<section class="webui-settings-card">
+    ${webuiSectionHeader("SYSTEM", "Hệ thống / Thời gian / Firmware", "Thông tin quản trị, NTP, firmware và công cụ local được gom về một trang như Web UI gốc.", "LOCAL ADMIN", "muted")}
+    <div class="webui-form-grid">
+      ${lockedSelectSetting("NTP", time.ntp_enable_state)}
+      ${lockedSelectSetting("NITZ", time.ntp_nitz_enable_state)}
+      ${lockedTextSetting("Timezone", time.ntp_timezone)}
+      ${lockedSelectSetting("Định dạng thời gian", time.ntp_format)}
+      ${lockedTextSetting("Firmware", firmware.firmware, "Thông tin chỉ đọc")}
+      ${lockedTextSetting("FOTA status", firmware.fotaStatus, "Thông tin chỉ đọc")}
+    </div>
+    <div class="webui-subcard">
+      <div class="webui-subcard-head"><div><strong>NC03 Local Bridge</strong><span>Địa chỉ modem và thao tác đồng bộ.</span></div>${statusPill("LOCAL ONLY")}</div>
+      <div class="form-grid"><label>Địa chỉ modem<input id="baseUrl" value="${esc(state.baseUrl)}" inputmode="url" placeholder="192.168.0.1" /></label><label>Tự làm mới<strong>10 giây/lần</strong></label></div>
+      ${state.addressError ? `<div class="inline-error">${esc(state.addressError)}</div>` : ""}
+      <div class="settings-actions"><button id="saveBaseUrl">Lưu địa chỉ</button><button id="refreshNow">Cập nhật ngay</button><button id="openStockUi">Mở Web UI gốc</button></div>
+    </div>
+    ${renderConnectionDoctor()}
+    <div class="webui-subcard report-panel">
+      <div class="webui-subcard-head"><div><strong>Báo cáo chẩn đoán</strong><span>Xuất snapshot an toàn, không chứa password/token/session/IMEI/ICCID. Không spread toàn bộ payload modem vào báo cáo.</span></div>${statusPill(state.live || state.details ? "READY" : "WAITING", state.live || state.details ? "ok" : "muted")}</div>
+      <div class="settings-actions"><button id="openDiagnosticReport" ${state.demoMode || state.live || state.details ? "" : "disabled"}>Mở báo cáo · In / Lưu PDF</button></div>
+    </div>
+    <div class="webui-subcard">
+      <div class="webui-subcard-head"><div><strong>Chế độ giao diện</strong><span>Ảnh hưởng mức chi tiết ở các màn hình khác.</span></div>${statusPill(state.uiMode === UI_MODE.ADVANCED ? "ADVANCED" : "BASIC")}</div>
+      <div class="mode-selector"><button data-ui-mode="basic" data-active="${state.uiMode === UI_MODE.BASIC}"><strong>Basic Mode</strong><span>Gọn, ưu tiên thông tin chính</span></button><button data-ui-mode="advanced" data-active="${state.uiMode === UI_MODE.ADVANCED}"><strong>Advanced Mode</strong><span>Hiện toàn bộ thông số đã đọc</span></button></div>
+    </div>
+    ${developerPanel}
+  </section>`;
+}
+
+function renderSettings() {
+  const d = state.details ?? {};
+  const sections = [
+    ["mobile","Mạng di động","SIM · 4G/5G"],
+    ["wifi","Wi-Fi","SSID · kênh"],
+    ["lan","LAN / DHCP","IP · lease"],
+    ["connectivity","USB / Bridge","Tether · passthrough"],
+    ["power","Pin / Nguồn","Sạc · màn hình"],
+    ["security","Bảo mật","WPS · filter"],
+    ["system","Hệ thống","NTP · firmware"]
+  ];
+  const selected = sections.some(([id])=>id === state.settingsSection) ? state.settingsSection : "wifi";
+  const body = selected === "mobile" ? renderSettingsMobile(d)
+    : selected === "wifi" ? renderSettingsWifi(d)
+    : selected === "lan" ? renderSettingsLan(d)
+    : selected === "connectivity" ? renderSettingsConnectivity(d)
+    : selected === "power" ? renderSettingsPower(d)
+    : selected === "security" ? renderSettingsSecurity(d)
+    : renderSettingsSystem(d);
+
+  return `${renderTopbar("Cài đặt", "Settings Center tổ chức theo nhóm giống Web UI gốc; dữ liệu hiện tại lấy trực tiếp từ modem, WRITE mở dần theo từng setting đã xác minh.")}
+    ${renderDetailsNotice()}
+    <section class="webui-settings-shell">
+      <aside class="webui-settings-nav">
+        <div class="webui-settings-nav-head"><span>NC03 SETTINGS</span><strong>Quản trị modem</strong><small>Firmware 8.00.42</small></div>
+        <nav>${sections.map(([id,label,meta])=>`<button data-settings-section="${id}" data-active="${selected === id}"><strong>${esc(label)}</strong><span>${esc(meta)}</span></button>`).join("")}</nav>
+        <div class="webui-settings-coverage"><span>WRITE coverage</span><strong>1 guarded</strong><small>Long Life Charging</small></div>
+      </aside>
+      <div class="webui-settings-content">
+        <div class="webui-settings-toolbar"><div><span>Trạng thái</span><strong>${state.detailsStale ? "Dữ liệu gần nhất" : state.details ? "Đồng bộ với modem" : "Đang chờ modem"}</strong></div><div><span>WRITE policy</span><strong>Fail-closed</strong></div><button id="refreshNow">↻ Đồng bộ</button><button id="openStockUi">Mở Web UI gốc</button></div>
+        ${body}
+      </div>
+    </section>`;
 }
 
 function page() {
@@ -1177,6 +1326,17 @@ function bind() {
     page();
   }));
 
+  document.querySelectorAll("[data-settings-section]").forEach((button) => button.addEventListener("click", async () => {
+    state.settingsSection = button.dataset.settingsSection || "wifi";
+    if (!state.demoMode) await refreshDetails({ render:false });
+    page();
+  }));
+
+  document.querySelectorAll("[data-settings-ap]").forEach((button) => button.addEventListener("click", () => {
+    state.settingsApIndex = Number(button.dataset.settingsAp) || 0;
+    page();
+  }));
+
   document.querySelectorAll("[data-ui-mode]").forEach((button) => button.addEventListener("click", async () => {
     state.uiMode = button.dataset.uiMode === "advanced" ? UI_MODE.ADVANCED : UI_MODE.BASIC;
     persist();
@@ -1246,6 +1406,11 @@ function bind() {
   document.querySelector("#runWriteReadiness")?.addEventListener("click", runWriteReadiness);
   document.querySelector("#toggleLongLifeCharging")?.addEventListener("click", (event) => {
     writeLongLifeCharging(event.currentTarget.dataset.next === "true");
+  });
+  document.querySelector("#toggleLongLifeChargingSwitch")?.addEventListener("change", (event) => {
+    const desired = event.currentTarget.checked;
+    event.currentTarget.checked = !desired;
+    writeLongLifeCharging(desired);
   });
   document.querySelector("#runConnectionDoctor")?.addEventListener("click", runConnectionDoctor);
   document.querySelector("#openDiagnosticReport")?.addEventListener("click", openDiagnosticReport);

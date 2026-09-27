@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.29"
+    "version": "0.7.30"
   },
   "capabilities": {
     "webLaunch": true,
@@ -78,7 +78,11 @@
     "localModemSessionCookies": true,
     "guardedSettingsWrite": true,
     "longLifeChargingWrite": true,
-    "reversibleWriteRollback": true
+    "reversibleWriteRollback": true,
+    "webUiStyleSettingsCenter": true,
+    "settingsCategoryNavigation": true,
+    "wifiApProfileTabs": true,
+    "settingsWriteCoverageDisclosure": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -165,7 +169,20 @@
     "longLifeChargingWriteRequiresPreflight": true,
     "longLifeChargingWriteRequiresReadback": true,
     "longLifeChargingWriteAutoRollbackOnMismatch": true,
-    "otherSettingsRemainReadOnly": true
+    "otherSettingsRemainReadOnly": true,
+    "settingsLayoutMirrorsStockGroups": true,
+    "lockedSettingsRenderAsControls": true,
+    "lockedSettingsDoNotDispatchWrites": true,
+    "sensitiveWifiPskNeverPrefilled": true,
+    "settingsCategories": [
+      "mobile",
+      "wifi",
+      "lan",
+      "connectivity",
+      "power",
+      "security",
+      "system"
+    ]
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,

@@ -97,3 +97,16 @@ test("contract publishes guarded Long Life Charging write without promoting unre
   assert.equal(contract.policy.longLifeChargingWriteAutoRollbackOnMismatch, true);
   assert.equal(contract.policy.otherSettingsRemainReadOnly, true);
 });
+
+
+test("contract publishes stock-WebUI-style settings navigation without broad write promotion", () => {
+  assert.equal(contract.capabilities.webUiStyleSettingsCenter, true);
+  assert.equal(contract.capabilities.settingsCategoryNavigation, true);
+  assert.equal(contract.capabilities.wifiApProfileTabs, true);
+  assert.equal(contract.policy.settingsLayoutMirrorsStockGroups, true);
+  assert.equal(contract.policy.lockedSettingsRenderAsControls, true);
+  assert.equal(contract.policy.lockedSettingsDoNotDispatchWrites, true);
+  assert.equal(contract.policy.sensitiveWifiPskNeverPrefilled, true);
+  assert.deepEqual(contract.policy.settingsCategories, ["mobile","wifi","lan","connectivity","power","security","system"]);
+  assert.equal(contract.policy.otherSettingsRemainReadOnly, true);
+});

@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.29 — Guarded Settings Write
+## Phase 2 · v0.7.30 — WebUI-style Settings Center
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -50,6 +50,7 @@ Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng
 - **runtime login resolver** theo dõi indirection an toàn của `loginKey`, fixed username và password input alias trong firmware JS; nếu chưa đủ, form hiển thị chính xác gate nào đang thiếu bằng boolean evidence, không trả literal/credential ra browser.
 - **session continuity**: login POST, `get_login_info` verification và các read request dùng chung cookie jar chỉ tồn tại trong RAM của Local Bridge; cookie/session không trả về browser và không ghi xuống đĩa.
 - **guarded settings write**: Safe Charge / Long Life Charging là setting đầu tiên có control ghi thật. Mỗi lần ghi đều preflight mapping → gửi lệnh bằng session local → đọc lại post-condition → tự rollback về trạng thái cũ nếu readback không khớp. Các setting khác vẫn khóa riêng.
+- **Settings Center kiểu Web UI modem**: chia Mạng di động / Wi‑Fi / LAN-DHCP / USB-Bridge / Pin-Nguồn / Bảo mật / Hệ thống; các giá trị đọc thật được đưa vào control form tương ứng. Control chưa VERIFY WRITE vẫn hiện đúng chỗ nhưng bị khóa, giúp giao diện và logic cài đặt tiến dần tới Web UI gốc mà không giả vờ đã ghi được.
 - **Secure Credential Vault** chỉ ghi password sau khi modem trả success và session được `get_login_info` xác minh lại; WRITE vẫn khóa riêng.
 - **Request object dependency trace** lần ngược `postdata = JSON.stringify(_obj)` sang chính `_obj`, field assignments và codec của từng field mà không trả literal/password.
 - **Nested AUTH transform** giữ được outer call như `hex_hmac_md5(loginKey, $(...).val())`, tránh nhầm password chỉ là `val()`.
