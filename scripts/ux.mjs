@@ -78,3 +78,6 @@ assert.ok(app.includes("AUTH VERIFIED"), "Login UI must visibly show the verifie
 assert.ok(app.includes('id="loginSubmit"'), "Verified AUTH must expose a real login action.");
 assert.ok(css.includes(".auth-readiness"), "AUTH readiness state needs visible styling.");
 assert.ok(css.includes(".remember-option"), "Remember option needs explicit styling.");
+
+assert.ok(app.includes("bootstrapRuntime"), "App startup must perform the AUTH/runtime handshake before settling the first screen.");
+assert.ok(app.includes("Xác thực lại NC03"), "Expired modem sessions need an explicit re-authentication UX.");
