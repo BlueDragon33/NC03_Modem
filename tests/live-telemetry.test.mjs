@@ -106,11 +106,13 @@ test("freshness timestamps and advanced snapshot staleness are explicit", () => 
   assert.match(app, /retryDetails/);
 });
 
-test("remember-password UX cannot look enabled before real auth is verified", () => {
+test("remember-password UX is disabled until runtime AUTH readiness is verified", () => {
   assert.match(app, /Ghi nhớ mật khẩu/);
-  assert.match(app, /Chưa hoạt động · sẽ bật mặc định sau khi AUTH VERIFIED/);
-  assert.doesNotMatch(app, /id="rememberPassword"/);
-  assert.doesNotMatch(app, /rememberPassword"\)\?\.addEventListener\("change"/);
+  assert.match(app, /id="rememberPassword"/);
+  assert.match(app, /\$\{ready \? "" : "disabled"\}/);
+  assert.match(app, /state\.authReadiness\?\.ready === true/);
+  assert.match(app, /rememberPassword"\)\?\.addEventListener\("change"/);
+  assert.match(app, /credentialVault\.save/);
 });
 
 test("manual modem address errors are shown instead of silently resetting the address", () => {
