@@ -560,3 +560,23 @@ Fix:
 - when an older NC03 cache was replaced, currently open NC03 windows are navigated once through the new network-first worker;
 - first install does not force a reload when there is no older NC03 cache;
 - live WRITE remains locked.
+
+
+## Phase 2AE — LOGIN-FIRST AUTHENTICATION UX
+
+Status: **IMPLEMENTED**
+
+Observed UX problem:
+- the app could open directly on Home/Developer Demo instead of presenting modem authentication first;
+- password and remember-password controls were disabled until AUTH readiness finished, so the user could not even type the modem password while the runtime was being checked;
+- a user could edit the modem address but still need a separate Save action before the login request used it.
+
+Fix:
+- every fresh launch renders the NC03 Login screen first;
+- persisted Demo mode is cleared on startup and cannot bypass the login screen;
+- password entry and remember-password selection are immediately interactive;
+- Login preflights runtime AUTH readiness before sending the credential;
+- the address typed in the login form is normalized and used by that same login attempt;
+- detected sessions no longer auto-enter Home during bootstrap;
+- credentials are still persisted only after verified login success;
+- WRITE remains independently locked.
