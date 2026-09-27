@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v30-real-login-gate";
+const CACHE = "nc03-control-center-v31-auth-session-lifecycle";
 const ASSETS = [
   "./",
   "./index.html",
@@ -15,6 +15,7 @@ const ASSETS = [
   "./src/modem/CapabilityRegistry.js",
   "./src/modem/NC03Capabilities.js",
   "./src/modem/NC03Auth.js",
+  "./src/modem/SecureCredentialVault.js",
   "./src/modem/NC03Api.js",
   "./src/modem/NC03Session.js",
   "./src/modem/NC03Parser.js",
