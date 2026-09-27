@@ -68,3 +68,11 @@ test("contract publishes login-first authentication UX without weakening credent
   assert.equal(contract.policy.demoModeNeverAutoRestoredOnLaunch, true);
   assert.equal(contract.policy.credentialSavedOnlyAfterVerifiedLogin, true);
 });
+
+
+test("contract publishes runtime login indirection and privacy-safe readiness evidence", () => {
+  assert.equal(contract.capabilities.runtimeLoginRecipeIndirection, true);
+  assert.equal(contract.capabilities.authReadinessEvidence, true);
+  assert.equal(contract.policy.authReadinessEvidenceNoSecrets, true);
+  assert.equal(contract.policy.credentialSavedOnlyAfterVerifiedLogin, true);
+});
