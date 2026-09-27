@@ -713,7 +713,8 @@ async function localHealth() {
     }
     if (payload.runtimeProtocol !== NC03_RUNTIME_PROTOCOL.id
       || payload.authEvidenceSchema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema
-      || payload.authLoginProtocol !== NC03_RUNTIME_PROTOCOL.authLoginProtocol) {
+      || payload.authLoginProtocol !== NC03_RUNTIME_PROTOCOL.authLoginProtocol
+      || payload.writeReadinessProtocol !== NC03_RUNTIME_PROTOCOL.writeReadinessProtocol) {
       throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
     }
     return payload;
@@ -863,6 +864,8 @@ async function runWriteReadiness() {
     const labels = {
       AUTHENTICATION_REQUIRED:"Cần đăng nhập NC03 trước khi lập reversible write plan.",
       LOCAL_BRIDGE_UNREACHABLE:"Local Bridge không phản hồi.",
+      LOCAL_BRIDGE_RESTART_REQUIRED:"WRITE Lab mới nhưng Local Bridge đang chạy runtime cũ. Hãy restart NC03 runtime sau khi cập nhật repo.",
+      METHOD_NOT_ALLOWED:"WRITE readiness endpoint không khớp runtime hiện tại. Hãy cập nhật/restart NC03 Local Bridge.",
       WRITE_READINESS_FAILED:"Không phân tích được WRITE readiness từ firmware local."
     };
     state.writeReadinessError = labels[error?.code] || error?.code || "WRITE_READINESS_FAILED";
