@@ -355,3 +355,13 @@ test("login uses the address currently typed in the login form", () => {
   assert.match(app, /state\.baseUrl = normalizeModemAddress\(addressInput\?\.value \|\| state\.baseUrl\)/);
   assert.match(app, /persist\(\)/);
 });
+
+
+test("login readiness exposes missing runtime evidence without exposing login secrets", () => {
+  assert.match(server, /evidence:\{/);
+  assert.match(server, /usernameHmac:Boolean\(recipe\.evidence\?\.usernameHmac\)/);
+  assert.match(server, /passwordInput:Boolean\(recipe\.evidence\?\.passwordInput\)/);
+  assert.match(app, /Thiếu bằng chứng runtime/);
+  assert.match(app, /username source/);
+  assert.match(app, /password input/);
+});
