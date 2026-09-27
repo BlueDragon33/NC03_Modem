@@ -7,6 +7,7 @@ import { buildConnectionDoctorReport } from "../src/modem/ConnectionDoctor.js";
 import { buildAuthSourceEvidence } from "../src/modem/AuthSourceDiscovery.js";
 import { NC03_RUNTIME_PROTOCOL } from "../src/runtime/RuntimeProtocol.js";
 import { discoverNc03LoginRecipe, discoverSaveAjaxTransport, executeNc03Login } from "../src/modem/NC03LoginRuntime.js";
+import { createCookieAwareFetch } from "../src/modem/NC03LocalCookieJar.js";
 import { buildWriteReadinessEvidence } from "../src/modem/WriteSourceDiscovery.js";
 
 const sourceRoot = resolve(process.cwd());
@@ -88,13 +89,27 @@ async function readJsonBody(req, maxBytes = 4096) {
   return raw ? JSON.parse(raw) : {};
 }
 
+const modemSessions = new Map();
+
+function modemSessionTransport(baseUrl) {
+  const normalized = normalizeModemBaseUrl(baseUrl);
+  let session = modemSessions.get(normalized);
+  if (!session) {
+    session = createCookieAwareFetch({
+      fetchImpl:(url, init = {}) => fetch(url, {
+        ...init,
+        redirect:"manual",
+        signal:init.signal ?? AbortSignal.timeout(5000)
+      })
+    });
+    modemSessions.set(normalized, session);
+  }
+  return session;
+}
+
 function modemAdapter(baseUrl) {
-  const fetchImpl = (url, init = {}) => fetch(url, {
-    ...init,
-    redirect: "manual",
-    signal: AbortSignal.timeout(3500)
-  });
-  return new NC03Firmware80042Adapter({ baseUrl, fetchImpl });
+  const session = modemSessionTransport(baseUrl);
+  return new NC03Firmware80042Adapter({ baseUrl, fetchImpl:session.fetchImpl });
 }
 
 const AUTH_SOURCE_SEEDS = Object.freeze([
@@ -318,21 +333,25 @@ async function modemLogin(req, res) {
       return;
     }
 
+    const session = modemSessionTransport(baseUrl);
+    session.jar.clear();
     const result = await executeNc03Login({
       baseUrl,
       password,
       recipe:runtime.recipe,
       transport:runtime.transport,
-      fetchImpl:(url, init = {}) => fetch(url, { ...init, redirect:"manual", signal:AbortSignal.timeout(5000) })
+      fetchImpl:session.fetchImpl
     });
 
     if (!result.ok) {
+      session.jar.clear();
       json(res, 401, { ok:false, code:result.code, retcode:result.retcode ?? null });
       return;
     }
 
     const verified = await modemAdapter(baseUrl).connect();
     if (!verified.authenticated) {
+      session.jar.clear();
       json(res, 502, { ok:false, code:"AUTH_VERIFICATION_FAILED" });
       return;
     }
