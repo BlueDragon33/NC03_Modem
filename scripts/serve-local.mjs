@@ -6,6 +6,7 @@ import { normalizeModemBaseUrl } from "../src/modem/LocalBridgePolicy.js";
 import { buildConnectionDoctorReport } from "../src/modem/ConnectionDoctor.js";
 import { buildAuthSourceEvidence } from "../src/modem/AuthSourceDiscovery.js";
 import { NC03_RUNTIME_PROTOCOL } from "../src/runtime/RuntimeProtocol.js";
+import { discoverNc03LoginRecipe, discoverSaveAjaxTransport, executeNc03Login } from "../src/modem/NC03LoginRuntime.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
@@ -219,6 +220,101 @@ async function authSourceProbe(req, res) {
   }
 }
 
+
+async function discoverLoginRuntime(baseUrl) {
+  const paths = ["/js/login.js","/js/tools.js","/js/common.js","/js/encryption.js"];
+  const results = await Promise.all(paths.map((path) => fetchStaticSource(baseUrl, path)));
+  const sources = results.map((result) => result.item).filter(Boolean);
+  const loginSource = sources.find((item) => item.path === "/js/login.js")?.source ?? "";
+  const recipe = discoverNc03LoginRecipe(loginSource);
+  const transport = discoverSaveAjaxTransport(sources);
+  return { recipe, transport };
+}
+
+function publicLoginReadiness(runtime) {
+  const recipe = runtime?.recipe ?? {};
+  const transport = runtime?.transport ?? {};
+  return {
+    ready:Boolean(recipe.ready && transport.ready),
+    recipe:{
+      endpoint:recipe.endpoint ?? null,
+      passwordTransform:recipe.passwordTransform ?? null,
+      successCode:Number.isFinite(recipe.successCode) ? recipe.successCode : null,
+      genericFailureCodes:Array.isArray(recipe.genericFailureCodes) ? recipe.genericFailureCodes : [],
+      usernameHmac:Boolean(recipe.ready),
+      passwordHmac:recipe.passwordTransform === "HMAC-MD5"
+    },
+    transport:{
+      helper:transport.helper ?? null,
+      method:transport.method ?? null,
+      contentType:transport.contentType ?? null,
+      rawStringBody:Boolean(transport.rawStringBody)
+    },
+    code:recipe.ready ? (transport.ready ? "AUTH_READY" : transport.code) : recipe.code
+  };
+}
+
+async function authReadiness(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl);
+    const runtime = await discoverLoginRuntime(baseUrl);
+    json(res, 200, { ok:true, payload:publicLoginReadiness(runtime) });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "AUTH_READINESS_FAILED";
+    json(res, 502, { ok:false, code:/^[A-Z0-9_]+$/.test(code) ? code : "AUTH_READINESS_FAILED" });
+  }
+}
+
+async function modemLogin(req, res) {
+  try {
+    const body = await readJsonBody(req, 8192);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl);
+    const password = typeof body.password === "string" ? body.password : "";
+    if (!password) {
+      json(res, 400, { ok:false, code:"PASSWORD_REQUIRED" });
+      return;
+    }
+
+    const runtime = await discoverLoginRuntime(baseUrl);
+    if (!runtime.recipe.ready || !runtime.transport.ready) {
+      json(res, 409, { ok:false, code:runtime.recipe.code || runtime.transport.code || "AUTH_NOT_READY" });
+      return;
+    }
+
+    const result = await executeNc03Login({
+      baseUrl,
+      password,
+      recipe:runtime.recipe,
+      transport:runtime.transport,
+      fetchImpl:(url, init = {}) => fetch(url, { ...init, redirect:"manual", signal:AbortSignal.timeout(5000) })
+    });
+
+    if (!result.ok) {
+      json(res, 401, { ok:false, code:result.code, retcode:result.retcode ?? null });
+      return;
+    }
+
+    const verified = await modemAdapter(baseUrl).connect();
+    if (!verified.authenticated) {
+      json(res, 502, { ok:false, code:"AUTH_VERIFICATION_FAILED" });
+      return;
+    }
+
+    json(res, 200, {
+      ok:true,
+      payload:{
+        authenticated:true,
+        retcode:result.retcode,
+        firmware:verified.firmware ?? null
+      }
+    });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "LOGIN_FAILED";
+    json(res, 502, { ok:false, code:/^[A-Z0-9_]+$/.test(code) ? code : "LOGIN_FAILED" });
+  }
+}
+
 async function modemDoctor(req, res) {
   try {
     const body = await readJsonBody(req);
@@ -305,6 +401,24 @@ const server = createServer(async (req, res) => {
       return;
     }
     await authSourceProbe(req, res);
+    return;
+  }
+
+  if (pathname === "/api/nc03/auth-readiness") {
+    if (req.method !== "POST") {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await authReadiness(req, res);
+    return;
+  }
+
+  if (pathname === "/api/nc03/login") {
+    if (req.method !== "POST") {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await modemLogin(req, res);
     return;
   }
 
