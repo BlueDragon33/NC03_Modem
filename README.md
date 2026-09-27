@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.26 — Login-first Authentication UX
+## Phase 2 · v0.7.27 — Runtime Login Recipe Resolver
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -47,6 +47,7 @@ Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng
 - **PWA update self-heal**: khi service worker mới thay thế một shell NC03 cũ, worker tự claim và reload đúng các tab NC03 đang mở một lần; vì vậy tab cũ không còn tiếp tục chạy `app.js` cũ rồi hiện raw `METHOD_NOT_ALLOWED`.
 - **runtime protocol/schema gate** chặn AUTH probe nếu frontend mới đang nói chuyện với Local Bridge cũ còn nằm trong RAM; UI yêu cầu restart thay vì hiển thị evidence mặc định sai.
 - **login-first UX**: mỗi lần mở app đều vào màn hình Đăng nhập NC03 trước; ô Password luôn nhập được. Khi bấm Đăng nhập, app mới preflight recipe + transport rồi thực hiện login an toàn; login key/username literal không trả ra browser.
+- **runtime login resolver** theo dõi indirection an toàn của `loginKey`, fixed username và password input alias trong firmware JS; nếu chưa đủ, form hiển thị chính xác gate nào đang thiếu bằng boolean evidence, không trả literal/credential ra browser.
 - **Secure Credential Vault** chỉ ghi password sau khi modem trả success và session được `get_login_info` xác minh lại; WRITE vẫn khóa riêng.
 - **Request object dependency trace** lần ngược `postdata = JSON.stringify(_obj)` sang chính `_obj`, field assignments và codec của từng field mà không trả literal/password.
 - **Nested AUTH transform** giữ được outer call như `hex_hmac_md5(loginKey, $(...).val())`, tránh nhầm password chỉ là `val()`.
