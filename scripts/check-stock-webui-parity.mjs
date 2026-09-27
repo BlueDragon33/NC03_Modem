@@ -47,8 +47,12 @@ for(const row of inv.rows){
   if(row.writeEvidence?.state==="VERIFIED" || row.writeEvidence?.state==="CANDIDATE" || row.writeEvidence?.state==="GUARDED_PENDING_HARDWARE_ACCEPTANCE"){
     assert.ok(row.writeEvidence.route || row.writeEvidence.routes,`write evidence missing route ${row.id}`);
   }
-  if(row.privacy==="SECRET"){
-    assert.notEqual(row.readEvidence?.state,"READ_VERIFIED",`secret value must not be mirrored as ordinary read state: ${row.id}`);
+  const readKeys=[
+    ...(Array.isArray(row.readEvidence?.keys) ? row.readEvidence.keys : []),
+    row.readEvidence?.keyTemplate ?? ""
+  ].join(" ").toLowerCase();
+  for(const forbidden of ["wifi_psk","password","passwd","sim_pin_value","iccid","imei","meid","esim_eid"]){
+    assert.equal(readKeys.includes(forbidden),false,`secret-bearing read key leaked into inventory: ${row.id} / ${forbidden}`);
   }
 }
 for(const [family,count] of familyCounts) assert.ok(count>0,`empty family ${family}`);
