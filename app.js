@@ -854,7 +854,7 @@ async function refreshLive({ render = true } = {}) {
         : CONNECTION_STATE.NC03_UNAVAILABLE;
     if (authRequired) {
       await refreshAuthReadiness({ render:false });
-      if (state.authReadiness?.ready) state.view = "login";
+      state.view = "login";
     }
   }
   if (render) page();
@@ -1117,7 +1117,7 @@ async function bootstrapRuntime() {
     if (state.live) await refreshDetails({ render:false });
     if (state.view === "login") state.view = "home";
   } else if ([CONNECTION_STATE.AUTHENTICATION_REQUIRED, CONNECTION_STATE.SESSION_EXPIRED].includes(state.connectionState)) {
-    if (state.authReadiness?.ready) state.view = "login";
+    state.view = "login";
   }
 
   page();
