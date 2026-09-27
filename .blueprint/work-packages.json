@@ -29,7 +29,21 @@
         "NC03-WP00"
       ],
       "purpose": "Inventory every stock Web UI job, control, action, readback and dangerous operation with evidence.",
-      "prompt": "prompts/01-wp01.md"
+      "prompt": "prompts/01-wp01.md",
+      "progress": "AUTOMATED_EVIDENCE_MAPPED",
+      "progressEvidence": [
+        "evidence/stock-webui-parity.v1.json",
+        "docs/NC03-STOCK-WEBUI-PARITY.md",
+        "scripts/check-stock-webui-parity.mjs"
+      ],
+      "blockers": [
+        {
+          "id": "wp01-human-stock-ui-review",
+          "type": "HUMAN_REAL_HARDWARE_REVIEW",
+          "status": "OPEN",
+          "requirement": "Compare the inventory against every page/control on the real NC03_8.00.42 stock Web UI and confirm/correct coverage without exposing secrets."
+        }
+      ]
     },
     {
       "id": "NC03-WP02",
