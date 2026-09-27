@@ -643,6 +643,7 @@ function renderConnectionDoctor() {
       <div class="doctor-checks">${(report.checks ?? []).map((check)=>`<article data-ok="${check.ok}"><span>${check.ok ? "✓" : "!"}</span><div><strong>${esc(check.label)}</strong><small>${esc(check.detail)}</small></div></article>`).join("")}</div>` : `<div class="empty">Chưa có kết quả chẩn đoán.</div>`}
     ${state.doctorError ? `<div class="inline-error">${esc(state.doctorError)}</div>` : ""}
     <div class="settings-actions"><button id="runConnectionDoctor">Chạy chẩn đoán</button>${report?.status === "AUTH_REQUIRED" ? `<button id="openStockUi">Mở Web UI gốc để đăng nhập</button>` : ""}</div>
+    <div class="advanced-note"><strong>Read-only safety</strong><span>Connection Doctor không bật write, không lưu mật khẩu và không xuất token/cookie/session.</span></div>
   </section>`;
 }
 
@@ -652,9 +653,10 @@ function renderSettingsMobile(d) {
   return `<section class="webui-settings-card">
     ${webuiSectionHeader("MOBILE NETWORK", "Mạng di động", "Bố cục theo Web UI gốc: dữ liệu di động, SIM, roaming và chế độ mạng.", "READ + MAP WRITE", "warn")}
     <div class="webui-toggle-list">
-      ${lockedToggleSetting("Dữ liệu di động", mobile.mobileData, "Candidate write chưa được post-condition xác minh")}
+      ${lockedToggleSetting("Mobile Data · Dữ liệu di động", mobile.mobileData, "Candidate write chưa được post-condition xác minh")}
       ${lockedToggleSetting("Roaming", network.dialup_roamswitch, "Sẽ mở sau khi map route + rollback")}
-      ${lockedToggleSetting("Cloud SIM tự động", mobile.cloudSimAutoSwitch)}
+      ${lockedToggleSetting("SIM PIN protect", mobile.pinProtection, "Hiện chỉ đọc trạng thái bảo vệ PIN")}
+      ${lockedToggleSetting("Cloud SIM auto-switch", mobile.cloudSimAutoSwitch)}
       ${lockedToggleSetting("Thông báo Cloud SIM", mobile.cloudSimNotification)}
     </div>
     <div class="webui-form-grid">
@@ -716,10 +718,10 @@ function renderSettingsLan(d) {
     <div class="webui-mini-stats">
       ${settingCard("DHCP reservations", rules.dhcpReservations)}
       ${settingCard("Port forwarding", rules.portForwardingRules)}
-      ${settingCard("IPv4 filters", rules.ipv4PacketFilterRules)}
-      ${settingCard("IPv6 filters", rules.ipv6PacketFilterRules)}
+      ${settingCard("IPv4 packet filters", rules.ipv4PacketFilterRules)}
+      ${settingCard("IPv6 packet filters", rules.ipv6PacketFilterRules)}
     </div>
-    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/router_set_dhcp_params · /action/router_set_ip_mac_bind_params</code><span>Rule raw không mirror sang dashboard; chỉ hiển thị số lượng cho tới khi editor an toàn được map.</span></div>
+    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/router_set_dhcp_params · /action/router_set_ip_mac_bind_params</code><span>Chỉ thống kê số lượng. Rule raw không mirror sang dashboard cho tới khi editor an toàn được map.</span></div>
   </section>`;
 }
 
@@ -809,7 +811,7 @@ function renderSettingsSystem(d) {
     </div>
     ${renderConnectionDoctor()}
     <div class="webui-subcard report-panel">
-      <div class="webui-subcard-head"><div><strong>Báo cáo chẩn đoán</strong><span>Xuất snapshot an toàn, không chứa password/token/session/IMEI/ICCID.</span></div>${statusPill(state.live || state.details ? "READY" : "WAITING", state.live || state.details ? "ok" : "muted")}</div>
+      <div class="webui-subcard-head"><div><strong>Báo cáo chẩn đoán</strong><span>Xuất snapshot an toàn, không chứa password/token/session/IMEI/ICCID. Không spread toàn bộ payload modem vào báo cáo.</span></div>${statusPill(state.live || state.details ? "READY" : "WAITING", state.live || state.details ? "ok" : "muted")}</div>
       <div class="settings-actions"><button id="openDiagnosticReport" ${state.demoMode || state.live || state.details ? "" : "disabled"}>Mở báo cáo · In / Lưu PDF</button></div>
     </div>
     <div class="webui-subcard">
