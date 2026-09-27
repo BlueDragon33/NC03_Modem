@@ -324,3 +324,14 @@ test("Write Readiness Lab remains read-only and prepares a reversible safe-charg
   assert.match(server, /buildWriteReadinessEvidence/);
   assert.doesNotMatch(server, /adapter\.setLongLifeCharging\(/);
 });
+
+
+test("WRITE readiness is runtime-gated and read-only GET/POST compatible", () => {
+  assert.match(app, /payload\.writeReadinessProtocol !== NC03_RUNTIME_PROTOCOL\.writeReadinessProtocol/);
+  assert.match(app, /WRITE readiness endpoint không khớp runtime hiện tại/);
+  assert.match(server, /writeReadinessProtocol:NC03_RUNTIME_PROTOCOL\.writeReadinessProtocol/);
+  assert.match(server, /pathname === "\/api\/nc03\/write-readiness"/);
+  assert.match(server, /\["GET","POST"\]\.includes\(req\.method \|\| "GET"\)/);
+  assert.match(server, /body = req\.method === "GET" \? \{\} : await readJsonBody\(req\)/);
+  assert.match(server, /body\.baseUrl \|\| DEFAULT_MODEM_BASE_URL/);
+});
