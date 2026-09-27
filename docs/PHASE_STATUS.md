@@ -615,3 +615,28 @@ Fix:
 - clear stale session cookies before a fresh login and after failed login/verification;
 - do not expose cookie/session values through browser APIs, logs, contracts or persistent storage;
 - WRITE remains independently locked.
+
+
+## Phase 2AH — FIRST GUARDED MODEM SETTING WRITE
+
+Status: **IMPLEMENTED · LIVE HARDWARE CONFIRMATION PENDING**
+
+Problem after AUTH became functional:
+- login and read telemetry worked on real NC03 hardware;
+- the normal Settings UI was still intentionally read-only, so changing a switch in this app could not affect the modem.
+
+Implemented:
+- first active write target: battery Safe Charge / Long Life path at the firmware-mapped `/action/device_set_battery_safe_charge` endpoint;
+- runtime preflight requires mapped endpoint, payload field, vendor transport and recognized current readback;
+- only known reversible toggle encodings are accepted (`enable/disable`, `on/off`, `1/0`, etc.);
+- one authenticated in-memory modem session is reused for the write;
+- success requires a post-write readback match;
+- failed post-condition triggers automatic rollback to the captured original value and rollback verification;
+- ambiguous field mapping fails closed;
+- all unrelated settings remain read-only.
+
+Next live gate:
+1. use the new Settings control once on the real modem;
+2. confirm the stock Web UI shows the same resulting state;
+3. if success + readback agree, promote this single route to WRITE VERIFIED;
+4. then map the next settings family instead of enabling all vendor writes at once.
