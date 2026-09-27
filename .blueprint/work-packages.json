@@ -1,0 +1,205 @@
+{
+  "schemaVersion": "1.0.0",
+  "planVersion": "1.0.0",
+  "projectId": "project:nc03-modem",
+  "executionMode": "strict-serial",
+  "rule": "A Work Package may enter ACTIVE only after every dependency is COMPLETE with evidence.",
+  "workPackages": [
+    {
+      "id": "NC03-WP00",
+      "sequence": 0,
+      "title": "Constitutional reset and anti-patch baseline",
+      "status": "ACTIVE",
+      "dependsOn": [],
+      "purpose": "Adopt canonical project state, serial prompt execution and anti-patch governance.",
+      "prompt": "prompts/00-wp00.md"
+    },
+    {
+      "id": "NC03-WP01",
+      "sequence": 1,
+      "title": "Stock Web UI parity inventory",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP00"
+      ],
+      "purpose": "Inventory every stock Web UI job, control, action, readback and dangerous operation with evidence.",
+      "prompt": "prompts/01-wp01.md"
+    },
+    {
+      "id": "NC03-WP02",
+      "sequence": 2,
+      "title": "Canonical settings and capability registry",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP01"
+      ],
+      "purpose": "Create stable setting/action IDs, schemas, capability lifecycle and UI metadata.",
+      "prompt": "prompts/02-wp02.md"
+    },
+    {
+      "id": "NC03-WP03",
+      "sequence": 3,
+      "title": "Architecture consolidation",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP02"
+      ],
+      "purpose": "Refactor v0.7.x behavior into stable UI/application/domain/adapter/transport boundaries and retire patch paths.",
+      "prompt": "prompts/03-wp03.md"
+    },
+    {
+      "id": "NC03-WP04",
+      "sequence": 4,
+      "title": "Authentication, session and credential lifecycle",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP03"
+      ],
+      "purpose": "Stabilize real login/session/re-auth/credential ownership and recovery.",
+      "prompt": "prompts/04-wp04.md"
+    },
+    {
+      "id": "NC03-WP05",
+      "sequence": 5,
+      "title": "Read plane normalization",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP04"
+      ],
+      "purpose": "Normalize modem reads into versioned domain contracts with freshness/privacy semantics.",
+      "prompt": "prompts/05-wp05.md"
+    },
+    {
+      "id": "NC03-WP06",
+      "sequence": 6,
+      "title": "Guarded write engine v2",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP05"
+      ],
+      "purpose": "Build the generic preflight/write/readback/rollback transaction engine used by all settings.",
+      "prompt": "prompts/06-wp06.md"
+    },
+    {
+      "id": "NC03-WP07",
+      "sequence": 7,
+      "title": "Wi-Fi settings parity",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP06"
+      ],
+      "purpose": "Implement verified Wi-Fi/AP settings parity.",
+      "prompt": "prompts/07-wp07.md"
+    },
+    {
+      "id": "NC03-WP08",
+      "sequence": 8,
+      "title": "LAN, DHCP and routing settings parity",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP07"
+      ],
+      "purpose": "Implement verified LAN/DHCP/routing settings and safe typed rule editing.",
+      "prompt": "prompts/08-wp08.md"
+    },
+    {
+      "id": "NC03-WP09",
+      "sequence": 9,
+      "title": "USB, Bridge and Ethernet settings parity",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP08"
+      ],
+      "purpose": "Implement USB tethering, Bridge/IP Passthrough and Ethernet parity.",
+      "prompt": "prompts/09-wp09.md"
+    },
+    {
+      "id": "NC03-WP10",
+      "sequence": 10,
+      "title": "Power, battery and display settings parity",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP09"
+      ],
+      "purpose": "Consolidate charge semantics and complete power/display settings.",
+      "prompt": "prompts/10-wp10.md"
+    },
+    {
+      "id": "NC03-WP11",
+      "sequence": 11,
+      "title": "Security, WPS, firewall and DMZ parity",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP10"
+      ],
+      "purpose": "Implement security settings with validation and containment controls.",
+      "prompt": "prompts/11-wp11.md"
+    },
+    {
+      "id": "NC03-WP12",
+      "sequence": 12,
+      "title": "Mobile network, SIM, APN and band parity",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP11"
+      ],
+      "purpose": "Implement mobile-network configuration while protecting sensitive carrier/SIM data.",
+      "prompt": "prompts/12-wp12.md"
+    },
+    {
+      "id": "NC03-WP13",
+      "sequence": 13,
+      "title": "System, time, firmware and admin operations",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP12"
+      ],
+      "purpose": "Implement NTP/system/admin operations and separately gate destructive reboot/reset/FOTA/password actions.",
+      "prompt": "prompts/13-wp13.md"
+    },
+    {
+      "id": "NC03-WP14",
+      "sequence": 14,
+      "title": "Device and client administration parity",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP13"
+      ],
+      "purpose": "Implement only stock-supported client/device administration with stable identity.",
+      "prompt": "prompts/14-wp14.md"
+    },
+    {
+      "id": "NC03-WP15",
+      "sequence": 15,
+      "title": "Product UX and design-system acceptance",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP14"
+      ],
+      "purpose": "Unify all completed capabilities into one premium responsive accessible modem-admin product.",
+      "prompt": "prompts/15-wp15.md"
+    },
+    {
+      "id": "NC03-WP16",
+      "sequence": 16,
+      "title": "Reliability, security and ecosystem integration",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP15"
+      ],
+      "purpose": "Prove PWA/runtime durability, threat containment, diagnostics and App Management boundaries.",
+      "prompt": "prompts/16-wp16.md"
+    },
+    {
+      "id": "NC03-WP17",
+      "sequence": 17,
+      "title": "Real-hardware acceptance and release evidence",
+      "status": "PLANNED",
+      "dependsOn": [
+        "NC03-WP16"
+      ],
+      "purpose": "Run exact-revision hardware/UX/security parity acceptance and prepare release evidence.",
+      "prompt": "prompts/17-wp17.md"
+    }
+  ]
+}
