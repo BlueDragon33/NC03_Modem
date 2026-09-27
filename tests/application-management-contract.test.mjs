@@ -58,3 +58,13 @@ test("contract publishes the WRITE readiness runtime boundary without promoting 
   assert.equal(contract.policy.writeReadinessNeverExecutesWrite, true);
   assert.equal(contract.policy.writeRequiresHarRollbackPostcondition, true);
 });
+
+
+test("contract publishes login-first authentication UX without weakening credential safety", () => {
+  assert.equal(contract.capabilities.loginFirstScreen, true);
+  assert.equal(contract.capabilities.passwordEntryBeforeAuthReadiness, true);
+  assert.equal(contract.policy.loginScreenFirstOnLaunch, true);
+  assert.equal(contract.policy.passwordEntryNotBlockedByReadiness, true);
+  assert.equal(contract.policy.demoModeNeverAutoRestoredOnLaunch, true);
+  assert.equal(contract.policy.credentialSavedOnlyAfterVerifiedLogin, true);
+});
