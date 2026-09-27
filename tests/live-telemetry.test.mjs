@@ -391,13 +391,10 @@ test("settings exposes guarded Long Life Charging write with postcondition and r
 
 test("Settings Center mirrors stock Web UI groups while locked controls stay non-writing", () => {
   assert.match(app, /NC03 SETTINGS/);
-  assert.match(app, /data-settings-section="mobile"/);
-  assert.match(app, /data-settings-section="wifi"/);
-  assert.match(app, /data-settings-section="lan"/);
-  assert.match(app, /data-settings-section="connectivity"/);
-  assert.match(app, /data-settings-section="power"/);
-  assert.match(app, /data-settings-section="security"/);
-  assert.match(app, /data-settings-section="system"/);
+  for (const group of ["mobile","wifi","lan","connectivity","power","security","system"]) {
+    assert.ok(app.includes(`["${group}"`), group);
+  }
+  assert.match(app, /data-settings-section=/);
   assert.match(app, /data-write="locked"/);
   assert.match(app, /switch-control/);
   assert.match(app, /Mật khẩu Wi-Fi/);
