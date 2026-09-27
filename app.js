@@ -288,7 +288,7 @@ function renderLogin() {
     ["loginKey", readinessEvidence.loginKey],
     ["endpoint", readinessEvidence.endpoint],
     ["username HMAC", readinessEvidence.usernameHmac],
-    ["username source", readinessEvidence.usernameLiteral],
+    ["username source", readinessEvidence.usernameSourceReady],
     ["password HMAC", readinessEvidence.passwordHmac],
     ["password input", readinessEvidence.passwordInput],
     ["success=0", readinessEvidence.successZero],
