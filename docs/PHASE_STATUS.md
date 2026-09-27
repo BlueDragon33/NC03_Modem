@@ -544,3 +544,19 @@ Fix:
 - frontend blocks readiness probing when the WRITE protocol is missing/mismatched;
 - readiness remains read-only and accepts GET/POST compatibility;
 - live WRITE stays locked until HAR write + rollback + post-condition are verified.
+
+
+## Phase 2AD — PWA STALE-TAB SELF-HEAL
+
+Status: **IMPLEMENTED**
+
+Observed failure:
+- a new service worker could download while an already-open tab continued executing an older `app.js`;
+- the old UI could therefore still show raw `METHOD_NOT_ALLOWED` even though the repository already contained the runtime-v4 WRITE-readiness fix.
+
+Fix:
+- service-worker cache key bumped for v0.7.25;
+- activation deletes the previous NC03 shell cache and claims clients;
+- when an older NC03 cache was replaced, currently open NC03 windows are navigated once through the new network-first worker;
+- first install does not force a reload when there is no older NC03 cache;
+- live WRITE remains locked.

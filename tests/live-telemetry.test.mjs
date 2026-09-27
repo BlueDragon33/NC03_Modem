@@ -335,3 +335,13 @@ test("WRITE readiness is runtime-gated and read-only GET/POST compatible", () =>
   assert.match(server, /body = req\.method === "GET" \? \{\} : await readJsonBody\(req\)/);
   assert.match(server, /body\.baseUrl \|\| DEFAULT_MODEM_BASE_URL/);
 });
+
+
+test("PWA upgrade self-heals an already-open stale frontend", () => {
+  const worker = fs.readFileSync(new URL("../sw.js", import.meta.url), "utf8");
+  assert.match(worker, /staleKeys = keys\.filter/);
+  assert.match(worker, /self\.clients\.claim\(\)/);
+  assert.match(worker, /self\.clients\.matchAll\(\{ type:"window", includeUncontrolled:true \}\)/);
+  assert.match(worker, /client\.navigate\(client\.url\)/);
+  assert.match(worker, /if \(!staleKeys\.length\) return/);
+});

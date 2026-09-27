@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.25 — PWA stale-tab self-heal
+
+- Fixed the remaining upgrade path behind the screenshot where an already-open v0.7.23/v0.7.24 tab could keep executing stale `app.js` and display raw `METHOD_NOT_ALLOWED` even after a newer service worker had downloaded.
+- The v0.7.25 service worker now removes the previous NC03 shell cache, claims clients, and reloads open NC03 windows once when an older shell was actually replaced.
+- This recovery works even when the currently running page itself is old and therefore has no new frontend-side update listener yet.
+- First install does not force an extra reload because the navigation step only runs when an older NC03 cache existed.
+- Runtime/write safety is unchanged: WRITE readiness stays read-only and live WRITE remains fail-closed.
+
 ## 0.7.24 — WRITE readiness runtime gate
 
 - Fixed a frontend/backend skew where the v0.7.23 WRITE Readiness UI could run against an older v0.7.22 Local Bridge because both still advertised runtime protocol v3.

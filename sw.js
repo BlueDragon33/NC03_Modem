@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v33-write-readiness-runtime-v4";
+const CACHE = "nc03-control-center-v34-pwa-self-heal-v0725";
 const ASSETS = [
   "./",
   "./index.html",
@@ -37,8 +37,27 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))));
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    const staleKeys = keys.filter((key) => key !== CACHE);
+    await Promise.all(staleKeys.map((key) => caches.delete(key)));
+    await self.clients.claim();
+
+    // A newly activated worker can be installed while an older app.js is still
+    // executing in an already-open tab. If we replaced an older NC03 shell,
+    // navigate each open window once so the new network-first worker serves the
+    // current UI immediately instead of leaving a stale frontend in memory.
+    if (!staleKeys.length) return;
+    const windows = await self.clients.matchAll({ type:"window", includeUncontrolled:true });
+    await Promise.all(windows.map(async (client) => {
+      if (typeof client.navigate !== "function") return;
+      try {
+        await client.navigate(client.url);
+      } catch {
+        // The client may close during activation; update recovery must stay non-fatal.
+      }
+    }));
+  })());
 });
 
 self.addEventListener("fetch", (event) => {
