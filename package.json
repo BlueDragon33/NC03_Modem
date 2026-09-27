@@ -1,6 +1,6 @@
 {
   "name": "nc03-control-center",
-  "version": "0.7.30",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,9 +13,10 @@
     "ux": "node scripts/ux.mjs",
     "security": "node scripts/security.mjs",
     "test": "npm run unit && npm run integration",
-    "verify": "npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run offline && npm run security",
+    "verify": "npm run blueprint:check && npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run offline && npm run security",
     "offline": "node scripts/offline.mjs",
     "serve:local": "node scripts/serve-local.mjs",
-    "analyze:har": "node scripts/analyze-har.mjs"
+    "analyze:har": "node scripts/analyze-har.mjs",
+    "blueprint:check": "node scripts/check-blueprint-prompt-system.mjs"
   }
 }

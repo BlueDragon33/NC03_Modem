@@ -1,5 +1,17 @@
 # Phase status
 
+> **LEGACY EVIDENCE HISTORY — FROZEN AT v0.7.x**
+>
+> This file preserves the discovery and repair history that led to the working NC03 baseline. It is no longer the canonical planning/status source and must not receive new symptom-numbered phases.
+>
+> Current authority:
+> - `.blueprint/project-profile.json`
+> - `.blueprint/blueprint.json`
+> - `.blueprint/work-packages.json`
+> - `prompts/README.md`
+>
+> New work is tracked as `NC03-WP00..NC03-WP17` under Blueprint 1.0.0 / B4.
+
 ## Phase 1 — FOUNDATION + NC03 DISCOVERY
 
 Status: **COMPLETE**

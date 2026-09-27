@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0.0",
+  "blueprintVersion": "1.0.0",
+  "projectId": "project:nc03-modem",
+  "blueprintLevel": "B4",
+  "canonicalAuthority": ".blueprint/blueprint.json",
+  "architecture": {
+    "layers": [
+      "Product UI",
+      "Application use-cases",
+      "Canonical settings/capability registry",
+      "NC03 domain contracts",
+      "Firmware adapters/profiles",
+      "Local Bridge transport/session",
+      "Physical NC03 modem"
+    ],
+    "dependencyDirection": "UI -> application -> domain contracts -> adapters -> transport -> modem",
+    "forbiddenCoupling": [
+      "UI -> raw modem endpoint",
+      "feature screen -> ad-hoc modem fetch/write",
+      "settings label -> endpoint inference",
+      "Application Management -> modem credential/session ownership",
+      "cloud/provider -> modem control authority"
+    ]
+  },
+  "canonicalSettingsFamilies": [
+    "mobile-network",
+    "wifi",
+    "lan-dhcp-routing",
+    "usb-bridge-ethernet",
+    "power-battery-display",
+    "security-wps-firewall-dmz",
+    "system-time-firmware-admin",
+    "devices-clients"
+  ],
+  "crossCuttingModules": [
+    "authentication-session",
+    "read-plane",
+    "guarded-write-engine",
+    "capability-registry",
+    "design-system",
+    "pwa-offline-runtime",
+    "application-management-contract",
+    "observability-diagnostics",
+    "security-resilience",
+    "firmware-profile-compatibility",
+    "release-evidence"
+  ],
+  "mandatoryGates": [
+    "gate:constitution:adoption",
+    "gate:architecture:future-scale",
+    "gate:architecture:boundary",
+    "gate:platform:profile-compatibility",
+    "gate:firmware:source-evidence",
+    "gate:auth:real-hardware",
+    "gate:read:contract",
+    "gate:write:reversible-transaction",
+    "gate:write:family-parity",
+    "gate:ux:commercial-quality",
+    "gate:ux:human-acceptance",
+    "gate:durability:ageing-regression",
+    "gate:security:resilience-containment",
+    "gate:hardware:e2e-parity",
+    "gate:release:exact-revision"
+  ],
+  "developmentLaw": [
+    "Design before build.",
+    "Contracts before components.",
+    "Dependency before sequencing.",
+    "Root cause before patch.",
+    "Canonical state before projection.",
+    "One source of truth per concept.",
+    "Do not start the next prompt until the current prompt gate is PASS.",
+    "Green CI is necessary but never sufficient for product PASS."
+  ]
+}

@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.7.30"
+    "version": "0.8.0"
   },
   "capabilities": {
     "webLaunch": true,
@@ -82,7 +82,10 @@
     "webUiStyleSettingsCenter": true,
     "settingsCategoryNavigation": true,
     "wifiApProfileTabs": true,
-    "settingsWriteCoverageDisclosure": true
+    "settingsWriteCoverageDisclosure": true,
+    "canonicalBlueprintPromptSystem": true,
+    "strictSerialWorkPackages": true,
+    "constitutionBoundDevelopment": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -182,7 +185,15 @@
       "power",
       "security",
       "system"
-    ]
+    ],
+    "blueprintLevel": "B4",
+    "blueprintVersion": "1.0.0",
+    "promptProjectionCount": 18,
+    "promptExecutionMode": "strict-serial",
+    "canonicalProjectState": ".blueprint/*",
+    "promptProjectionIsSourceOfTruth": false,
+    "rootCauseBeforePatch": true,
+    "productionAuthoritySeparateFromMerge": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
