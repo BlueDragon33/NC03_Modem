@@ -1,6 +1,6 @@
 {
   "name": "nc03-control-center",
-  "version": "0.7.21",
+  "version": "0.7.22",
   "private": true,
   "type": "module",
   "scripts": {
