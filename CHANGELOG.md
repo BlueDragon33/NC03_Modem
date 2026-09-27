@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.22 — AUTH startup and session lifecycle
+
+- Added an explicit startup handshake: runtime/schema gate → AUTH readiness → live session probe → first stable screen.
+- AUTH-required modems always route to the Login screen, even when the recipe is not ready yet; password controls remain disabled until AUTH READY.
+- A previously verified session that later returns AUTHENTICATION_REQUIRED is classified as SESSION_EXPIRED instead of generic reconnecting.
+- Live polling now rerenders immediately when AUTH changes the active view or connection state, so an expired session opens re-authentication without waiting for another full render.
+- Login UI distinguishes first login from session re-authentication.
+- Added SecureCredentialVault.js to the PWA offline shell so the remember-password flow does not break when the shell is running from cache.
+- WRITE capabilities remain independently fail-closed.
+
+
 ## 0.7.21 — Runtime-gated modem login
 
 - Promoted firmware 8.00.42 AUTH from source discovery to a real login flow after live evidence confirmed the request field, input path, HMAC-MD5 transform and success code 0.
