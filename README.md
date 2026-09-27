@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.21 — Runtime-Gated Real Login
+## Phase 2 · v0.7.22 — AUTH Startup & Session Lifecycle
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -114,3 +114,12 @@ GitHub Pages chỉ deploy live khi repository đã bật **Settings → Pages �
 - Session success is verified again before the app treats AUTH as connected.
 - Unknown login retcodes remain generic failures.
 - WRITE remains a separate fail-closed capability gate.
+
+
+### AUTH startup & session lifecycle
+
+- startup AUTH handshake runs before the first stable screen;
+- AUTH-required state always routes to Login, while password input remains gated by AUTH READY;
+- expired sessions switch to SESSION_EXPIRED and open re-authentication immediately;
+- encrypted remember-password vault is part of the offline PWA shell;
+- WRITE remains a separate fail-closed gate.

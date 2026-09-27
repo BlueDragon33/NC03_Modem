@@ -485,3 +485,21 @@ Implemented:
 - runtime protocol v3.
 
 WRITE remains independently fail-closed.
+
+
+## Phase 2AA — AUTH STARTUP & SESSION LIFECYCLE
+
+Status: **IMPLEMENTED**
+
+Implemented after runtime-gated real login:
+- deterministic startup handshake;
+- first-login vs expired-session distinction;
+- SESSION_EXPIRED transition when an authenticated live session later requires AUTH;
+- immediate navigation/render to Login during polling;
+- AUTH LOCKED Login screen when the modem requires auth but recipe/transport are not ready;
+- encrypted credential vault included in the offline PWA shell.
+
+Next hardware gate:
+- verify the first real password login on firmware 8.00.42;
+- verify a forced/restarted modem session returns to re-authentication cleanly;
+- WRITE remains locked until a reversible write transaction is captured and verified.

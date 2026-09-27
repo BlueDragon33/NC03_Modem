@@ -282,10 +282,14 @@ function renderLogin() {
   const readinessText = ready
     ? `AUTH READY · ${esc(state.authReadiness.recipe?.passwordTransform ?? "verified recipe")} · ${esc(state.authReadiness.transport?.method ?? "POST")}`
     : esc(state.authReadinessError || state.authReadiness?.code || "Đang xác minh AUTH recipe/transport từ firmware local.");
+  const sessionExpired = state.connectionState === CONNECTION_STATE.SESSION_EXPIRED;
+  const loginIntro = sessionExpired
+    ? "Phiên đăng nhập modem đã hết hạn. Xác thực lại để tiếp tục dữ liệu live."
+    : "Recipe đăng nhập được Local Bridge đọc trực tiếp từ firmware local. Password không gửi lên cloud.";
   return `<section class="login-shell">
     <div class="login-card">
       <div class="login-brand"><div class="brand-mark">N3</div><div><small>HYBRID Wi-Fi 5G</small><strong>NC03 Control Center</strong></div></div>
-      <div class="login-copy"><span class="eyebrow">LOCAL MODEM ACCESS</span><h1>Đăng nhập NC03</h1><p>Recipe đăng nhập được Local Bridge đọc trực tiếp từ firmware local. Password không gửi lên cloud.</p></div>
+      <div class="login-copy"><span class="eyebrow">LOCAL MODEM ACCESS</span><h1>${sessionExpired ? "Xác thực lại NC03" : "Đăng nhập NC03"}</h1><p>${esc(loginIntro)}</p></div>
       ${renderAlwaysOnStatus()}
       <div class="login-form">
         <label>Địa chỉ modem<input id="loginBaseUrl" value="${esc(state.baseUrl)}" inputmode="url" autocomplete="url" placeholder="192.168.0.1" /></label>
@@ -833,18 +837,24 @@ async function refreshLive({ render = true } = {}) {
     state.connectionState = CONNECTION_STATE.CONNECTED;
     state.liveError = "";
   } catch (error) {
+    const authRequired = error?.code === "AUTHENTICATION_REQUIRED";
+    const hadVerifiedSession = state.connectionState === CONNECTION_STATE.CONNECTED || Boolean(state.lastLiveSuccessAt);
     state.liveStale = Boolean(state.live);
-    state.liveError = error?.code === "AUTHENTICATION_REQUIRED"
-      ? "Modem yêu cầu đăng nhập. NC03 Control Center đang xác minh AUTH recipe để mở form Password."
+    state.liveError = authRequired
+      ? hadVerifiedSession
+        ? "Phiên đăng nhập modem đã hết hạn. Hãy xác thực lại."
+        : "Modem yêu cầu đăng nhập. NC03 Control Center đang xác minh AUTH recipe để mở form Password."
       : "Không kết nối được NC03 qua Local Bridge.";
-    state.connectionState = state.liveStale
-      ? CONNECTION_STATE.RECONNECTING
-      : error?.code === "AUTHENTICATION_REQUIRED"
-        ? CONNECTION_STATE.AUTHENTICATION_REQUIRED
+    state.connectionState = authRequired
+      ? hadVerifiedSession
+        ? CONNECTION_STATE.SESSION_EXPIRED
+        : CONNECTION_STATE.AUTHENTICATION_REQUIRED
+      : state.liveStale
+        ? CONNECTION_STATE.RECONNECTING
         : CONNECTION_STATE.NC03_UNAVAILABLE;
-    if (error?.code === "AUTHENTICATION_REQUIRED") {
+    if (authRequired) {
       await refreshAuthReadiness({ render:false });
-      if (state.authReadiness?.ready) state.view = "login";
+      state.view = "login";
     }
   }
   if (render) page();
@@ -869,9 +879,12 @@ async function pollLiveOnce() {
   liveRefreshInFlight = true;
   const hadLive = Boolean(state.live);
   const wasStale = state.liveStale;
+  const previousView = state.view;
+  const previousConnectionState = state.connectionState;
   try {
     await refreshLive({ render:false });
-    if (hadLive !== Boolean(state.live)) page();
+    const authNavigationChanged = previousView !== state.view || previousConnectionState !== state.connectionState;
+    if (hadLive !== Boolean(state.live) || authNavigationChanged) page();
     else {
       updateLiveTelemetryDom();
       if (wasStale !== state.liveStale) {
@@ -1090,14 +1103,32 @@ function bind() {
   });
 }
 
+async function bootstrapRuntime() {
+  await ensureDemo();
+  if (state.demoMode) {
+    page();
+    return;
+  }
+
+  await refreshAuthReadiness({ render:false });
+  await refreshLive({ render:false });
+
+  if (state.connectionState === CONNECTION_STATE.CONNECTED) {
+    if (state.live) await refreshDetails({ render:false });
+    if (state.view === "login") state.view = "home";
+  } else if ([CONNECTION_STATE.AUTHENTICATION_REQUIRED, CONNECTION_STATE.SESSION_EXPIRED].includes(state.connectionState)) {
+    state.view = "login";
+  }
+
+  page();
+}
+
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js")
     .then((registration) => registration.update())
     .catch(() => {});
 }
-await ensureDemo();
-if (!state.demoMode) await refreshAll();
-else page();
+await bootstrapRuntime();
 startLivePolling();
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) pollLiveOnce().catch(() => {});
