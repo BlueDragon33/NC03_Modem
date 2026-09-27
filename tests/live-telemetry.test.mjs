@@ -269,3 +269,25 @@ test("frontend refuses AUTH probe when Local Bridge runtime protocol/schema is s
   assert.match(app, /payload\.runtimeProtocol !== NC03_RUNTIME_PROTOCOL\.id/);
   assert.match(app, /probe\?\.evidence\?\.schema !== NC03_RUNTIME_PROTOCOL\.authEvidenceSchema/);
 });
+
+
+test("real login UI is gated by runtime AUTH readiness", () => {
+  assert.match(app, /authReadiness/);
+  assert.match(app, /\/api\/nc03\/auth-readiness/);
+  assert.match(app, /\/api\/nc03\/login/);
+  assert.match(app, /id="loginPassword"/);
+  assert.match(app, /AUTH VERIFIED/);
+  assert.match(app, /credentialVault\.save/);
+  assert.match(app, /body:JSON\.stringify\(\{ baseUrl:state\.baseUrl, password \}\)/);
+  assert.match(server, /async function authReadiness/);
+  assert.match(server, /async function modemLogin/);
+  assert.match(server, /\/api\/nc03\/auth-readiness/);
+  assert.match(server, /\/api\/nc03\/login/);
+  assert.match(server, /AUTH_VERIFICATION_FAILED/);
+});
+
+test("runtime login bridge never returns firmware login key or username literal", () => {
+  assert.match(server, /function publicLoginReadiness/);
+  assert.doesNotMatch(server, /publicLoginReadiness[\s\S]{0,1800}usernameLiteral:/);
+  assert.doesNotMatch(server, /publicLoginReadiness[\s\S]{0,1800}\bkey:/);
+});
