@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectId": "project:nc03-modem",
+  "name": "NC03 Control Center",
+  "repository": "BlueDragon33/NC03_Modem",
+  "blueprintLevel": "B4",
+  "classification": "PLATFORM",
+  "productType": "local-first modem administration PWA",
+  "referenceDevice": {
+    "model": "HYBRID Wi-Fi 5G NC03",
+    "firmwareBaseline": "NC03_8.00.42",
+    "modemOriginPolicy": "RFC1918 IPv4 only"
+  },
+  "primaryUsers": [
+    "local modem administrator"
+  ],
+  "productIntent": [
+    "Replace the stock NC03 Web UI with a modern, coherent and easier administration experience.",
+    "Preserve or improve verified stock Web UI functional coverage instead of becoming a read-only dashboard.",
+    "Perform settings changes on the real modem through a local trusted bridge.",
+    "Operate local-first/PWA and remain maintainable across future firmware/profile changes."
+  ],
+  "nonNegotiableConstraints": [
+    "Do not modify modem firmware.",
+    "Do not invent modem endpoints, request fields, response meanings or rollback behavior.",
+    "Do not send modem password, session, cookie or raw private HAR data to cloud services.",
+    "Do not expose current Wi-Fi PSK merely to populate the replacement UI.",
+    "Every state-changing operation requires verified mapping, post-condition evidence and recovery behavior.",
+    "Frontend never talks directly to modem production endpoints; modem traffic belongs to Local Bridge/adapters.",
+    "Application Management owns neither modem credential/session nor modem command authority.",
+    "Production release remains a separate explicit gate."
+  ]
+}
