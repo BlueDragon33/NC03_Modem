@@ -53,6 +53,7 @@ let state = {
   settingsWriteError: "",
   settingsWriteResult: null,
   settingsSection: "wifi",
+  settingsApIndex: 0,
   authReadiness: null,
   authReadinessError: "",
   loginLoading: false,
@@ -670,28 +671,30 @@ function renderSettingsMobile(d) {
 function renderSettingsWifi(d) {
   const wifi = d.wifi ?? {};
   const aps = wifi.aps ?? [];
+  const activeAp = aps.find((ap)=>ap.index === state.settingsApIndex) ?? aps[0] ?? null;
+  if (activeAp) state.settingsApIndex = activeAp.index;
   return `<section class="webui-settings-card">
     ${webuiSectionHeader("WI-FI", "Wi-Fi", "Các profile AP được bố trí như trang quản trị modem: trạng thái, SSID, bảo mật, kênh và giới hạn client.", "READ + WRITE CANDIDATE", "warn")}
     <div class="webui-toggle-list">
       ${lockedToggleSetting("Wi-Fi tổng", wifi.workStatus ?? (wifi.enabled ? "enable" : "disable"), "/action/wifi_set_basic_params đã thấy trong firmware; chưa mở cho tới khi map rollback")}
     </div>
-    <div class="webui-ap-tabs">${aps.length ? aps.map((ap)=>`<button type="button" disabled data-active="${ap.index === 0}">AP ${ap.index + 1}<small>${esc(ap.ssid || "Không tên")}</small></button>`).join("") : `<span>Chưa tải được profile AP.</span>`}</div>
-    ${aps.length ? aps.map((ap)=>`<div class="webui-ap-panel">
+    <div class="webui-ap-tabs">${aps.length ? aps.map((ap)=>`<button type="button" data-settings-ap="${ap.index}" data-active="${ap.index === activeAp?.index}">AP ${ap.index + 1}<small>${esc(ap.ssid || "Không tên")}</small></button>`).join("") : `<span>Chưa tải được profile AP.</span>`}</div>
+    ${activeAp ? `<div class="webui-ap-panel">
       <div class="webui-form-grid">
-        ${lockedTextSetting("Tên Wi-Fi (SSID)", ap.ssid)}
+        ${lockedTextSetting("Tên Wi-Fi (SSID)", activeAp.ssid)}
         ${lockedTextSetting("Mật khẩu Wi-Fi", "", "Không đọc/hiển thị PSK hiện tại; khi mở WRITE sẽ nhập mật khẩu mới")}
-        ${lockedSelectSetting("Bảo mật", ap.security)}
-        ${lockedSelectSetting("Tần số", ap.frequency)}
-        ${lockedSelectSetting("Kênh", ap.channel)}
-        ${lockedSelectSetting("Chuẩn 802.11", ap.mode)}
-        ${lockedSelectSetting("Bandwidth", ap.bandwidth)}
-        ${lockedTextSetting("Số thiết bị tối đa", ap.maxClients)}
+        ${lockedSelectSetting("Bảo mật", activeAp.security)}
+        ${lockedSelectSetting("Tần số", activeAp.frequency)}
+        ${lockedSelectSetting("Kênh", activeAp.channel)}
+        ${lockedSelectSetting("Chuẩn 802.11", activeAp.mode)}
+        ${lockedSelectSetting("Bandwidth", activeAp.bandwidth)}
+        ${lockedTextSetting("Số thiết bị tối đa", activeAp.maxClients)}
       </div>
       <div class="webui-toggle-list compact">
-        ${lockedToggleSetting("Bật AP", ap.state)}
-        ${lockedToggleSetting("Phát SSID", ap.broadcast)}
+        ${lockedToggleSetting("Bật AP", activeAp.state)}
+        ${lockedToggleSetting("Phát SSID", activeAp.broadcast)}
       </div>
-    </div>`).join("") : `<div class="empty">Không có cấu hình Wi-Fi để hiển thị.</div>`}
+    </div>` : `<div class="empty">Không có cấu hình Wi-Fi để hiển thị.</div>`}
     <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/wifi_set_ap_params · /action/wifi_set_ap_txpower · /action/wifi_set_basic_params</code><span>UI đã sẵn form, nhưng nút Apply chỉ mở khi từng request shape + readback + rollback được xác minh.</span></div>
   </section>`;
 }
@@ -1324,6 +1327,11 @@ function bind() {
   document.querySelectorAll("[data-settings-section]").forEach((button) => button.addEventListener("click", async () => {
     state.settingsSection = button.dataset.settingsSection || "wifi";
     if (!state.demoMode) await refreshDetails({ render:false });
+    page();
+  }));
+
+  document.querySelectorAll("[data-settings-ap]").forEach((button) => button.addEventListener("click", () => {
+    state.settingsApIndex = Number(button.dataset.settingsAp) || 0;
     page();
   }));
 
