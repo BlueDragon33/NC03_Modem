@@ -15,7 +15,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng local-
 - Không commit HAR thô chứa thông tin riêng.
 - Mock Mode chỉ nằm trong Advanced Developer Mode và luôn gắn nhãn **DEMO DATA**.
 
-## Phase 2 · v0.7.25 — PWA Update Self-Heal
+## Phase 2 · v0.7.26 — Login-first Authentication UX
 
 Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng hiện có, và dự án có thêm công cụ local để rút ngắn bước map AUTH/write mà không đoán API. Local API envelope đã được chuẩn hóa để AUTH Source Probe/Connection Doctor không còn trả kết quả rỗng do lệch response shape:
 
@@ -46,13 +46,13 @@ Read-path của firmware **NC03_8.00.42** đã hoàn thiện theo bằng chứng
 - **PWA shell dùng network-first + cache fallback**, nên khi Local Bridge đã lên bản mới thì `app.js`/module cũng ưu tiên lấy bản mới thay vì trả cache cũ trước.
 - **PWA update self-heal**: khi service worker mới thay thế một shell NC03 cũ, worker tự claim và reload đúng các tab NC03 đang mở một lần; vì vậy tab cũ không còn tiếp tục chạy `app.js` cũ rồi hiện raw `METHOD_NOT_ALLOWED`.
 - **runtime protocol/schema gate** chặn AUTH probe nếu frontend mới đang nói chuyện với Local Bridge cũ còn nằm trong RAM; UI yêu cầu restart thay vì hiển thị evidence mặc định sai.
-- **runtime-gated real login** chỉ mở Password khi Local Bridge tự đọc được recipe + transport từ firmware 8.00.42; login key/username literal không trả ra browser.
+- **login-first UX**: mỗi lần mở app đều vào màn hình Đăng nhập NC03 trước; ô Password luôn nhập được. Khi bấm Đăng nhập, app mới preflight recipe + transport rồi thực hiện login an toàn; login key/username literal không trả ra browser.
 - **Secure Credential Vault** chỉ ghi password sau khi modem trả success và session được `get_login_info` xác minh lại; WRITE vẫn khóa riêng.
 - **Request object dependency trace** lần ngược `postdata = JSON.stringify(_obj)` sang chính `_obj`, field assignments và codec của từng field mà không trả literal/password.
 - **Nested AUTH transform** giữ được outer call như `hex_hmac_md5(loginKey, $(...).val())`, tránh nhầm password chỉ là `val()`.
 - **Response code map** chỉ giữ mã/symbol thực sự xuất hiện trong nhánh response của login, loại các constant không liên quan trong cùng `login.js`.
 
-App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. Trước AUTH VERIFIED, giao diện chỉ hiển thị `Ghi nhớ mật khẩu` như một policy đang khóa — không dùng checkbox có dấu tích gây hiểu nhầm rằng credential đã được lưu.
+App Management dùng runtime local NC03 và Universal Contract, nhưng không sở hữu modem credential/session. `Ghi nhớ mật khẩu` có thể chọn ngay trên form, nhưng credential chỉ được mã hóa và lưu sau khi modem xác nhận đăng nhập thành công.
 
 ## Chạy local
 
@@ -111,7 +111,7 @@ GitHub Pages chỉ deploy live khi repository đã bật **Settings → Pages �
 ### Runtime-gated real login
 
 - Local Bridge reads the login recipe and vendor transport from the modem firmware at runtime.
-- Login controls unlock only when both recipe and transport are resolved.
+- Password entry is available immediately; pressing Login first resolves recipe + transport and only proceeds when that preflight is ready.
 - Session success is verified again before the app treats AUTH as connected.
 - Unknown login retcodes remain generic failures.
 - WRITE remains a separate fail-closed capability gate.
@@ -119,8 +119,8 @@ GitHub Pages chỉ deploy live khi repository đã bật **Settings → Pages �
 
 ### AUTH startup & session lifecycle
 
-- startup AUTH handshake runs before the first stable screen;
-- AUTH-required state always routes to Login, while password input remains gated by AUTH READY;
+- the first stable screen is always the NC03 Login screen;
+- AUTH readiness runs in the background and again on submit when needed, but never disables password entry;
 - expired sessions switch to SESSION_EXPIRED and open re-authentication immediately;
 - encrypted remember-password vault is part of the offline PWA shell;
 - WRITE remains a separate fail-closed gate.
