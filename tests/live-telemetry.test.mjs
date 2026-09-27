@@ -56,7 +56,7 @@ test("10 second polling updates live DOM in place and pauses while hidden", () =
   assert.match(app, /function updateLiveTelemetryDom/);
   assert.match(app, /document\.hidden/);
   assert.match(app, /liveRefreshInFlight/);
-  assert.match(app, /hadLive !== Boolean\(state\.live\)\) page\(\)/);
+  assert.match(app, /hadLive !== Boolean\(state\.live\) \|\| authNavigationChanged\) page\(\)/);
   assert.match(app, /updateLiveTelemetryDom\(\)/);
   assert.match(app, /visibilitychange/);
 });
