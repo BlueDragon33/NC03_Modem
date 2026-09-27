@@ -762,9 +762,9 @@ async function submitLogin() {
       PASSWORD_REQUIRED:"Hãy nhập mật khẩu quản trị modem."
     };
     state.loginError = labels[error?.code] || error?.code || "LOGIN_FAILED";
-    page();
   } finally {
     state.loginLoading = false;
+    page();
   }
 }
 
