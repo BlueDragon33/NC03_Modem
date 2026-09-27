@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v35-login-first-v0726";
+const CACHE = "nc03-control-center-v36-runtime-login-v0727";
 const ASSETS = [
   "./",
   "./index.html",

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.27 — Runtime login recipe resolver
+
+- Fixed the real-device `LOGIN_RECIPE_INCOMPLETE` path shown after v0.7.26 login-first UX.
+- The runtime parser no longer requires username HMAC input to be a string literal directly inside `_obj.username = ...`; it can resolve safe static indirection such as a fixed username variable.
+- `loginKey` may now be resolved from the supporting firmware sources used by the login runtime instead of only from `login.js`.
+- Password HMAC detection now follows a simple input alias (for example a variable assigned from `.val()`) instead of requiring the input call to be nested directly inside the HMAC call.
+- Runtime discovery now includes the login page and MD5 helper source alongside login/tools/common/encryption.
+- `/api/nc03/auth-readiness` returns only boolean readiness evidence so the UI can show which gate is missing without exposing loginKey, username literal, password, token, cookie or raw firmware source.
+- Login remains fail-closed when any required recipe element is genuinely missing; WRITE remains independently locked.
+
 ## 0.7.26 — Login-first authentication UX
 
 - Every fresh NC03 Control Center launch now renders the NC03 login screen first.

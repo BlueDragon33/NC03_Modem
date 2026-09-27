@@ -580,3 +580,21 @@ Fix:
 - detected sessions no longer auto-enter Home during bootstrap;
 - credentials are still persisted only after verified login success;
 - WRITE remains independently locked.
+
+
+## Phase 2AF — RUNTIME LOGIN RECIPE RESOLVER
+
+Status: **IMPLEMENTED**
+
+Observed live failure:
+- v0.7.26 correctly showed the Login screen and accepted password input;
+- the runtime preflight then returned `LOGIN_RECIPE_INCOMPLETE`;
+- the parser was more rigid than the previously confirmed firmware evidence because it required direct literal/direct nested-call shapes.
+
+Fix:
+- resolve static login-key and username indirection across the runtime support sources;
+- follow a simple password-input alias into HMAC-MD5;
+- widen runtime source collection to login page + login/tools/common/encryption/md5;
+- publish only boolean readiness evidence to the browser so missing gates are visible without exposing secrets;
+- keep login fail-closed when the runtime evidence is genuinely incomplete;
+- keep WRITE independently locked.

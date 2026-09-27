@@ -234,13 +234,21 @@ async function authSourceProbe(req, res) {
 
 
 async function discoverLoginRuntime(baseUrl) {
-  const paths = ["/js/login.js","/js/tools.js","/js/common.js","/js/encryption.js"];
+  const paths = [
+    "/common/login.html",
+    "/js/login.js",
+    "/js/tools.js",
+    "/js/common.js",
+    "/js/encryption.js",
+    "/js/md5.js"
+  ];
   const results = await Promise.all(paths.map((path) => fetchStaticSource(baseUrl, path)));
   const sources = results.map((result) => result.item).filter(Boolean);
+  const diagnostics = results.map((result) => result.diagnostic);
   const loginSource = sources.find((item) => item.path === "/js/login.js")?.source ?? "";
   const recipe = discoverNc03LoginRecipe(loginSource, sources);
   const transport = discoverSaveAjaxTransport(sources);
-  return { recipe, transport };
+  return { recipe, transport, diagnostics };
 }
 
 function publicLoginReadiness(runtime) {
@@ -261,6 +269,22 @@ function publicLoginReadiness(runtime) {
       method:transport.method ?? null,
       contentType:transport.contentType ?? null,
       rawStringBody:Boolean(transport.rawStringBody)
+    },
+    evidence:{
+      loginFunction:Boolean(recipe.evidence?.loginFunction),
+      loginKey:Boolean(recipe.evidence?.loginKey),
+      endpoint:Boolean(recipe.evidence?.endpoint),
+      usernameHmac:Boolean(recipe.evidence?.usernameHmac),
+      usernameSourceReady:Boolean(recipe.evidence?.usernameLiteral),
+      passwordHmac:Boolean(recipe.evidence?.passwordHmac),
+      passwordInput:Boolean(recipe.evidence?.passwordInput),
+      successZero:Boolean(recipe.evidence?.successZero),
+      transport:Boolean(transport.ready)
+    },
+    diagnostics:{
+      sourceCount:Array.isArray(runtime?.diagnostics)
+        ? runtime.diagnostics.filter((item) => item?.status === "HTTP_OK").length
+        : 0
     },
     code:recipe.ready ? (transport.ready ? "AUTH_READY" : transport.code) : recipe.code
   };
