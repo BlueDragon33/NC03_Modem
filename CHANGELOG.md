@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.21 — Verified real modem login
+
+- Promoted firmware 8.00.42 AUTH from source discovery to a runtime-gated real login flow after live evidence confirmed request-object field evidence, password input, HMAC-MD5 and success retcode 0.
+- Added `NC03LoginRuntime`: reads the login recipe and `saveAjaxJsonData` transport from local firmware source at runtime; login key and username literal never leave the Local Bridge.
+- Added `POST /api/nc03/auth-readiness` and `POST /api/nc03/login`.
+- The login endpoint hashes username/password locally, submits `/goform/login`, then verifies the resulting modem session before reporting success.
+- Unknown retcode 13 remains a generic `LOGIN_REJECTED`; no unsupported semantic label is invented.
+- Password input and Login button only unlock when recipe + transport are both runtime-verified.
+- Remember-password now uses the existing AES-GCM local credential vault and persists only after verified login success.
+- Runtime protocol bumped to `nc03-local-runtime/v3` so a v0.7.21 frontend cannot silently talk to an older Local Bridge.
+- WRITE capabilities remain independently locked behind WRITE VERIFIED.
+
+
 ## 0.7.20 — Runtime schema gate
 
 - Added a shared immutable runtime protocol descriptor used by both browser UI and Local Bridge.
