@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.26 — Login-first authentication UX
+
+- Every fresh NC03 Control Center launch now renders the NC03 login screen first.
+- Password input is always editable; AUTH readiness no longer disables the password field or blocks the user from typing.
+- Clicking Login preflights the firmware AUTH recipe/transport and only then sends the credential to the local login bridge.
+- The modem address typed on the login screen is normalized and used directly for the login attempt, so the user no longer has to press a separate Save button first.
+- Persisted Developer Demo mode is cleared on launch and can no longer bypass the login screen after a reload.
+- An already-detected modem session no longer auto-navigates to Home during bootstrap; entering the real app is an explicit login action.
+- Credential persistence still happens only after verified login success; WRITE remains independently locked.
+
 ## 0.7.25 — PWA stale-tab self-heal
 
 - Fixed the remaining upgrade path behind the screenshot where an already-open v0.7.23/v0.7.24 tab could keep executing stale `app.js` and display raw `METHOD_NOT_ALLOWED` even after a newer service worker had downloaded.
