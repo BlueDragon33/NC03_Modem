@@ -264,27 +264,28 @@ test("AUTH lab shows password dataflow and recipe status", () => {
 });
 
 
-test("frontend refuses AUTH probe when Local Bridge runtime protocol/schema is stale", () => {
+test("application boundary refuses AUTH probe when Local Bridge runtime protocol/schema is stale", () => {
   assert.match(server, /NC03_RUNTIME_PROTOCOL/);
   assert.match(server, /runtimeProtocol:NC03_RUNTIME_PROTOCOL\.id/);
   assert.match(server, /authEvidenceSchema:NC03_RUNTIME_PROTOCOL\.authEvidenceSchema/);
   assert.match(server, /bootedAt:runtimeBootedAt/);
   assert.match(app, /LOCAL_BRIDGE_RESTART_REQUIRED/);
-  assert.match(app, /payload\.runtimeProtocol !== NC03_RUNTIME_PROTOCOL\.id/);
-  assert.match(app, /probe\?\.evidence\?\.schema !== NC03_RUNTIME_PROTOCOL\.authEvidenceSchema/);
+  assert.match(applicationClient, /#assertRuntime\(payload\)/);
+  assert.match(applicationClient, /payload\?\.evidence\?\.schema !== this\.runtimeProtocol\.authEvidenceSchema/);
 });
 
 
 test("real login submit preflights runtime AUTH readiness without locking password entry", () => {
   assert.match(app, /authReadiness/);
-  assert.match(app, /\/api\/nc03\/auth-readiness/);
-  assert.match(app, /\/api\/nc03\/login/);
+  assert.match(app, /controlClient\.getAuthReadiness\(state\.baseUrl\)/);
+  assert.match(app, /controlClient\.login\(state\.baseUrl, password\)/);
   assert.match(app, /id="loginPassword"/);
   assert.match(app, /CƠ CHẾ ĐĂNG NHẬP SẴN SÀNG/);
   assert.match(app, /if \(!state\.authReadiness\?\.ready\) \{/);
   assert.match(app, /await refreshAuthReadiness\(\{ render:false \}\)/);
   assert.match(app, /credentialVault\.save/);
-  assert.match(app, /body:JSON\.stringify\(\{ baseUrl:state\.baseUrl, password \}\)/);
+  assert.match(applicationClient, /"\/api\/nc03\/auth-readiness"/);
+  assert.match(applicationClient, /"\/api\/nc03\/login"/);
   assert.match(server, /async function authReadiness/);
   assert.match(server, /async function modemLogin/);
   assert.match(server, /AUTH_VERIFICATION_FAILED/);
@@ -320,7 +321,8 @@ test("session expiry takes priority over stale-data reconnect and rerenders logi
 test("Write Readiness Lab remains read-only and prepares a reversible safe-charge capture", () => {
   assert.match(app, /WRITE READINESS LAB/);
   assert.match(app, /Long Life Charging · reversible write plan/);
-  assert.match(app, /\/api\/nc03\/write-readiness/);
+  assert.match(app, /controlClient\.getWriteReadiness\(state\.baseUrl\)/);
+  assert.match(applicationClient, /"\/api\/nc03\/write-readiness"/);
   assert.match(app, /writeEnabled=false/);
   assert.match(app, /READY FOR REVERSIBLE HAR CAPTURE/);
   assert.match(server, /async function writeReadiness/);
@@ -330,8 +332,8 @@ test("Write Readiness Lab remains read-only and prepares a reversible safe-charg
 });
 
 
-test("WRITE readiness is runtime-gated and read-only GET/POST compatible", () => {
-  assert.match(app, /payload\.writeReadinessProtocol !== NC03_RUNTIME_PROTOCOL\.writeReadinessProtocol/);
+test("WRITE readiness is runtime-gated centrally and read-only GET/POST compatible", () => {
+  assert.match(applicationClient, /writeReadinessProtocol !== protocol\.writeReadinessProtocol/);
   assert.match(app, /WRITE readiness endpoint không khớp runtime hiện tại/);
   assert.match(server, /writeReadinessProtocol:NC03_RUNTIME_PROTOCOL\.writeReadinessProtocol/);
   assert.match(server, /pathname === "\/api\/nc03\/write-readiness"/);
