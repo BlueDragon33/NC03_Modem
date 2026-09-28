@@ -30,9 +30,10 @@
       ],
       "purpose": "Inventory every stock Web UI job, control, action, readback and dangerous operation with evidence.",
       "prompt": "prompts/01-wp01.md",
-      "progress": "AUTOMATED_EVIDENCE_AND_LOCAL_AUDITOR_READY",
+      "progress": "AUTOMATED_EVIDENCE_COMPLETE_HUMAN_REVIEW_PENDING",
       "progressEvidence": [
         "evidence/stock-webui-parity.v1.json",
+        "evidence/wp01-live-stock-ui-audit-2026-09-28.json",
         "docs/NC03-STOCK-WEBUI-PARITY.md",
         "scripts/check-stock-webui-parity.mjs",
         "src/modem/StockWebUiAudit.js",
@@ -43,7 +44,7 @@
           "id": "wp01-human-stock-ui-review",
           "type": "HUMAN_REAL_HARDWARE_REVIEW",
           "status": "OPEN",
-          "requirement": "Compare the inventory against every page/control on the real NC03_8.00.42 stock Web UI and confirm/correct coverage without exposing secrets."
+          "requirement": "Review the real NC03_8.00.42 stock Web UI navigation and settings pages against the canonical inventory. Automated static audit reached the authenticated settings shell but cannot prove dynamic navigation/control coverage."
         }
       ]
     },
