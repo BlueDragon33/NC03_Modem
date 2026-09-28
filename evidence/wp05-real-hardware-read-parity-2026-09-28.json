@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "wp05-real-hardware-read-parity-2026-09-28",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP05",
+  "referenceFirmware": "NC03_8.00.42",
+  "evidenceType": "HUMAN_REAL_HARDWARE_PARITY",
+  "result": "PASS",
+  "acceptedSurfaces": [
+    "Home",
+    "Network",
+    "Wi-Fi",
+    "Devices",
+    "Settings"
+  ],
+  "conclusion": "Real-device read parity was confirmed after migration to nc03-read-model/v1.",
+  "privacy": {
+    "credentialsRecorded": false,
+    "sessionRecorded": false
+  }
+}

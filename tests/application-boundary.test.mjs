@@ -48,7 +48,8 @@ test("Application client rejects stale runtime protocol centrally", async () => 
     authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
     writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
     settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
-    stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema
+    stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema,
+    readModelSchema:NC03_RUNTIME_PROTOCOL.readModelSchema
   });
   const client=new NC03ControlClient({fetchImpl});
   await assert.rejects(()=>client.health(),(error)=>error instanceof NC03ControlClientError && error.code==="LOCAL_BRIDGE_RESTART_REQUIRED");
@@ -116,4 +117,19 @@ test("Application client transport wrapper prevents client-instance receiver lea
   const source=fs.readFileSync("src/application/NC03ControlClient.js","utf8");
   assert.match(source, /Reflect\.apply\(fetchImpl, globalThis, args\)/);
   assert.doesNotMatch(source, /this\.fetchImpl = fetchImpl;/);
+});
+
+
+test("Application client rejects non-normalized read payloads", async () => {
+  const client=new NC03ControlClient({fetchImpl:async()=>response({ok:true,payload:{status:{connected:true}}})});
+  await assert.rejects(()=>client.getSnapshot("http://192.168.0.1"),(error)=>error.code==="READ_MODEL_SCHEMA_MISMATCH");
+});
+
+test("Application client accepts versioned normalized read payloads", async () => {
+  const client=new NC03ControlClient({fetchImpl:async()=>response({
+    ok:true,
+    payload:{schema:NC03_RUNTIME_PROTOCOL.readModelSchema,version:"1.0.0",kind:"LIVE",meta:{freshness:{state:"FRESH"}}}
+  })});
+  const payload=await client.getSnapshot("http://192.168.0.1");
+  assert.equal(payload.kind,"LIVE");
 });

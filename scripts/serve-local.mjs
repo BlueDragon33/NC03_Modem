@@ -11,6 +11,7 @@ import { createCookieAwareFetch } from "../src/modem/NC03LocalCookieJar.js";
 import { buildWriteReadinessEvidence } from "../src/modem/WriteSourceDiscovery.js";
 import { buildReversibleTogglePlan, executeJsonToggleWrite, executeRollback, readbackMatches } from "../src/modem/NC03SafeWriteRuntime.js";
 import { buildStockWebUiAudit, stockUiAuditDiscoveryPaths } from "../src/modem/StockWebUiAudit.js";
+import { normalizeAdvancedSnapshot, normalizeLiveSnapshot } from "../src/domain/NC03ReadModel.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
@@ -704,9 +705,12 @@ async function modemRead(req, res, operation) {
       json(res, 401, { ok:false, authenticated:false, code:"AUTHENTICATION_REQUIRED" });
       return;
     }
-    const payload = operation === "details"
+    const rawPayload = operation === "details"
       ? await adapter.getAdvancedSnapshot()
       : await adapter.getLiveSnapshot();
+    const payload = operation === "details"
+      ? normalizeAdvancedSnapshot(rawPayload)
+      : normalizeLiveSnapshot(rawPayload);
     json(res, 200, { ok:true, authenticated:true, baseUrl, payload });
   } catch (error) {
     const code = error instanceof Error ? error.message : "NC03_READ_FAILED";
@@ -826,6 +830,7 @@ const server = createServer(async (req, res) => {
       writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
       settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
       stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema,
+      readModelSchema:NC03_RUNTIME_PROTOCOL.readModelSchema,
       bootedAt:runtimeBootedAt,
       assetRoot:usingDist ? "dist" : "source",
       contractEndpoint:"/api/application-management/contract"

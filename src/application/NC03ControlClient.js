@@ -121,12 +121,20 @@ export class NC03ControlClient {
     return this.#postModem("/api/nc03/doctor", baseUrl);
   }
 
-  getSnapshot(baseUrl) {
-    return this.#postModem("/api/nc03/snapshot", baseUrl);
+  async getSnapshot(baseUrl) {
+    const payload=await this.#postModem("/api/nc03/snapshot", baseUrl);
+    if (payload?.schema !== this.runtimeProtocol.readModelSchema || payload?.kind !== "LIVE") {
+      throw codedError("READ_MODEL_SCHEMA_MISMATCH");
+    }
+    return payload;
   }
 
-  getDetails(baseUrl) {
-    return this.#postModem("/api/nc03/details", baseUrl);
+  async getDetails(baseUrl) {
+    const payload=await this.#postModem("/api/nc03/details", baseUrl);
+    if (payload?.schema !== this.runtimeProtocol.readModelSchema || payload?.kind !== "DETAILS") {
+      throw codedError("READ_MODEL_SCHEMA_MISMATCH");
+    }
+    return payload;
   }
 
   clearSession(baseUrl) {

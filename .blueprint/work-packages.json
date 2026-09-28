@@ -134,18 +134,41 @@
       "id": "NC03-WP05",
       "sequence": 5,
       "title": "Read plane normalization",
-      "status": "ACTIVE",
+      "status": "COMPLETE",
       "dependsOn": [
         "NC03-WP04"
       ],
       "purpose": "Normalize modem reads into versioned domain contracts with freshness/privacy semantics.",
-      "prompt": "prompts/05-wp05.md"
+      "prompt": "prompts/05-wp05.md",
+      "progress": "COMPLETE",
+      "progressEvidence": [
+        "src/domain/NC03ReadModel.js",
+        "docs/NC03-READ-PLANE-NORMALIZATION.md",
+        "evidence/wp05-read-plane-normalization.v1.json",
+        "tests/read-model.test.mjs",
+        "tests/application-boundary.test.mjs",
+        "tests/diagnostic-report.test.mjs",
+        "tests/live-telemetry.test.mjs"
+      ],
+      "blockers": [],
+      "completionEvidence": [
+        "src/domain/NC03ReadModel.js",
+        "docs/NC03-READ-PLANE-NORMALIZATION.md",
+        "evidence/wp05-read-plane-normalization.v1.json",
+        "evidence/wp05-real-hardware-read-parity-2026-09-28.json",
+        "tests/read-model.test.mjs",
+        "tests/application-boundary.test.mjs",
+        "tests/diagnostic-report.test.mjs",
+        "tests/live-telemetry.test.mjs",
+        "NC03 CI #618",
+        "Universal Constitution Compliance #69"
+      ]
     },
     {
       "id": "NC03-WP06",
       "sequence": 6,
       "title": "Guarded write engine v2",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "dependsOn": [
         "NC03-WP05"
       ],

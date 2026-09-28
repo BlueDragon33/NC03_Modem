@@ -464,3 +464,15 @@ test("WP04 PWA cache includes application-layer runtime modules", () => {
   assert.match(sw, /src\/application\/NC03AuthSessionStateMachine\.js/);
   assert.match(sw, /src\/domain\/NC03SettingsRegistry\.js/);
 });
+
+
+test("WP05 Product UI consumes normalized read contract rather than vendor fields", () => {
+  const vendorFieldPattern=/\b(?:mnet_|dialup_|rt_|device_|wifi_|ntp_|lcd_|statistics_|fota_)[A-Za-z0-9_]*/g;
+  const executableLines=app.split("\n").filter((line)=>!line.includes("<code>mnet_sig_level</code>")).join("\n");
+  assert.equal((executableLines.match(vendorFieldPattern) ?? []).length,0);
+  assert.match(server,/normalizeAdvancedSnapshot/);
+  assert.match(server,/normalizeLiveSnapshot/);
+  assert.match(applicationClient,/READ_MODEL_SCHEMA_MISMATCH/);
+  assert.match(app,/details\?\.dataUsage\?\.totalBytes/);
+  assert.match(app,/state\.details\?\.mobile/);
+});
