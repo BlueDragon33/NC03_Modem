@@ -1,0 +1,1679 @@
+{
+  "schemaVersion": "1.0.0",
+  "inventoryId": "nc03-stock-webui-parity",
+  "inventoryVersion": "1.0.0",
+  "projectId": "project:nc03-modem",
+  "referenceFirmware": "NC03_8.00.42",
+  "workPackage": "NC03-WP01",
+  "status": "HUMAN_AND_AUTOMATED_COVERAGE_CONFIRMED",
+  "humanReview": {
+    "required": true,
+    "state": "COMPLETE",
+    "requiredForCompletion": true,
+    "instructions": "Compare every stock Web UI page/control on the physical NC03_8.00.42 modem with this inventory. Add missing controls/pages and confirm or correct labels/grouping. Do not reveal secrets in screenshots/HAR.",
+    "confirmedEvidence": [
+      "evidence/wp01-human-stock-ui-home-status-2026-09-28.json",
+      "evidence/wp01-human-stock-ui-batch-2026-09-28-02.json",
+      "evidence/wp01-prior-evidence-reconciliation-2026-09-28.json"
+    ],
+    "remainingScope": [],
+    "note": "Coverage completed by reconciling current screenshots, authenticated local audit, real-HAR/source evidence and prior conversation evidence. Internal firmware states not observed as stock controls are classified explicitly instead of blocking the inventory.",
+    "completedAt": "2026-09-28"
+  },
+  "evidenceSources": [
+    "src/modem/NC03Firmware80042Profile.js",
+    "src/modem/NC03Firmware80042Adapter.js",
+    "src/modem/NC03Har2Profile.js",
+    "src/modem/WriteSourceDiscovery.js",
+    "docs/AUTH_DISCOVERY.md",
+    "existing real-HAR and live-hardware evidence preserved in repository history"
+  ],
+  "families": [
+    "mobile-network",
+    "wifi",
+    "lan-dhcp-routing",
+    "usb-bridge-ethernet",
+    "power-battery-display",
+    "security-wps-firewall-dmz",
+    "system-time-firmware-admin",
+    "devices-clients"
+  ],
+  "rows": [
+    {
+      "id": "auth.login",
+      "family": "system-time-firmware-admin",
+      "label": "Đăng nhập quản trị",
+      "kind": "action",
+      "stockUiPresence": "CONFIRMED_RUNTIME_HARDWARE",
+      "readEvidence": {
+        "state": "VERIFIED",
+        "source": "runtime firmware source + real hardware login",
+        "route": "/goform/login"
+      },
+      "writeEvidence": {
+        "state": "VERIFIED",
+        "source": "runtime login recipe + session verification",
+        "route": "/goform/login"
+      },
+      "danger": "MEDIUM",
+      "privacy": "SECRET",
+      "notes": "Password transformed by firmware recipe; session verified via get_login_info."
+    },
+    {
+      "id": "auth.session-status",
+      "family": "system-time-firmware-admin",
+      "label": "Trạng thái phiên đăng nhập",
+      "kind": "read",
+      "stockUiPresence": "CONFIRMED_RUNTIME_HARDWARE",
+      "readEvidence": {
+        "state": "VERIFIED",
+        "source": "real HAR/profile",
+        "route": "/goform/get_login_info"
+      },
+      "writeEvidence": {
+        "state": "NOT_APPLICABLE"
+      },
+      "danger": "LOW",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "auth.logout",
+      "family": "system-time-firmware-admin",
+      "label": "Đăng xuất",
+      "kind": "action",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "SOURCE_OBSERVED",
+        "source": "firmware source probe",
+        "route": "/action/logout"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "firmware source probe",
+        "route": "/action/logout"
+      },
+      "danger": "MEDIUM",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": "Logout control is visible as a global icon in the stock UI sidebar/footer area."
+    },
+    {
+      "id": "mobile.data",
+      "family": "mobile-network",
+      "label": "Dữ liệu di động",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "dialup_dataswitch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "mobile.roaming",
+      "family": "mobile-network",
+      "label": "Roaming",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "dialup_roamswitch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "mobile.sim-slot",
+      "family": "mobile-network",
+      "label": "Khe SIM",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "mnet_sim_slot"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "mobile.sim-pin-protect",
+      "family": "mobile-network",
+      "label": "Bảo vệ SIM PIN",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "mnet_sim_pin_protect",
+          "mnet_sim_pin_rtimes"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "SECRET",
+      "notes": ""
+    },
+    {
+      "id": "mobile.cloud-sim-auto",
+      "family": "mobile-network",
+      "label": "Cloud SIM tự động",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "mnet_uc_switch_enable"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "mobile.cloud-sim-notification",
+      "family": "mobile-network",
+      "label": "Thông báo Cloud SIM",
+      "kind": "toggle",
+      "stockUiPresence": "NOT_OBSERVED_AS_STOCK_CONTROL",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "mnet_uc_switch_notification"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "mobile.acquisition-order",
+      "family": "mobile-network",
+      "label": "Acquisition order",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "mnet_acqorder"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "mobile.scan-mode",
+      "family": "mobile-network",
+      "label": "Scan mode",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "mnet_scan_mode"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "mobile.nr5g-mode",
+      "family": "mobile-network",
+      "label": "Chế độ 5G",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "mnet_nr5g_config_mode"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "mobile.band",
+      "family": "mobile-network",
+      "label": "Band",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "mnet_band"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "mobile.band-lock",
+      "family": "mobile-network",
+      "label": "Band lock",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "mnet_band_lock_type"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "mobile.band-auto-unlock",
+      "family": "mobile-network",
+      "label": "Tự mở khóa band",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "mnet_band_auto_unlock_switch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "mobile.apn-profiles",
+      "family": "mobile-network",
+      "label": "APN / profile dữ liệu",
+      "kind": "collection",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "INTENTIONALLY_NOT_MIRRORED",
+        "source": "privacy policy",
+        "keys": [
+          "dialup_profile_*"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "SECRET",
+      "notes": "Current profile values intentionally excluded from ordinary UI state; stock UI presence requires human confirmation."
+    },
+    {
+      "id": "mobile.data-usage",
+      "family": "mobile-network",
+      "label": "Thống kê dữ liệu",
+      "kind": "read",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "statistics_data_used",
+          "statistics_data_limit",
+          "statistics_billing_day",
+          "statistics_day_data_used",
+          "statistics_day_limit",
+          "statistics_time_mode"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "routes": [
+          "/action/statistics_set_dsflow",
+          "/action/statistics_clear_dsflow"
+        ]
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.global-enable",
+      "family": "wifi",
+      "label": "Bật/tắt Wi‑Fi tổng",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "wifi_work_status",
+          "wifi_total_switch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_basic_params"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.ap-enable",
+      "family": "wifi",
+      "label": "Bật/tắt AP",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keyTemplate": "wifi_state_{0..3}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.ssid",
+      "family": "wifi",
+      "label": "Tên Wi‑Fi (SSID)",
+      "kind": "text",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keyTemplate": "wifi_ssid_{0..3}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.password",
+      "family": "wifi",
+      "label": "Mật khẩu Wi‑Fi mới",
+      "kind": "password",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "INTENTIONALLY_NOT_MIRRORED",
+        "source": "privacy policy",
+        "keys": [
+          "xmg_wifi_psk_*"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "HIGH",
+      "privacy": "SECRET",
+      "notes": "Current PSK must never be prefilled; write flow should accept a new value only."
+    },
+    {
+      "id": "wifi.security-mode",
+      "family": "wifi",
+      "label": "Chế độ bảo mật Wi‑Fi",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keyTemplate": "wifi_security_{0..3}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.broadcast-ssid",
+      "family": "wifi",
+      "label": "Phát SSID",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keyTemplate": "wifi_broadcast_ssid_{0..3}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.frequency",
+      "family": "wifi",
+      "label": "Tần số / band AP",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keyTemplate": "wifi_freq_{0..3}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.channel",
+      "family": "wifi",
+      "label": "Kênh Wi‑Fi",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keyTemplate": "wifi_channel_{0..3}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.mode",
+      "family": "wifi",
+      "label": "Chế độ Wi‑Fi",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keyTemplate": "wifi_mode_{0..3}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.standard",
+      "family": "wifi",
+      "label": "Chuẩn 802.11",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keyTemplate": "wifi_80211_mode_{0..3}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.bandwidth",
+      "family": "wifi",
+      "label": "Bandwidth",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keyTemplate": "wifi_bandwidth_{0..3}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.max-clients",
+      "family": "wifi",
+      "label": "Số client tối đa",
+      "kind": "number",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keyTemplate": "wifi_max_client_{0..3}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_params"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.tx-power",
+      "family": "wifi",
+      "label": "Công suất phát",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "UNMAPPED"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_ap_txpower"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "wifi.privacy-separator",
+      "family": "wifi",
+      "label": "Privacy / AP isolation",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "UNMAPPED"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_privacy_separator_params"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "lan.dhcp-enable",
+      "family": "lan-dhcp-routing",
+      "label": "DHCP Server",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_dhcp_v4_switch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_dhcp_params"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "lan.gateway",
+      "family": "lan-dhcp-routing",
+      "label": "Gateway LAN",
+      "kind": "ipv4",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_dhcp_v4_gw"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_dhcp_params"
+      },
+      "danger": "CRITICAL",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "lan.subnet-mask",
+      "family": "lan-dhcp-routing",
+      "label": "Subnet mask",
+      "kind": "ipv4",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_dhcp_v4_mask"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_dhcp_params"
+      },
+      "danger": "CRITICAL",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "lan.dhcp-start",
+      "family": "lan-dhcp-routing",
+      "label": "DHCP start",
+      "kind": "ipv4",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_dhcp_v4_start"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_dhcp_params"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "lan.dhcp-end",
+      "family": "lan-dhcp-routing",
+      "label": "DHCP end",
+      "kind": "ipv4",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_dhcp_v4_end"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_dhcp_params"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "lan.lease-time",
+      "family": "lan-dhcp-routing",
+      "label": "DHCP lease time",
+      "kind": "duration",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_dhcp_lease_time"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_dhcp_params"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "lan.dns-proxy",
+      "family": "lan-dhcp-routing",
+      "label": "DNS proxy",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_dhcp_dns_proxy"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_dhcp_params"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "lan.dns-address",
+      "family": "lan-dhcp-routing",
+      "label": "DNS address",
+      "kind": "text",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_dhcp_dns_addr"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_dhcp_params"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "lan.ip-mac-bindings",
+      "family": "lan-dhcp-routing",
+      "label": "IP/MAC binding",
+      "kind": "collection",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "COUNT_ONLY",
+        "source": "get_mgdb_params",
+        "keyTemplate": "rt_ip_mac_bind_{0..31}"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_ip_mac_bind_params"
+      },
+      "danger": "HIGH",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "lan.port-forwarding",
+      "family": "lan-dhcp-routing",
+      "label": "Port forwarding",
+      "kind": "collection",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "COUNT_ONLY",
+        "source": "get_mgdb_params",
+        "keyTemplate": "rt_port_forward_{0..31}"
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "CRITICAL",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "lan.ipv4-filters",
+      "family": "lan-dhcp-routing",
+      "label": "IPv4 packet filters",
+      "kind": "collection",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "COUNT_ONLY",
+        "source": "get_mgdb_params",
+        "keyTemplate": "rt_obj_value_info_v4_lan_{0..49}"
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "CRITICAL",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "lan.ipv6-filters",
+      "family": "lan-dhcp-routing",
+      "label": "IPv6 packet filters",
+      "kind": "collection",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "COUNT_ONLY",
+        "source": "get_mgdb_params",
+        "keyTemplate": "rt_obj_value_info_v6_lan_{0..49}"
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "CRITICAL",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "connectivity.bridge-enable",
+      "family": "usb-bridge-ethernet",
+      "label": "IP Passthrough / Bridge",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_PRIOR_EVIDENCE",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_ip_passthrough_switch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "CRITICAL",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "connectivity.bridge-lan-type",
+      "family": "usb-bridge-ethernet",
+      "label": "Bridge LAN type",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_PRIOR_EVIDENCE",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_ip_passthrough_lan_type"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "CRITICAL",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "connectivity.usb-tether",
+      "family": "usb-bridge-ethernet",
+      "label": "USB tethering",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_usb_tethering_status"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/device_set_usb_tethering"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "connectivity.usb-speed",
+      "family": "usb-bridge-ethernet",
+      "label": "USB speed/type",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_usb_speed_type"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/device_set_usb_speed_type"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "connectivity.ethernet-type",
+      "family": "usb-bridge-ethernet",
+      "label": "Ethernet type",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_eth_type"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "connectivity.cradle-screen-saver",
+      "family": "usb-bridge-ethernet",
+      "label": "Cradle screen saver",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "lcd_plinth_screen_saver_sw"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "power.safe-charge",
+      "family": "power-battery-display",
+      "label": "Safe Charge",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_bat_safe_charge_switch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/device_set_battery_safe_charge"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": "Semantics must be separated from Long Life before independent promotion."
+    },
+    {
+      "id": "power.long-life",
+      "family": "power-battery-display",
+      "label": "Long Life Charging",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_charge_long_life",
+          "device_bat_safe_charge_switch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "GUARDED_PENDING_HARDWARE_ACCEPTANCE",
+        "source": "v0.7.29 guarded write",
+        "route": "/action/device_set_battery_safe_charge"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "power.mode",
+      "family": "power-battery-display",
+      "label": "Power saving mode",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_power_saving_mode"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/device_set_power_saving_mode"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "power.auto-sleep-switch",
+      "family": "power-battery-display",
+      "label": "Auto sleep",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_as_switch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/device_set_autosleep"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "power.auto-sleep-timer",
+      "family": "power-battery-display",
+      "label": "Auto sleep timer",
+      "kind": "duration",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_as_timer"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/device_set_autosleep"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "power.ac-autostart",
+      "family": "power-battery-display",
+      "label": "AC auto-start",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_ac_autostart"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/device_set_ac_autostart"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "power.lcd-timeout",
+      "family": "power-battery-display",
+      "label": "Tắt LCD sau",
+      "kind": "duration",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_turnoff_lcd_time"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/device_set_turnoff_lcd_time"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "power.eco-display",
+      "family": "power-battery-display",
+      "label": "Eco display",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "lcd_eco_display_time_state"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/lcd_set_eco_display_time_state"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "power.pseudo-enable",
+      "family": "power-battery-display",
+      "label": "Pseudo enable",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_pseudo_enable"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": "Meaning requires human/vendor UI confirmation."
+    },
+    {
+      "id": "security.wps-enable",
+      "family": "security-wps-firewall-dmz",
+      "label": "WPS",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "wifi_wps_enable_state"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_wps_status"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "security.wps-mode",
+      "family": "security-wps-firewall-dmz",
+      "label": "WPS mode",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "wifi_wps_mode"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_wps_status"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "security.wifi-mac-filter-mode",
+      "family": "security-wps-firewall-dmz",
+      "label": "Wi‑Fi MAC filter",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "wifi_macfilter_mode"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/wifi_set_macfilter_params"
+      },
+      "danger": "CRITICAL",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "security.protection",
+      "family": "security-wps-firewall-dmz",
+      "label": "Security protection",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_security_protection_switch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/router_set_security_protection"
+      },
+      "danger": "HIGH",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "security.mac-filter-type",
+      "family": "security-wps-firewall-dmz",
+      "label": "MAC filter type",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_macfilter_type"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "CRITICAL",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "security.ip-filter-type",
+      "family": "security-wps-firewall-dmz",
+      "label": "IP filter type",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_ipfilter_type"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "CRITICAL",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "security.dmz-enable",
+      "family": "security-wps-firewall-dmz",
+      "label": "DMZ",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "rt_dmz_switch"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "CRITICAL",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "security.dmz-target",
+      "family": "security-wps-firewall-dmz",
+      "label": "DMZ target IP",
+      "kind": "ipv4",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "INTENTIONALLY_NOT_MIRRORED",
+        "source": "privacy policy",
+        "keys": [
+          "rt_dmz_ip"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "CRITICAL",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": ""
+    },
+    {
+      "id": "system.ntp-enable",
+      "family": "system-time-firmware-admin",
+      "label": "NTP",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "ntp_enable_state"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "system.nitz-enable",
+      "family": "system-time-firmware-admin",
+      "label": "NITZ",
+      "kind": "toggle",
+      "stockUiPresence": "NOT_OBSERVED_AS_STOCK_CONTROL",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "ntp_nitz_enable_state"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "system.timezone",
+      "family": "system-time-firmware-admin",
+      "label": "Timezone",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "ntp_timezone"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "system.time-format",
+      "family": "system-time-firmware-admin",
+      "label": "Định dạng thời gian",
+      "kind": "select",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "ntp_format"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "system.daylight",
+      "family": "system-time-firmware-admin",
+      "label": "Daylight saving",
+      "kind": "toggle",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "ntp_daylight_state"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "LOW",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "system.reboot",
+      "family": "system-time-firmware-admin",
+      "label": "Khởi động lại modem",
+      "kind": "dangerous-action",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "NOT_APPLICABLE"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js-get-helper",
+        "route": "/action/reboot"
+      },
+      "danger": "CRITICAL",
+      "privacy": "NORMAL",
+      "notes": ""
+    },
+    {
+      "id": "system.admin-password",
+      "family": "system-time-firmware-admin",
+      "label": "Đổi mật khẩu quản trị",
+      "kind": "password-action",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "SOURCE_OBSERVED",
+        "source": "systemadmin.js password codec evidence"
+      },
+      "writeEvidence": {
+        "state": "CANDIDATE",
+        "source": "vendor-js",
+        "route": "/action/modify_password"
+      },
+      "danger": "CRITICAL",
+      "privacy": "SECRET",
+      "notes": ""
+    },
+    {
+      "id": "system.firmware-status",
+      "family": "system-time-firmware-admin",
+      "label": "Firmware / FOTA status",
+      "kind": "read",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "get_mgdb_params",
+        "keys": [
+          "device_software_version",
+          "device_hardware_version",
+          "fota_curr_istatus",
+          "fota_retcode"
+        ]
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "MEDIUM",
+      "privacy": "NORMAL",
+      "notes": "Home > Status visibly includes model/software version information."
+    },
+    {
+      "id": "system.factory-reset",
+      "family": "system-time-firmware-admin",
+      "label": "Khôi phục cài đặt gốc",
+      "kind": "dangerous-action",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
+      "readEvidence": {
+        "state": "UNMAPPED"
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "CRITICAL",
+      "privacy": "NORMAL",
+      "notes": "Stock UI presence must be confirmed; no state-changing route should be inferred."
+    },
+    {
+      "id": "devices.connected-list",
+      "family": "devices-clients",
+      "label": "Danh sách thiết bị kết nối",
+      "kind": "collection",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
+      "readEvidence": {
+        "state": "READ_VERIFIED",
+        "source": "real HAR/profile",
+        "route": "/action/router_get_hosts_info"
+      },
+      "writeEvidence": {
+        "state": "NOT_APPLICABLE"
+      },
+      "danger": "LOW",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": "Home > Status contains a Clients table with Name, MAC Address, IP Address, Type and Connection Uptime."
+    },
+    {
+      "id": "devices.client-admin",
+      "family": "devices-clients",
+      "label": "Quản trị từng client (nếu Web UI có)",
+      "kind": "action-family",
+      "stockUiPresence": "NOT_OBSERVED_AS_STOCK_CONTROL",
+      "readEvidence": {
+        "state": "UNMAPPED"
+      },
+      "writeEvidence": {
+        "state": "UNMAPPED"
+      },
+      "danger": "HIGH",
+      "privacy": "LOCAL_SENSITIVE",
+      "notes": "Human review must confirm which client actions exist in stock UI."
+    }
+  ],
+  "knownWriteRoutes": [
+    "/action/device_set_battery_safe_charge",
+    "/action/device_set_power_saving_mode",
+    "/action/device_set_autosleep",
+    "/action/device_set_turnoff_lcd_time",
+    "/action/device_set_ac_autostart",
+    "/action/lcd_set_eco_display_time_state",
+    "/action/wifi_set_ap_params",
+    "/action/wifi_set_ap_txpower",
+    "/action/wifi_set_basic_params",
+    "/action/router_set_privacy_separator_params",
+    "/action/wifi_set_wps_status",
+    "/action/wifi_set_macfilter_params",
+    "/action/router_set_security_protection",
+    "/action/router_set_dhcp_params",
+    "/action/router_set_ip_mac_bind_params",
+    "/action/reboot",
+    "/action/device_set_usb_tethering",
+    "/action/device_set_usb_speed_type",
+    "/action/statistics_set_dsflow",
+    "/action/statistics_clear_dsflow",
+    "/goform/schedule_process"
+  ],
+  "unresolved": [
+    "Human confirmation of exact stock Web UI page/navigation structure.",
+    "Human confirmation of controls not represented by current HAR/source/read-key evidence.",
+    "Exact stock UI placement/labeling of APN/eSIM/client administration/factory reset/FOTA actions.",
+    "Write request shapes and rollback semantics for all candidates except the existing guarded Long Life experiment.",
+    "Independent semantics of Safe Charge versus Long Life Charging."
+  ],
+  "observedStockNavigation": [
+    "Home > Status",
+    "Mobile Network",
+    "LAN",
+    "Wi-Fi",
+    "Security",
+    "Management",
+    "Data Usage"
+  ],
+  "stockUiPrivacyDifferences": [
+    {
+      "id": "stock-home-wifi-key-visible",
+      "observation": "Stock Home Status displays the current Wi-Fi Key.",
+      "replacementPolicy": "Do not mirror or prefill the current Wi-Fi PSK in NC03 Control Center."
+    },
+    {
+      "id": "stock-home-iccid-visible",
+      "observation": "Stock Home Status displays USIM ICCID.",
+      "replacementPolicy": "Treat ICCID as sensitive; do not expose it by default in ordinary dashboard/diagnostic export."
+    }
+  ],
+  "completion": {
+    "gate": "Human review confirms stock UI coverage",
+    "status": "PASS",
+    "evidence": "evidence/wp01-prior-evidence-reconciliation-2026-09-28.json",
+    "caveat": "WP01 inventories stock surface and evidence state only. WRITE request-shape/readback/rollback verification remains owned by WP06-WP13."
+  }
+}

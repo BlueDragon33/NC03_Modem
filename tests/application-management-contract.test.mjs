@@ -125,3 +125,17 @@ test("contract publishes Constitution-bound canonical Blueprint governance", () 
   assert.equal(contract.policy.rootCauseBeforePatch, true);
   assert.equal(contract.policy.productionAuthoritySeparateFromMerge, true);
 });
+
+
+test("contract publishes privacy-safe stock Web UI audit without promoting it to human acceptance", () => {
+  assert.equal(contract.capabilities.stockWebUiStructureAudit, true);
+  assert.equal(contract.capabilities.stockWebUiAuditExport, true);
+  assert.equal(contract.endpoints.stockWebUiAudit, "/api/nc03/stock-ui-audit");
+  assert.equal(contract.policy.stockWebUiAuditSchema, "nc03-stock-webui-audit/v2");
+  assert.equal(contract.policy.stockWebUiAuditLocalOnly, true);
+  assert.equal(contract.policy.stockWebUiAuditStructureOnly, true);
+  assert.equal(contract.policy.stockWebUiAuditNeverReturnsControlValues, true);
+  assert.equal(contract.policy.stockWebUiAuditUsesAuthenticatedSession, true);
+  assert.equal(contract.policy.stockWebUiAuditReportsCoverageGaps, true);
+  assert.equal(contract.policy.stockWebUiAuditDoesNotReplaceHumanReview, true);
+});
