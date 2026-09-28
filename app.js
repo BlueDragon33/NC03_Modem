@@ -46,6 +46,9 @@ let state = {
   authSourceEvidence: null,
   authSourceError: "",
   authSourceLoading: false,
+  stockUiAudit: null,
+  stockUiAuditError: "",
+  stockUiAuditLoading: false,
   writeReadiness: null,
   writeReadinessError: "",
   writeReadinessLoading: false,
@@ -441,6 +444,8 @@ function renderDiscovery() {
   const writeReady = quality?.readyForWriteMapping === true;
   const sourceEvidence = state.authSourceEvidence?.evidence ?? null;
   const sourceDiagnostics = state.authSourceEvidence?.diagnostics ?? null;
+  const stockAudit = state.stockUiAudit?.audit ?? null;
+  const stockAuditDiagnostics = state.stockUiAudit?.diagnostics ?? null;
   const sourceTone = sourceEvidence?.status === "LOGIN_SOURCE_CANDIDATE_READY" ? "ok" : sourceEvidence ? "warn" : "muted";
   const writeReadiness = state.writeReadiness?.evidence ?? null;
   const writeDiagnostics = state.writeReadiness?.diagnostics ?? null;
@@ -469,6 +474,30 @@ function renderDiscovery() {
       </div>
       <div class="evidence-actions"><button id="downloadHarEvidence">Xuất evidence.json</button><button id="clearHarEvidence" class="secondary-action">Xóa phiên phân tích</button></div>
     ` : ""}
+  </section>
+
+  <section class="panel evidence-panel stock-ui-audit-panel">
+    <div class="panel-head"><div><span>STOCK WEB UI AUDIT · WP01</span><h2>Quét cấu trúc Web UI gốc trực tiếp từ modem</h2></div>${statusPill(stockAudit ? "STRUCTURE CAPTURED" : state.stockUiAuditLoading ? "ĐANG QUÉT" : "CHƯA CHẠY", stockAudit ? "ok" : "muted")}</div>
+    <p class="body-copy">Local Bridge chỉ đọc HTML/JS tĩnh của modem và trả về cấu trúc đã rút gọn: page path, script path, control id/name, navigation hint và action route. Không trả value của input, password, PSK, cookie hay session.</p>
+    ${state.stockUiAuditError ? `<div class="inline-error">${esc(state.stockUiAuditError)}</div>` : ""}
+    ${stockAudit ? `
+      <div class="evidence-summary">
+        <div><span>Trang phát hiện</span><strong>${stockAudit.summary?.pageCount ?? 0}</strong><small>HTML path / navigation candidate</small></div>
+        <div><span>Controls</span><strong>${stockAudit.summary?.controlCount ?? 0}</strong><small>${stockAudit.summary?.uniqueControlKeyCount ?? 0} key duy nhất</small></div>
+        <div><span>Action routes</span><strong>${stockAudit.summary?.actionRouteCount ?? 0}</strong><small>/action + /goform</small></div>
+        <div><span>Privacy</span><strong>STRUCTURE ONLY</strong><small>No control values</small></div>
+      </div>
+      <div class="source-evidence-grid">
+        <article><span>Page paths</span><code>${esc(stockAudit.pagePaths?.join("\n") || "chưa thấy")}</code></article>
+        <article><span>Navigation candidates</span><code>${esc((stockAudit.navigation ?? []).slice(0,80).map((item)=>`${item.path}${item.label ? ` · ${item.label}` : ""}`).join("\n") || "chưa thấy")}</code></article>
+        <article><span>Action routes</span><code>${esc(stockAudit.actionRoutes?.join("\n") || "chưa thấy")}</code></article>
+        <article><span>Control IDs / names</span><code>${esc((stockAudit.controls ?? []).slice(0,160).map((item)=>`${item.sourcePath} · ${item.tag}/${item.type} · ${item.id || item.name || item.i18n || item.labelHint || "unnamed"}${item.sensitive ? " · SENSITIVE-NAME" : ""}`).join("\n") || "chưa thấy")}</code></article>
+      </div>
+      ${stockAuditDiagnostics ? `<div class="probe-diagnostics"><div><span>AUDIT DIAGNOSTICS</span><strong>${stockAuditDiagnostics.sourceCount ?? 0} source đọc được</strong><small>${esc(Object.entries(stockAuditDiagnostics.summary ?? {}).map(([k,v])=>`${k}: ${v}`).join(" · ") || "—")}</small></div></div>` : ""}
+      <div class="evidence-actions"><button id="downloadStockUiAudit">Xuất stock-ui-audit.json</button></div>
+    ` : `<div class="empty">Bấm quét để tự động thu thập cấu trúc Web UI gốc trên modem thật. Kết quả giúp giảm số ảnh cần đối chiếu thủ công, nhưng không tự thay thế Human Review của WP01.</div>`}
+    <div class="evidence-actions"><button id="runStockUiAudit" ${state.stockUiAuditLoading ? "disabled" : ""}>${state.stockUiAuditLoading ? "Đang quét…" : "Quét Web UI gốc"}</button></div>
+    <div class="advanced-note"><strong>WP01 gate</strong><span>Kết quả này là evidence tự động. Human Review vẫn phải xác nhận các trang/control động mà source tĩnh không thể chứng minh.</span></div>
   </section>
 
   <section class="panel evidence-panel auth-source-panel">
@@ -898,7 +927,8 @@ async function localHealth() {
       || payload.authEvidenceSchema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema
       || payload.authLoginProtocol !== NC03_RUNTIME_PROTOCOL.authLoginProtocol
       || payload.writeReadinessProtocol !== NC03_RUNTIME_PROTOCOL.writeReadinessProtocol
-      || payload.settingsWriteProtocol !== NC03_RUNTIME_PROTOCOL.settingsWriteProtocol) {
+      || payload.settingsWriteProtocol !== NC03_RUNTIME_PROTOCOL.settingsWriteProtocol
+      || payload.stockUiAuditSchema !== NC03_RUNTIME_PROTOCOL.stockUiAuditSchema) {
       throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
     }
     return payload;
@@ -1081,6 +1111,35 @@ async function submitLogin() {
       const restoredPassword = document.querySelector("#loginPassword");
       if (restoredPassword) restoredPassword.value = password;
     }
+  }
+}
+
+async function runStockUiAudit() {
+  if (!state.developerMode || state.stockUiAuditLoading) return;
+  state.stockUiAuditLoading = true;
+  state.stockUiAuditError = "";
+  page();
+  try {
+    await localHealth();
+    const payload = await localRead("/api/nc03/stock-ui-audit");
+    if (payload?.runtime?.protocolId !== NC03_RUNTIME_PROTOCOL.id
+      || payload?.runtime?.stockUiAuditSchema !== NC03_RUNTIME_PROTOCOL.stockUiAuditSchema
+      || payload?.audit?.schema !== NC03_RUNTIME_PROTOCOL.stockUiAuditSchema) {
+      throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
+    }
+    state.stockUiAudit = payload;
+  } catch (error) {
+    state.stockUiAudit = null;
+    const labels = {
+      LOCAL_BRIDGE_UNREACHABLE:"Local Bridge không phản hồi.",
+      LOCAL_BRIDGE_RESTART_REQUIRED:"Stock UI Audit mới nhưng Local Bridge đang chạy runtime/schema cũ. Hãy restart NC03 runtime.",
+      METHOD_NOT_ALLOWED:"Stock UI Audit endpoint không khớp runtime hiện tại.",
+      STOCK_UI_AUDIT_FAILED:"Không quét được cấu trúc Web UI gốc từ modem local."
+    };
+    state.stockUiAuditError = labels[error?.code] || error?.code || "STOCK_UI_AUDIT_FAILED";
+  } finally {
+    state.stockUiAuditLoading = false;
+    page();
   }
 }
 
@@ -1356,6 +1415,9 @@ function bind() {
       state.authSourceEvidence = null;
       state.authSourceError = "";
       state.authSourceLoading = false;
+      state.stockUiAudit = null;
+      state.stockUiAuditError = "";
+      state.stockUiAuditLoading = false;
       state.writeReadiness = null;
       state.writeReadinessError = "";
       state.writeReadinessLoading = false;
@@ -1402,6 +1464,7 @@ function bind() {
     await refreshAll();
   });
 
+  document.querySelector("#runStockUiAudit")?.addEventListener("click", runStockUiAudit);
   document.querySelector("#runAuthSourceProbe")?.addEventListener("click", runAuthSourceProbe);
   document.querySelector("#runWriteReadiness")?.addEventListener("click", runWriteReadiness);
   document.querySelector("#toggleLongLifeCharging")?.addEventListener("click", (event) => {
@@ -1437,6 +1500,29 @@ function bind() {
       state.discoveryError = `Không đọc được HAR: ${error instanceof Error ? error.message : "Dữ liệu không hợp lệ"}`;
     }
     page();
+  });
+
+  document.querySelector("#downloadStockUiAudit")?.addEventListener("click", () => {
+    if (!state.stockUiAudit?.audit || !state.developerMode) return;
+    const artifact = {
+      schema:state.stockUiAudit.audit.schema,
+      capturedAt:new Date().toISOString(),
+      modemBaseUrl:state.baseUrl,
+      audit:state.stockUiAudit.audit,
+      diagnostics:{
+        summary:state.stockUiAudit.diagnostics?.summary ?? {},
+        sourceCount:state.stockUiAudit.diagnostics?.sourceCount ?? 0
+      }
+    };
+    const blob = new Blob([JSON.stringify(artifact, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "nc03-stock-ui-audit.json";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
   });
 
   document.querySelector("#downloadHarEvidence")?.addEventListener("click", () => {
