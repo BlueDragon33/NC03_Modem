@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "reportId": "wp05-read-plane-normalization",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP05",
+  "status": "AUTOMATED_GATES_READY_HARDWARE_PARITY_PENDING",
+  "readModel": {
+    "schema": "nc03-read-model/v1",
+    "version": "1.0.0",
+    "module": "src/domain/NC03ReadModel.js"
+  },
+  "boundaries": {
+    "vendorMappingOwner": "src/modem/NC03Firmware80042Adapter.js",
+    "normalizationOwner": "src/domain/NC03ReadModel.js",
+    "transportOwner": "scripts/serve-local.mjs + src/application/NC03ControlClient.js",
+    "productUiVendorFieldAuthority": false
+  },
+  "automatedEvidence": [
+    "tests/read-model.test.mjs",
+    "tests/application-boundary.test.mjs",
+    "tests/diagnostic-report.test.mjs",
+    "tests/live-telemetry.test.mjs"
+  ],
+  "pendingHardwareEvidence": [
+    "Home live/read data parity after normalized contract migration",
+    "Network/Wi-Fi/Devices/Settings detail parity after normalized contract migration"
+  ]
+}
