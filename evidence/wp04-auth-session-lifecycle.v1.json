@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "reportId": "wp04-auth-session-lifecycle",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP04",
+  "status": "AUTOMATED_GATES_READY_HARDWARE_RECOVERY_PENDING",
+  "implementation": {
+    "stateMachine": "src/application/NC03AuthSessionStateMachine.js",
+    "applicationClient": "src/application/NC03ControlClient.js",
+    "sessionOwner": "Local Bridge in-memory NC03LocalCookieJar",
+    "credentialOwner": "SecureCredentialVault",
+    "localSessionClearEndpoint": "/api/nc03/session/clear",
+    "vendorLogoutAttempted": false
+  },
+  "coveredCases": [
+    "fresh bootstrap → readiness → login",
+    "wrong password / login rejection",
+    "successful verified login",
+    "expired authenticated session → re-authentication required",
+    "Local Bridge unavailable",
+    "stale Local Bridge/runtime protocol",
+    "explicit local session invalidation",
+    "remembered credential encryption/redaction"
+  ],
+  "existingHardwareEvidence": {
+    "successfulLogin": true,
+    "sessionCookieContinuity": true,
+    "source": "Previously confirmed real NC03_8.00.42 login/session behavior in project history"
+  },
+  "pendingHardwareEvidence": [
+    "restart/clear Local Bridge session on real modem",
+    "protected read detects authentication loss",
+    "UI returns to re-authentication",
+    "re-login succeeds"
+  ]
+}
