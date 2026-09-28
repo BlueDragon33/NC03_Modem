@@ -147,11 +147,11 @@ const STOCK_UI_SOURCE_SEEDS = Object.freeze([
   "/js/tools.js"
 ]);
 
-async function fetchStaticSource(baseUrl, path) {
+async function fetchStaticSource(baseUrl, path, { fetchImpl = fetch } = {}) {
   const url = new URL(path, baseUrl);
   const startedAt = Date.now();
   try {
-    const response = await fetch(url, {
+    const response = await fetchImpl(url, {
       method:"GET",
       redirect:"manual",
       signal:AbortSignal.timeout(2200),
@@ -203,13 +203,14 @@ async function stockUiAudit(req, res) {
     const baseUrl = await authProbeBaseUrl(req);
     const sources = [];
     const diagnostics = [];
+    const session = modemSessionTransport(baseUrl);
     const collect = async (paths) => {
       const safePaths = [...new Set(paths)]
         .filter((path) => typeof path === "string")
         .filter((path) => /^\/[A-Za-z0-9_./-]+(?:\.html|\.js)?$/i.test(path))
         .filter((path) => !sources.some((item) => item.path === path));
       if (!safePaths.length) return;
-      const results = await Promise.all(safePaths.map((path) => fetchStaticSource(baseUrl, path)));
+      const results = await Promise.all(safePaths.map((path) => fetchStaticSource(baseUrl, path, { fetchImpl:session.fetchImpl })));
       for (const result of results) {
         diagnostics.push(result.diagnostic);
         if (result.item && !sources.some((item) => item.path === result.item.path)) sources.push(result.item);
@@ -217,9 +218,9 @@ async function stockUiAudit(req, res) {
     };
 
     await collect(STOCK_UI_SOURCE_SEEDS);
-    for (let pass = 0; pass < 2; pass += 1) {
+    for (let pass = 0; pass < 3; pass += 1) {
       const current = buildStockWebUiAudit(sources);
-      await collect(stockUiAuditDiscoveryPaths(current));
+      await collect(stockUiAuditDiscoveryPaths(current, { maxPages:96, maxScripts:160 }));
     }
 
     const audit = buildStockWebUiAudit(sources);
@@ -227,12 +228,23 @@ async function stockUiAudit(req, res) {
       acc[item.status] = (acc[item.status] || 0) + 1;
       return acc;
     }, {});
+    const fetchedPaths = new Set(audit.sourcePaths ?? []);
+    const missingPagePaths = (audit.pagePaths ?? []).filter((path) => !fetchedPaths.has(path));
+    const protectedPageCount = (audit.sourcePaths ?? []).filter((path) => path.startsWith("/html/") || path.includes("settings")).length;
+    const coverage = {
+      status:missingPagePaths.length ? "PARTIAL" : protectedPageCount ? "AUTHENTICATED_SURFACE_CAPTURED" : "LOGIN_SURFACE_ONLY",
+      sessionTransport:true,
+      protectedPageCount,
+      missingPagePaths,
+      redirectCount:summary.REDIRECT ?? 0
+    };
 
     json(res, 200, {
       ok:true,
       payload:{
         baseUrl,
         audit,
+        coverage,
         runtime:{
           protocolId:NC03_RUNTIME_PROTOCOL.id,
           stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema,
