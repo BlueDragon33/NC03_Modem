@@ -197,11 +197,13 @@
     "promptProjectionIsSourceOfTruth": false,
     "rootCauseBeforePatch": true,
     "productionAuthoritySeparateFromMerge": true,
-    "stockWebUiAuditSchema": "nc03-stock-webui-audit/v1",
+    "stockWebUiAuditSchema": "nc03-stock-webui-audit/v2",
     "stockWebUiAuditLocalOnly": true,
     "stockWebUiAuditStructureOnly": true,
     "stockWebUiAuditNeverReturnsControlValues": true,
-    "stockWebUiAuditDoesNotReplaceHumanReview": true
+    "stockWebUiAuditDoesNotReplaceHumanReview": true,
+    "stockWebUiAuditUsesAuthenticatedSession": true,
+    "stockWebUiAuditReportsCoverageGaps": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
