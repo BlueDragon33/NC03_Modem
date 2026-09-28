@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "wp01-human-stock-ui-home-status-2026-09-28",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP01",
+  "referenceFirmware": "NC03_8.00.42",
+  "evidenceType": "HUMAN_SCREENSHOT_REVIEW",
+  "screenshots": [
+    "image(20260928-022751).png",
+    "image(20260928-022801).png"
+  ],
+  "privacyHandling": {
+    "valuesPersisted": false,
+    "note": "Screenshots visibly contain sensitive/local identifiers and a Wi-Fi key. Canonical evidence records structure and field presence only, never those values."
+  },
+  "confirmedNavigation": [
+    {
+      "label": "Home",
+      "submenu": [
+        "Status"
+      ]
+    },
+    {
+      "label": "Mobile Network"
+    },
+    {
+      "label": "LAN"
+    },
+    {
+      "label": "Wi-Fi"
+    },
+    {
+      "label": "Security"
+    },
+    {
+      "label": "Management"
+    },
+    {
+      "label": "Data Usage"
+    }
+  ],
+  "confirmedPage": {
+    "pathLabel": "Home > Status",
+    "sections": [
+      {
+        "label": "WAN Network",
+        "visibleFields": [
+          "Uptime",
+          "Status",
+          "Connection Type",
+          "IPv4 Address",
+          "Gateway",
+          "Primary DNS Server",
+          "Secondary DNS Server",
+          "IPv6 Address",
+          "IPv6 Primary DNS Server",
+          "IPv6 Secondary DNS Server",
+          "USIM ICCID",
+          "USIM Status"
+        ]
+      },
+      {
+        "label": "Device Informations",
+        "visibleFields": [
+          "Model Name",
+          "Software Version"
+        ]
+      },
+      {
+        "label": "Wi-Fi Status",
+        "visibleFields": [
+          "5GHz SSID",
+          "Key",
+          "Wi-Fi Mode",
+          "QR code"
+        ]
+      },
+      {
+        "label": "Clients",
+        "visibleColumns": [
+          "No",
+          "Name",
+          "MAC Address",
+          "IP Address",
+          "Type",
+          "Connection Uptime"
+        ]
+      }
+    ],
+    "visibleGlobalActions": [
+      "logout icon",
+      "language icon"
+    ]
+  },
+  "architectureImplications": [
+    "Stock Web UI exposes current Wi-Fi Key on Home Status; NC03 Control Center intentionally must not mirror/prefill the current Wi-Fi PSK.",
+    "Stock Web UI exposes USIM ICCID and client MAC/IP data; replacement UI should preserve the user job while applying explicit privacy classification/redaction/export rules.",
+    "Top-level stock information architecture is now human-confirmed for Home, Mobile Network, LAN, Wi-Fi, Security, Management and Data Usage."
+  ],
+  "remainingHumanReview": [
+    "Mobile Network expanded submenu/pages",
+    "LAN expanded submenu/pages",
+    "Wi-Fi expanded submenu/pages",
+    "Security expanded submenu/pages",
+    "Management expanded submenu/pages",
+    "Data Usage expanded submenu/pages"
+  ]
+}
