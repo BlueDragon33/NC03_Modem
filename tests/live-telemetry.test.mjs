@@ -397,7 +397,7 @@ test("Settings Center mirrors stock Web UI groups while locked controls stay non
   assert.match(app, /data-settings-section=/);
   assert.match(app, /data-write="locked"/);
   assert.match(app, /switch-control/);
-  assert.match(app, /Mật khẩu Wi-Fi/);
+  assert.match(app, /registryLockedText\("wifi\.password"/);
   assert.match(app, /Không đọc\/hiển thị PSK hiện tại/);
   assert.match(app, /toggleLongLifeChargingSwitch/);
   assert.match(app, /data-settings-ap/);
