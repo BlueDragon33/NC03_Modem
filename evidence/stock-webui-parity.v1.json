@@ -1,16 +1,27 @@
 {
   "schemaVersion": "1.0.0",
   "inventoryId": "nc03-stock-webui-parity",
-  "inventoryVersion": "0.1.0",
+  "inventoryVersion": "0.2.0",
   "projectId": "project:nc03-modem",
   "referenceFirmware": "NC03_8.00.42",
   "workPackage": "NC03-WP01",
   "status": "AUTOMATED_EVIDENCE_MAPPED_HUMAN_REVIEW_REQUIRED",
   "humanReview": {
     "required": true,
-    "state": "PENDING",
+    "state": "IN_PROGRESS",
     "requiredForCompletion": true,
-    "instructions": "Compare every stock Web UI page/control on the physical NC03_8.00.42 modem with this inventory. Add missing controls/pages and confirm or correct labels/grouping. Do not reveal secrets in screenshots/HAR."
+    "instructions": "Compare every stock Web UI page/control on the physical NC03_8.00.42 modem with this inventory. Add missing controls/pages and confirm or correct labels/grouping. Do not reveal secrets in screenshots/HAR.",
+    "confirmedEvidence": [
+      "evidence/wp01-human-stock-ui-home-status-2026-09-28.json"
+    ],
+    "remainingScope": [
+      "Mobile Network expanded submenu/pages",
+      "LAN expanded submenu/pages",
+      "Wi-Fi expanded submenu/pages",
+      "Security expanded submenu/pages",
+      "Management expanded submenu/pages",
+      "Data Usage expanded submenu/pages"
+    ]
   },
   "evidenceSources": [
     "src/modem/NC03Firmware80042Profile.js",
@@ -74,7 +85,7 @@
       "family": "system-time-firmware-admin",
       "label": "Đăng xuất",
       "kind": "action",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "SOURCE_OBSERVED",
         "source": "firmware source probe",
@@ -87,7 +98,7 @@
       },
       "danger": "MEDIUM",
       "privacy": "LOCAL_SENSITIVE",
-      "notes": "Presence/UX still requires stock UI confirmation."
+      "notes": "Logout control is visible as a global icon in the stock UI sidebar/footer area."
     },
     {
       "id": "mobile.data",
@@ -1542,7 +1553,7 @@
       "family": "system-time-firmware-admin",
       "label": "Firmware / FOTA status",
       "kind": "read",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1558,7 +1569,7 @@
       },
       "danger": "MEDIUM",
       "privacy": "NORMAL",
-      "notes": ""
+      "notes": "Home > Status visibly includes model/software version information."
     },
     {
       "id": "system.factory-reset",
@@ -1581,7 +1592,7 @@
       "family": "devices-clients",
       "label": "Danh sách thiết bị kết nối",
       "kind": "collection",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "real HAR/profile",
@@ -1592,7 +1603,7 @@
       },
       "danger": "LOW",
       "privacy": "LOCAL_SENSITIVE",
-      "notes": ""
+      "notes": "Home > Status contains a Clients table with Name, MAC Address, IP Address, Type and Connection Uptime."
     },
     {
       "id": "devices.client-admin",
@@ -1640,5 +1651,26 @@
     "Exact stock UI placement/labeling of APN/eSIM/client administration/factory reset/FOTA actions.",
     "Write request shapes and rollback semantics for all candidates except the existing guarded Long Life experiment.",
     "Independent semantics of Safe Charge versus Long Life Charging."
+  ],
+  "observedStockNavigation": [
+    "Home > Status",
+    "Mobile Network",
+    "LAN",
+    "Wi-Fi",
+    "Security",
+    "Management",
+    "Data Usage"
+  ],
+  "stockUiPrivacyDifferences": [
+    {
+      "id": "stock-home-wifi-key-visible",
+      "observation": "Stock Home Status displays the current Wi-Fi Key.",
+      "replacementPolicy": "Do not mirror or prefill the current Wi-Fi PSK in NC03 Control Center."
+    },
+    {
+      "id": "stock-home-iccid-visible",
+      "observation": "Stock Home Status displays USIM ICCID.",
+      "replacementPolicy": "Treat ICCID as sensitive; do not expose it by default in ordinary dashboard/diagnostic export."
+    }
   ]
 }
