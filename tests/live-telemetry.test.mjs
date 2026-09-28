@@ -11,6 +11,7 @@ import {
 const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const applicationClient = fs.readFileSync(new URL("../src/application/NC03ControlClient.js", import.meta.url), "utf8");
 const server = fs.readFileSync(new URL("../scripts/serve-local.mjs", import.meta.url), "utf8");
+const sourceReader = fs.readFileSync(new URL("../src/modem/NC03WriteSourceCollection.js", import.meta.url), "utf8");
 const sw = fs.readFileSync(new URL("../sw.js", import.meta.url), "utf8");
 
 test("live battery, connection and signal poll every 10 seconds", () => {
@@ -193,8 +194,8 @@ test("AUTH probe exposes bridge failures and per-path diagnostics instead of a g
   assert.match(app, /PROBE DIAGNOSTICS/);
   assert.match(server, /diagnostics:\{/);
   assert.match(server, /Promise\.all\(paths\.map/);
-  assert.match(server, /TIMEOUT/);
-  assert.match(server, /REDIRECT/);
+  assert.match(sourceReader, /TIMEOUT/);
+  assert.match(sourceReader, /REDIRECT/);
 });
 
 

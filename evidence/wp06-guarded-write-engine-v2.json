@@ -8,5 +8,9 @@
   "engine": "src/modem/NC03GuardedWriteEngine.js",
   "firstOperation": "power.long-life",
   "acceptanceEndpoint": "/api/nc03/write-acceptance/long-life-charging",
+  "sourceTransport": "shared-in-memory-authenticated-session",
+  "preflightFailure": "privacy-safe-machine-readable-stage-and-source-counts",
+  "original409Body": "NOT_CAPTURED",
+  "hardwareAcceptance": "PENDING_RETEST",
   "persistentWriteStillLocked": true
 }

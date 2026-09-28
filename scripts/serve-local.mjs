@@ -9,6 +9,7 @@ import { NC03_RUNTIME_PROTOCOL } from "../src/runtime/RuntimeProtocol.js";
 import { discoverNc03LoginRecipe, discoverSaveAjaxTransport, executeNc03Login } from "../src/modem/NC03LoginRuntime.js";
 import { createCookieAwareFetch } from "../src/modem/NC03LocalCookieJar.js";
 import { buildWriteReadinessEvidence } from "../src/modem/WriteSourceDiscovery.js";
+import { fetchStaticSource, collectWriteSourceEvidence } from "../src/modem/NC03WriteSourceCollection.js";
 import { buildReversibleTogglePlan, executeJsonToggleWrite, executeRollback, readbackMatches } from "../src/modem/NC03SafeWriteRuntime.js";
 import { executeGuardedWriteTransaction } from "../src/modem/NC03GuardedWriteEngine.js";
 import { settingDefinition } from "../src/domain/NC03SettingsRegistry.js";
@@ -149,48 +150,6 @@ const STOCK_UI_SOURCE_SEEDS = Object.freeze([
   "/js/common.js",
   "/js/tools.js"
 ]);
-
-async function fetchStaticSource(baseUrl, path, { fetchImpl = fetch } = {}) {
-  const url = new URL(path, baseUrl);
-  const startedAt = Date.now();
-  try {
-    const response = await fetchImpl(url, {
-      method:"GET",
-      redirect:"manual",
-      signal:AbortSignal.timeout(2200),
-      headers:{ Accept:"text/html,application/javascript,text/javascript,*/*;q=0.5" }
-    });
-    const contentType = String(response.headers.get("content-type") || "");
-    const diagnostic = {
-      path:url.pathname,
-      status:response.ok ? "HTTP_OK" : response.status >= 300 && response.status < 400 ? "REDIRECT" : "HTTP_ERROR",
-      httpStatus:response.status,
-      contentType:contentType.split(";")[0] || null,
-      durationMs:Date.now() - startedAt
-    };
-    if (!response.ok) return { item:null, diagnostic };
-    if (!/javascript|text\/(?:html|plain)|application\/x-javascript/i.test(contentType)) {
-      return { item:null, diagnostic:{ ...diagnostic, status:"UNSUPPORTED_CONTENT" } };
-    }
-    const text = await response.text();
-    return {
-      item:{ path:url.pathname, source:text.slice(0, 524288) },
-      diagnostic:{ ...diagnostic, bytes:Buffer.byteLength(text) }
-    };
-  } catch (error) {
-    const name = String(error?.name || "");
-    return {
-      item:null,
-      diagnostic:{
-        path:url.pathname,
-        status:name === "TimeoutError" || name === "AbortError" ? "TIMEOUT" : "NETWORK_ERROR",
-        httpStatus:null,
-        contentType:null,
-        durationMs:Date.now() - startedAt
-      }
-    };
-  }
-}
 
 async function authProbeBaseUrl(req) {
   if (req.method === "GET") {
@@ -467,25 +426,21 @@ async function writeReadiness(req, res) {
       return;
     }
 
-    const [power, sourceResults] = await Promise.all([
+    const session = modemSessionTransport(baseUrl);
+    const [power, collection] = await Promise.all([
       adapter.getPowerSettings(),
-      Promise.all(WRITE_SOURCE_SEEDS.map((path) => fetchStaticSource(baseUrl, path)))
+      collectWriteSourceEvidence({ baseUrl, paths:WRITE_SOURCE_SEEDS, fetchImpl:session.fetchImpl })
     ]);
-    const sources = sourceResults.map((result) => result.item).filter(Boolean);
-    const diagnostics = sourceResults.map((result) => result.diagnostic);
-    const evidence = buildWriteReadinessEvidence(sources, { targetId, currentState:power });
+    const evidence = buildWriteReadinessEvidence(collection.sources, { targetId, currentState:power });
 
     json(res, 200, {
       ok:true,
       payload:{
         evidence,
         diagnostics:{
-          sourceCount:sources.length,
-          items:diagnostics,
-          summary:diagnostics.reduce((acc, item) => {
-            acc[item.status] = (acc[item.status] || 0) + 1;
-            return acc;
-          }, {})
+          sourceCount:collection.sources.length,
+          items:collection.diagnostics,
+          summary:collection.summary
         }
       }
     });
@@ -512,12 +467,12 @@ async function verifyPowerReadback(adapter, key, enabled) {
 
 async function buildLongLifeWriteContext(baseUrl, desiredEnabled) {
   const adapter = modemAdapter(baseUrl);
-  const [currentPower, sourceResults] = await Promise.all([
+  const session = modemSessionTransport(baseUrl);
+  const [currentPower, collection] = await Promise.all([
     adapter.getPowerSettings(),
-    Promise.all(WRITE_SOURCE_SEEDS.map((path) => fetchStaticSource(baseUrl, path)))
+    collectWriteSourceEvidence({ baseUrl, paths:WRITE_SOURCE_SEEDS, fetchImpl:session.fetchImpl })
   ]);
-  const sources = sourceResults.map((result) => result.item).filter(Boolean);
-  const evidence = buildWriteReadinessEvidence(sources, {
+  const evidence = buildWriteReadinessEvidence(collection.sources, {
     targetId:"long-life-charging",
     currentState:currentPower
   });
@@ -526,8 +481,7 @@ async function buildLongLifeWriteContext(baseUrl, desiredEnabled) {
     currentState:currentPower,
     desiredEnabled
   });
-  const transport = discoverSaveAjaxTransport(sources);
-  const session = modemSessionTransport(baseUrl);
+  const transport = discoverSaveAjaxTransport(collection.sources);
   return { adapter, currentPower, evidence, plan, transport, session };
 }
 
@@ -630,9 +584,9 @@ async function acceptLongLifeChargingWrite(req, res) {
     }
 
     const currentPower = await adapter.getPowerSettings();
-    const sourceResults = await Promise.all(WRITE_SOURCE_SEEDS.map((path) => fetchStaticSource(baseUrl, path)));
-    const sources = sourceResults.map((result) => result.item).filter(Boolean);
-    const evidence = buildWriteReadinessEvidence(sources, {
+    const session = modemSessionTransport(baseUrl);
+    const collection = await collectWriteSourceEvidence({ baseUrl, paths:WRITE_SOURCE_SEEDS, fetchImpl:session.fetchImpl });
+    const evidence = buildWriteReadinessEvidence(collection.sources, {
       targetId:"long-life-charging",
       currentState:currentPower
     });
@@ -642,7 +596,23 @@ async function acceptLongLifeChargingWrite(req, res) {
       desiredEnabled:true
     });
     if (!probePlan.ready) {
-      json(res, 409, { ok:false, code:probePlan.code || "WRITE_MAPPING_INCOMPLETE" });
+      json(res, 409, {
+        ok:false,
+        code:probePlan.code || "WRITE_MAPPING_INCOMPLETE",
+        payload:{
+          stage:"MAPPING_PREFLIGHT",
+          diagnostics:{
+            sourceCount:collection.sources.length,
+            sourceSummary:collection.summary,
+            sessionTransport:true,
+            endpointMapped:evidence.endpointMapped,
+            requestShapeMapped:evidence.requestShapeMapped,
+            transportMapped:evidence.transportMapped,
+            readbackPresent:evidence.currentReadbackPresent,
+            fieldCandidateCount:evidence.fieldCandidates.length
+          }
+        }
+      });
       return;
     }
 

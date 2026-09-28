@@ -37,6 +37,8 @@ A separate reversible acceptance operation is available at:
 
 It requires explicit confirmation, runs in acceptance mode, attempts the inverse state, verifies it, then always restores and verifies the original state.
 
+The Local Bridge now reads WRITE source scripts through its existing authenticated modem session. If the mapping preflight still returns HTTP 409, the JSON response includes a safe `code` and `payload.stage=MAPPING_PREFLIGHT` with source status counts and mapping flags. These counts exclude source text, cookies and credentials. The original device's 409 response body was not captured, so its exact cause remains unverified until a new hardware response is collected.
+
 ## Safety properties
 
 - capability lock is enforced server-side;
