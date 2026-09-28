@@ -61,11 +61,11 @@ test("10 second polling updates live DOM in place and pauses while hidden", () =
   assert.match(app, /visibilitychange/);
 });
 
-test("advanced UI exposes only safe mobile state and rule counts", () => {
-  for (const label of ["Mobile Data", "SIM PIN protect", "Cloud SIM auto-switch", "DHCP reservations", "Port forwarding", "IPv4 packet filters", "IPv6 packet filters"]) {
-    assert.ok(app.includes(label), label);
+test("advanced UI exposes registry-backed safe mobile state and rule counts", () => {
+  for (const id of ["mobile.data","mobile.sim-pin-protect","mobile.cloud-sim-auto","lan.ip-mac-bindings","lan.port-forwarding","lan.ipv4-filters","lan.ipv6-filters"]) {
+    assert.ok(app.includes(id), id);
   }
-  assert.ok(app.includes("Chỉ thống kê số lượng"));
+  assert.match(app, /registryCapabilityNote/);
   assert.doesNotMatch(app, /wifi_wps_pin_value/);
   assert.doesNotMatch(app, /rt_dmz_ip/);
 });
