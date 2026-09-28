@@ -1,15 +1,13 @@
 import { MockNC03Adapter } from "./src/modem/MockNC03Adapter.js";
-import { NC03_80042_CAPABILITIES } from "./src/modem/NC03Firmware80042Profile.js";
-import { HAR2_CAPABILITY_OVERRIDES } from "./src/modem/NC03Har2Profile.js";
 import { buildHarEvidenceReport, parseHar, summarizeCandidates } from "./src/modem/HarDiscovery.js";
 import { loadPreferences, savePreferences, SECURITY_NOTE } from "./src/modem/LocalPreferences.js";
 import { CONNECTION_STATE, connectionStateLabel } from "./src/modem/ConnectionState.js";
 import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
 import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
 import { buildDiagnosticReport } from "./src/ui/DiagnosticReport.js";
-import { NC03_RUNTIME_PROTOCOL } from "./src/runtime/RuntimeProtocol.js";
 import { SecureCredentialVault } from "./src/modem/SecureCredentialVault.js";
 import { NC03ControlClient } from "./src/application/NC03ControlClient.js";
+import { DEFAULT_CAPABILITIES } from "./src/modem/CapabilityRegistry.js";
 import { NC03_SETTINGS_REGISTRY, canWriteSetting, lifecycleForSetting, settingDefinition } from "./src/domain/NC03SettingsRegistry.js";
 
 const app = document.querySelector("#app");
@@ -417,9 +415,7 @@ function renderDevices() {
 }
 
 function capabilityRows() {
-  const merged = new Map(NC03_80042_CAPABILITIES.map((row) => [row.module, row]));
-  for (const row of HAR2_CAPABILITY_OVERRIDES) merged.set(row.module, row);
-  return [...merged.values()].map(row => `<tr><td>${esc(row.module)}</td><td>${row.read ? "✓" : "—"}</td><td>${row.write ? "✓" : "—"}</td><td><code>${esc(row.endpoint)}</code></td><td>${esc(row.method)}</td><td>${esc(row.auth)}</td><td><span class="table-status">${esc(row.status)}</span></td></tr>`).join("");
+  return DEFAULT_CAPABILITIES.map((row) => `<tr><td>${esc(row.module)}</td><td>${row.read ? "✓" : "—"}</td><td>${row.write ? "✓" : "—"}</td><td><code>canonical registry</code></td><td>—</td><td>local</td><td><span class="table-status">${esc(row.status)}</span></td></tr>`).join("");
 }
 
 function renderEvidenceList(items, emptyText, tone = "muted") {
