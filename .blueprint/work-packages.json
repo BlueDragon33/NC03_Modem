@@ -30,7 +30,7 @@
       ],
       "purpose": "Inventory every stock Web UI job, control, action, readback and dangerous operation with evidence.",
       "prompt": "prompts/01-wp01.md",
-      "progress": "HUMAN_REVIEW_IN_PROGRESS_HOME_STATUS_CONFIRMED",
+      "progress": "HUMAN_REVIEW_RECONCILING_PRIOR_EVIDENCE",
       "progressEvidence": [
         "evidence/stock-webui-parity.v1.json",
         "evidence/wp01-live-stock-ui-audit-2026-09-28.json",
@@ -38,14 +38,15 @@
         "scripts/check-stock-webui-parity.mjs",
         "src/modem/StockWebUiAudit.js",
         "/api/nc03/stock-ui-audit",
-        "evidence/wp01-human-stock-ui-home-status-2026-09-28.json"
+        "evidence/wp01-human-stock-ui-home-status-2026-09-28.json",
+        "evidence/wp01-human-stock-ui-batch-2026-09-28-02.json"
       ],
       "blockers": [
         {
-          "id": "wp01-human-stock-ui-review",
-          "type": "HUMAN_REAL_HARDWARE_REVIEW",
-          "status": "IN_PROGRESS",
-          "requirement": "Home > Status and top-level navigation are confirmed. Expand and review Mobile Network, LAN, Wi-Fi, Security, Management and Data Usage pages/submenus before WP01 completion."
+          "id": "wp01-prior-evidence-reconciliation",
+          "type": "EVIDENCE_RECONCILIATION",
+          "status": "ACTIVE",
+          "requirement": "Reconcile previously supplied screenshots and HAR evidence before requesting anything again from the user. Ask only for truly missing evidence after deduplication."
         }
       ]
     },
