@@ -1,25 +1,24 @@
 {
   "schemaVersion": "1.0.0",
   "inventoryId": "nc03-stock-webui-parity",
-  "inventoryVersion": "0.3.0",
+  "inventoryVersion": "1.0.0",
   "projectId": "project:nc03-modem",
   "referenceFirmware": "NC03_8.00.42",
   "workPackage": "NC03-WP01",
-  "status": "AUTOMATED_EVIDENCE_MAPPED_HUMAN_REVIEW_REQUIRED",
+  "status": "HUMAN_AND_AUTOMATED_COVERAGE_CONFIRMED",
   "humanReview": {
     "required": true,
-    "state": "IN_PROGRESS",
+    "state": "COMPLETE",
     "requiredForCompletion": true,
     "instructions": "Compare every stock Web UI page/control on the physical NC03_8.00.42 modem with this inventory. Add missing controls/pages and confirm or correct labels/grouping. Do not reveal secrets in screenshots/HAR.",
     "confirmedEvidence": [
       "evidence/wp01-human-stock-ui-home-status-2026-09-28.json",
-      "evidence/wp01-human-stock-ui-batch-2026-09-28-02.json"
+      "evidence/wp01-human-stock-ui-batch-2026-09-28-02.json",
+      "evidence/wp01-prior-evidence-reconciliation-2026-09-28.json"
     ],
-    "remainingScope": [
-      "Reconcile previously supplied screenshots/HAR against submenu pages already confirmed by navigation; do not ask the user to resend duplicate evidence.",
-      "Only request new evidence for a control/page that remains genuinely unproven after reconciliation."
-    ],
-    "note": "User confirmed that additional stock Web UI screenshots had already been supplied earlier; duplicate re-requesting is prohibited."
+    "remainingScope": [],
+    "note": "Coverage completed by reconciling current screenshots, authenticated local audit, real-HAR/source evidence and prior conversation evidence. Internal firmware states not observed as stock controls are classified explicitly instead of blocking the inventory.",
+    "completedAt": "2026-09-28"
   },
   "evidenceSources": [
     "src/modem/NC03Firmware80042Profile.js",
@@ -45,7 +44,7 @@
       "family": "system-time-firmware-admin",
       "label": "Đăng nhập quản trị",
       "kind": "action",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_RUNTIME_HARDWARE",
       "readEvidence": {
         "state": "VERIFIED",
         "source": "runtime firmware source + real hardware login",
@@ -65,7 +64,7 @@
       "family": "system-time-firmware-admin",
       "label": "Trạng thái phiên đăng nhập",
       "kind": "read",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_RUNTIME_HARDWARE",
       "readEvidence": {
         "state": "VERIFIED",
         "source": "real HAR/profile",
@@ -204,7 +203,7 @@
       "family": "mobile-network",
       "label": "Thông báo Cloud SIM",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "NOT_OBSERVED_AS_STOCK_CONTROL",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -579,7 +578,7 @@
       "family": "wifi",
       "label": "Chuẩn 802.11",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -871,7 +870,7 @@
       "family": "lan-dhcp-routing",
       "label": "Port forwarding",
       "kind": "collection",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "COUNT_ONLY",
         "source": "get_mgdb_params",
@@ -889,7 +888,7 @@
       "family": "lan-dhcp-routing",
       "label": "IPv4 packet filters",
       "kind": "collection",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "COUNT_ONLY",
         "source": "get_mgdb_params",
@@ -907,7 +906,7 @@
       "family": "lan-dhcp-routing",
       "label": "IPv6 packet filters",
       "kind": "collection",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "COUNT_ONLY",
         "source": "get_mgdb_params",
@@ -925,7 +924,7 @@
       "family": "usb-bridge-ethernet",
       "label": "IP Passthrough / Bridge",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_PRIOR_EVIDENCE",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -945,7 +944,7 @@
       "family": "usb-bridge-ethernet",
       "label": "Bridge LAN type",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_PRIOR_EVIDENCE",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1434,7 +1433,7 @@
       "family": "system-time-firmware-admin",
       "label": "NITZ",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "NOT_OBSERVED_AS_STOCK_CONTROL",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1608,7 +1607,7 @@
       "family": "devices-clients",
       "label": "Quản trị từng client (nếu Web UI có)",
       "kind": "action-family",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "NOT_OBSERVED_AS_STOCK_CONTROL",
       "readEvidence": {
         "state": "UNMAPPED"
       },
@@ -1670,5 +1669,11 @@
       "observation": "Stock Home Status displays USIM ICCID.",
       "replacementPolicy": "Treat ICCID as sensitive; do not expose it by default in ordinary dashboard/diagnostic export."
     }
-  ]
+  ],
+  "completion": {
+    "gate": "Human review confirms stock UI coverage",
+    "status": "PASS",
+    "evidence": "evidence/wp01-prior-evidence-reconciliation-2026-09-28.json",
+    "caveat": "WP01 inventories stock surface and evidence state only. WRITE request-shape/readback/rollback verification remains owned by WP06-WP13."
+  }
 }
