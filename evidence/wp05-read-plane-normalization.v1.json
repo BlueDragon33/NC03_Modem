@@ -3,7 +3,7 @@
   "reportId": "wp05-read-plane-normalization",
   "projectId": "project:nc03-modem",
   "workPackage": "NC03-WP05",
-  "status": "AUTOMATED_GATES_READY_HARDWARE_PARITY_PENDING",
+  "status": "PASS",
   "readModel": {
     "schema": "nc03-read-model/v1",
     "version": "1.0.0",
@@ -21,8 +21,9 @@
     "tests/diagnostic-report.test.mjs",
     "tests/live-telemetry.test.mjs"
   ],
-  "pendingHardwareEvidence": [
-    "Home live/read data parity after normalized contract migration",
-    "Network/Wi-Fi/Devices/Settings detail parity after normalized contract migration"
-  ]
+  "pendingHardwareEvidence": [],
+  "hardwareAcceptance": {
+    "result": "PASS",
+    "evidence": "evidence/wp05-real-hardware-read-parity-2026-09-28.json"
+  }
 }
