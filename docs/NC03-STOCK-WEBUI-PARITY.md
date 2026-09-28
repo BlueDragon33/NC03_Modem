@@ -51,6 +51,30 @@ Observed:
 
 Interpretation: **automated static evidence is complete for WP01, but static source is insufficient to certify the dynamic stock settings surface**. The remaining gate is deliberately human/real-UI review; we will not keep widening the crawler merely to manufacture an automated PASS.
 
+## Human screenshot review — Home > Status
+
+Human review now confirms the stock top-level navigation:
+
+- Home → Status
+- Mobile Network
+- LAN
+- Wi-Fi
+- Security
+- Management
+- Data Usage
+
+The Home > Status page visibly contains four functional sections:
+- WAN Network;
+- Device Informations;
+- Wi-Fi Status;
+- Clients.
+
+Privacy difference recorded deliberately: the stock page displays the current Wi-Fi key and USIM ICCID. The replacement product will preserve the administration job but will **not** mirror the current Wi-Fi PSK into ordinary app state and will treat ICCID as sensitive.
+
+The Clients table is confirmed with columns for client name, MAC address, IP address, connection type and connection uptime.
+
+Remaining Human Review is now limited to the expanded pages/submenus under Mobile Network, LAN, Wi-Fi, Security, Management and Data Usage.
+
 ## Human review required before WP01 can PASS
 
 On the real stock Web UI, review each page from top to bottom and confirm:
