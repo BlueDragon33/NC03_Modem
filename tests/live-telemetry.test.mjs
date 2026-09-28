@@ -311,7 +311,8 @@ test("startup always renders Login first and never restores Demo automatically",
 
 test("session expiry takes priority over stale-data reconnect and rerenders login immediately", () => {
   assert.match(app, /CONNECTION_STATE\.SESSION_EXPIRED/);
-  assert.match(app, /const hadVerifiedSession = state\.connectionState === CONNECTION_STATE\.CONNECTED \|\| Boolean\(state\.lastLiveSuccessAt\)/);
+  assert.match(app, /const hadVerifiedSession = Boolean\(state\.authSession\?\.hadAuthenticatedSession \|\| state\.lastLiveSuccessAt\)/);
+  assert.match(app, /authSessionMachine\.protectedRequestFailed\(error\?\.code \|\| "NC03_READ_FAILED"\)/);
   assert.match(app, /const previousView = state\.view/);
   assert.match(app, /const previousConnectionState = state\.connectionState/);
   assert.match(app, /authNavigationChanged/);
