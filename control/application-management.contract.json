@@ -116,7 +116,8 @@
     "writeReadiness": "/api/nc03/write-readiness",
     "longLifeCharging": "/api/nc03/settings/long-life-charging",
     "stockWebUiAudit": "/api/nc03/stock-ui-audit",
-    "sessionClear": "/api/nc03/session/clear"
+    "sessionClear": "/api/nc03/session/clear",
+    "longLifeWriteAcceptance": "/api/nc03/write-acceptance/long-life-charging"
   },
   "policy": {
     "remoteAdminReady": false,
@@ -247,7 +248,11 @@
     "productUiConsumesVendorFields": false,
     "unknownBooleanReadValueBecomesNull": true,
     "readFreshnessExplicit": true,
-    "guardedWriteProtocol": "nc03-guarded-write/v2"
+    "guardedWriteProtocol": "nc03-guarded-write/v2",
+    "writeRequiresExplicitConfirmation": true,
+    "failedPostconditionCannotReportSuccess": true,
+    "rollbackOutcomeExplicit": true,
+    "acceptanceModeAlwaysRestoresOriginal": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
