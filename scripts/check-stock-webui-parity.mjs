@@ -17,7 +17,7 @@ const allowedWrite=new Set([
 ]);
 const allowedDanger=new Set(["LOW","MEDIUM","HIGH","CRITICAL"]);
 const allowedPrivacy=new Set(["NORMAL","LOCAL_SENSITIVE","SECRET"]);
-const allowedStockPresence=new Set(["PENDING_HUMAN_CONFIRMATION","CONFIRMED_NAVIGATION_SCREENSHOT","CONFIRMED_HUMAN_SCREENSHOT"]);
+const allowedStockPresence=new Set(["CONFIRMED_NAVIGATION_SCREENSHOT","CONFIRMED_HUMAN_SCREENSHOT","CONFIRMED_RUNTIME_HARDWARE","CONFIRMED_PRIOR_EVIDENCE","NOT_OBSERVED_AS_STOCK_CONTROL"]);
 
 assert.equal(inv.schemaVersion,"1.0.0");
 assert.equal(inv.inventoryId,"nc03-stock-webui-parity");
@@ -26,10 +26,12 @@ assert.equal(inv.referenceFirmware,"NC03_8.00.42");
 assert.equal(inv.workPackage,"NC03-WP01");
 assert.equal(inv.humanReview.required,true);
 assert.equal(inv.humanReview.requiredForCompletion,true);
-assert.ok(["PENDING","IN_PROGRESS","COMPLETE"].includes(inv.humanReview.state));
+assert.equal(inv.humanReview.state,"COMPLETE");
 
 assert.deepEqual(inv.families,expectedFamilies);
 assert.ok(Array.isArray(inv.rows) && inv.rows.length >= 70,"inventory unexpectedly small");
+assert.equal(inv.status,"HUMAN_AND_AUTOMATED_COVERAGE_CONFIRMED");
+assert.equal(inv.completion?.status,"PASS");
 
 const ids=new Set();
 const familyCounts=new Map(expectedFamilies.map((f)=>[f,0]));
