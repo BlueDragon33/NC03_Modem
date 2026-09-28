@@ -830,6 +830,7 @@ const server = createServer(async (req, res) => {
       writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
       settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
       stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema,
+      readModelSchema:NC03_RUNTIME_PROTOCOL.readModelSchema,
       bootedAt:runtimeBootedAt,
       assetRoot:usingDist ? "dist" : "source",
       contractEndpoint:"/api/application-management/contract"
