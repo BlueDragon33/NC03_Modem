@@ -3,7 +3,7 @@
   "reportId": "wp04-auth-session-lifecycle",
   "projectId": "project:nc03-modem",
   "workPackage": "NC03-WP04",
-  "status": "AUTOMATED_GATES_READY_HARDWARE_RECOVERY_PENDING",
+  "status": "PASS",
   "implementation": {
     "stateMachine": "src/application/NC03AuthSessionStateMachine.js",
     "applicationClient": "src/application/NC03ControlClient.js",
@@ -27,10 +27,11 @@
     "sessionCookieContinuity": true,
     "source": "Previously confirmed real NC03_8.00.42 login/session behavior in project history"
   },
-  "pendingHardwareEvidence": [
-    "restart/clear Local Bridge session on real modem",
-    "protected read detects authentication loss",
-    "UI returns to re-authentication",
-    "re-login succeeds"
-  ]
+  "pendingHardwareEvidence": [],
+  "hardwareAcceptance": {
+    "result": "PASS",
+    "evidence": "evidence/wp04-real-hardware-recovery-2026-09-28.json",
+    "exactHeadCi": "NC03 CI #609 PASS",
+    "constitution": "Universal Constitution Compliance #60 PASS"
+  }
 }
