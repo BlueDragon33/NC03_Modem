@@ -88,7 +88,8 @@ test("contract publishes local modem session continuity without cloud credential
 
 test("contract publishes guarded Long Life Charging write without promoting unrelated settings", () => {
   assert.equal(contract.capabilities.guardedSettingsWrite, true);
-  assert.equal(contract.capabilities.longLifeChargingWrite, true);
+  assert.equal(contract.capabilities.longLifeChargingWrite, false);
+  assert.equal(contract.capabilities.longLifeChargingWriteCandidate, true);
   assert.equal(contract.capabilities.reversibleWriteRollback, true);
   assert.equal(contract.endpoints.longLifeCharging, "/api/nc03/settings/long-life-charging");
   assert.equal(contract.policy.settingsWriteProtocol, "nc03-settings-write/v1");
@@ -138,4 +139,19 @@ test("contract publishes privacy-safe stock Web UI audit without promoting it to
   assert.equal(contract.policy.stockWebUiAuditUsesAuthenticatedSession, true);
   assert.equal(contract.policy.stockWebUiAuditReportsCoverageGaps, true);
   assert.equal(contract.policy.stockWebUiAuditDoesNotReplaceHumanReview, true);
+});
+
+
+test("contract publishes canonical settings registry as write authority", () => {
+  assert.equal(contract.capabilities.canonicalSettingsRegistry, true);
+  assert.equal(contract.capabilities.settingsRegistryDrivenUi, true);
+  assert.equal(contract.capabilities.vendorRoutesExcludedFromCanonicalIdentity, true);
+  assert.equal(contract.policy.settingsRegistrySchema, "nc03-settings-registry/v1");
+  assert.equal(contract.policy.settingsRegistryVersion, "1.0.0");
+  assert.equal(contract.policy.settingsRegistryEntries, 77);
+  assert.equal(contract.policy.writeAuthorityFromSettingsRegistry, true);
+  assert.equal(contract.policy.vendorRoutesAreEvidenceNotIdentity, true);
+  assert.equal(contract.policy.internalFirmwareStateNotPromotedToStockControl, true);
+  assert.equal(contract.policy.longLifeChargingWriteAuthorized, false);
+  assert.equal(contract.policy.longLifeChargingLifecycle, "WRITE_CANDIDATE");
 });
