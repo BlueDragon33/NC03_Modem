@@ -5,7 +5,7 @@ const required = [
   "index.html", "app.js", "styles.css", "manifest.webmanifest", "sw.js", "icon.svg", "report.html", "report.css", "report.js",
   "src/modem/NC03Adapter.js", "src/modem/MockNC03Adapter.js", "src/modem/HarDiscovery.js",
   "src/modem/NC03Auth.js", "src/modem/NC03Api.js", "src/modem/NC03Session.js", "src/modem/NC03LocalCookieJar.js",
-  "src/modem/NC03Parser.js", "src/modem/NC03Capabilities.js", "src/domain/NC03SettingsRegistry.js", "src/application/NC03ControlClient.js", "src/modem/ConnectionState.js",
+  "src/modem/NC03Parser.js", "src/modem/NC03Capabilities.js", "src/domain/NC03SettingsRegistry.js", "src/domain/NC03ReadModel.js", "src/application/NC03ControlClient.js", "src/modem/ConnectionState.js",
   "src/modem/NC03Firmware80042Profile.js", "src/modem/NC03Firmware80042Adapter.js", "src/modem/NC03Har2Profile.js", "src/modem/NC03SafeWriteRuntime.js", "src/modem/StockWebUiAudit.js", "src/modem/LocalBridgePolicy.js", "src/modem/LoginPolicy.js",
   "src/ui/NavigationModel.js", "src/ui/DiagnosticReport.js", "docs/API_DISCOVERY.md", "docs/AUTH_DISCOVERY.md", "docs/SECURITY.md", "docs/ARCHITECTURE.md",
   "docs/PHASE_STATUS.md", "docs/NC03-ARCHITECTURE-CONSOLIDATION.md", "control/nc03-architecture-boundaries.v1.json", "CHANGELOG.md", "scripts/offline.mjs", "scripts/analyze-har.mjs"
