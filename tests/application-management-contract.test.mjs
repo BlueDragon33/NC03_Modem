@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 
 const contract = JSON.parse(fs.readFileSync(new URL("../control/application-management.contract.json", import.meta.url), "utf8"));
+const packageJson = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const pkg = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const build = fs.readFileSync(new URL("../scripts/build.mjs", import.meta.url), "utf8");
 const server = fs.readFileSync(new URL("../scripts/serve-local.mjs", import.meta.url), "utf8");
@@ -174,7 +175,7 @@ test("contract publishes consolidated architecture ownership boundaries", () => 
 
 
 test("contract publishes deterministic auth session lifecycle", () => {
-  assert.equal(contract.application.version, "0.8.3");
+  assert.equal(contract.application.version, packageJson.version);
   assert.equal(contract.capabilities.deterministicAuthSessionStateMachine, true);
   assert.equal(contract.capabilities.localSessionInvalidation, true);
   assert.equal(contract.endpoints.sessionClear, "/api/nc03/session/clear");
@@ -186,7 +187,7 @@ test("contract publishes deterministic auth session lifecycle", () => {
 
 
 test("contract publishes normalized read-plane boundary", () => {
-  assert.equal(contract.application.version, "0.8.4");
+  assert.equal(contract.application.version, packageJson.version);
   assert.equal(contract.capabilities.versionedNormalizedReadModel, true);
   assert.equal(contract.capabilities.vendorFieldIsolationAtBridge, true);
   assert.equal(contract.policy.readModelSchema, "nc03-read-model/v1");
