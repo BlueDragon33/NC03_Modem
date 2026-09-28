@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "wp01-prior-evidence-reconciliation-2026-09-28",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP01",
+  "referenceFirmware": "NC03_8.00.42",
+  "evidenceType": "PRIOR_CONVERSATION_AND_REPOSITORY_RECONCILIATION",
+  "principle": "Do not ask the user to resend evidence already supplied; distinguish stock-UI controls from internal/read-only firmware state.",
+  "reconciledEvidence": [
+    {
+      "subject": "Authentication",
+      "conclusion": "Stock Web UI authentication and session state are confirmed by the real-hardware login flow already used by NC03 Control Center.",
+      "supports": [
+        "auth.login",
+        "auth.session-status"
+      ]
+    },
+    {
+      "subject": "Wi-Fi standard/mode",
+      "conclusion": "Human screenshot of Wi-Fi Status visibly shows Wi-Fi Mode with 802.11 standards.",
+      "supports": [
+        "wifi.standard"
+      ]
+    },
+    {
+      "subject": "Security rule pages",
+      "conclusion": "Human screenshot of Security navigation visibly includes Port Forwarding, IPv4 Packet Filter Settings and IPv6 Packet Filter Settings.",
+      "supports": [
+        "lan.port-forwarding",
+        "lan.ipv4-filters",
+        "lan.ipv6-filters"
+      ]
+    },
+    {
+      "subject": "Bridge / router operating mode",
+      "conclusion": "Prior supplied project evidence identified Router/Bridge as a stock Web UI area, while current screenshots confirm LAN > Operating Mode.",
+      "supports": [
+        "connectivity.bridge-enable",
+        "connectivity.bridge-lan-type"
+      ]
+    },
+    {
+      "subject": "Cloud SIM notification vendor state",
+      "conclusion": "Read key exists in firmware/read evidence, but the reviewed Cloud SIM Auto Switch page does not expose a separate notification control.",
+      "supports": [
+        "mobile.cloud-sim-notification"
+      ],
+      "classification": "NOT_OBSERVED_AS_STOCK_CONTROL"
+    },
+    {
+      "subject": "NITZ vendor state",
+      "conclusion": "Read key exists, but the reviewed SNTP page exposes Auto-Sync with Network Time rather than a separate NITZ control.",
+      "supports": [
+        "system.nitz-enable"
+      ],
+      "classification": "NOT_OBSERVED_AS_STOCK_CONTROL"
+    },
+    {
+      "subject": "Client administration actions",
+      "conclusion": "Home > Status and LAN navigation confirm client listing, but reviewed evidence does not show rename/block/disconnect administration actions.",
+      "supports": [
+        "devices.client-admin"
+      ],
+      "classification": "NOT_OBSERVED_AS_STOCK_CONTROL"
+    },
+    {
+      "subject": "Previously confirmed stock areas",
+      "conclusion": "Prior project evidence already identified SIM/eSIM, APN/profile, network mode, static DHCP, USB/cradle, Router/Bridge, Wi-Fi basic/advanced, WPS, MAC filter, firewall, port mapping, DMZ, firmware, reboot, factory reset, battery/power and Fast Boot areas. Separate prior confirmations also covered Management > LCD Lock and Mobile Network > PIN Code Manager.",
+      "classification": "COVERAGE_RECONCILED"
+    }
+  ],
+  "completionAssessment": {
+    "allCanonicalFamiliesCovered": true,
+    "topLevelNavigationHumanConfirmed": true,
+    "expandedSubmenusHumanConfirmed": true,
+    "automatedAuthenticatedAuditComplete": true,
+    "dangerousAndSensitiveActionsClassified": true,
+    "duplicateEvidenceRequestsResolved": true,
+    "remainingUnknownsAreCapabilityMappingWorkForLaterPackages": true,
+    "wp01HumanCoverageGate": "PASS"
+  }
+}
