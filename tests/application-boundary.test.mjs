@@ -90,3 +90,29 @@ test("Application client exposes explicit local session invalidation without ven
   assert.deepEqual(result,{cleared:true,vendorLogoutAttempted:false});
   assert.equal(calls[0].path,"/api/nc03/session/clear");
 });
+
+
+test("Application client invokes injected fetch with global receiver", async () => {
+  let observedThis=null;
+  function receiverSensitiveFetch() {
+    observedThis=this;
+    return Promise.resolve(response({
+      ok:true,
+      app:"nc03-control-center",
+      runtimeProtocol:NC03_RUNTIME_PROTOCOL.id,
+      authEvidenceSchema:NC03_RUNTIME_PROTOCOL.authEvidenceSchema,
+      authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
+      writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
+      settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
+      stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema
+    }));
+  }
+  const client=new NC03ControlClient({fetchImpl:receiverSensitiveFetch});
+  await client.health();
+  assert.equal(observedThis,globalThis);
+});
+
+test("Application client transport wrapper prevents client-instance receiver leakage", () => {
+  assert.match(clientSource, /Reflect\.apply\(fetchImpl, globalThis, args\)/);
+  assert.doesNotMatch(clientSource, /this\.fetchImpl = fetchImpl;/);
+});
