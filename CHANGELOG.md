@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.1 — Canonical Settings Registry
+
+- Added `nc03-settings-registry/v1` with 77 stable setting/action IDs mapped 1:1 from WP01.
+- Added explicit capability lifecycle: UNMAPPED → READ_MAPPED → WRITE_CANDIDATE → WRITE_VERIFIED → HARDWARE_ACCEPTED.
+- Vendor endpoints/field keys are evidence/profile details, not canonical product identity.
+- Settings UI now consumes registry labels/capability state and no longer treats displayed vendor routes as authority.
+- Legacy module capability matrix is derived from the canonical registry.
+- Long Life Charging remains a runtime candidate but is no longer UI-authorized until WRITE_VERIFIED/hardware gates are satisfied.
+- Added formal registry schema, mapping report, CI gate and compatibility tests.
+
 ## 0.8.0 — Constitution-bound Blueprint & Prompt System
 
 - Adopted the existing Universal Constitution v1.1 / B4 project classification as the active engineering authority.
