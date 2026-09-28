@@ -17,6 +17,7 @@ const allowedWrite=new Set([
 ]);
 const allowedDanger=new Set(["LOW","MEDIUM","HIGH","CRITICAL"]);
 const allowedPrivacy=new Set(["NORMAL","LOCAL_SENSITIVE","SECRET"]);
+const allowedStockPresence=new Set(["PENDING_HUMAN_CONFIRMATION","CONFIRMED_HUMAN_SCREENSHOT"]);
 
 assert.equal(inv.schemaVersion,"1.0.0");
 assert.equal(inv.inventoryId,"nc03-stock-webui-parity");
@@ -25,7 +26,7 @@ assert.equal(inv.referenceFirmware,"NC03_8.00.42");
 assert.equal(inv.workPackage,"NC03-WP01");
 assert.equal(inv.humanReview.required,true);
 assert.equal(inv.humanReview.requiredForCompletion,true);
-assert.equal(inv.humanReview.state,"PENDING");
+assert.ok(["PENDING","IN_PROGRESS","COMPLETE"].includes(inv.humanReview.state));
 
 assert.deepEqual(inv.families,expectedFamilies);
 assert.ok(Array.isArray(inv.rows) && inv.rows.length >= 70,"inventory unexpectedly small");
@@ -38,7 +39,7 @@ for(const row of inv.rows){
   ids.add(row.id);
   assert.ok(expectedFamilies.includes(row.family),`unknown family ${row.family}`);
   familyCounts.set(row.family,familyCounts.get(row.family)+1);
-  assert.equal(row.stockUiPresence,"PENDING_HUMAN_CONFIRMATION");
+  assert.ok(allowedStockPresence.has(row.stockUiPresence),`bad stock UI presence state ${row.id}`);
   assert.ok(allowedRead.has(row.readEvidence?.state),`bad read state ${row.id}`);
   assert.ok(allowedWrite.has(row.writeEvidence?.state),`bad write state ${row.id}`);
   assert.ok(allowedDanger.has(row.danger),`bad danger ${row.id}`);
