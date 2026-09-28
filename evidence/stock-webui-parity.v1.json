@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "inventoryId": "nc03-stock-webui-parity",
-  "inventoryVersion": "0.2.0",
+  "inventoryVersion": "0.3.0",
   "projectId": "project:nc03-modem",
   "referenceFirmware": "NC03_8.00.42",
   "workPackage": "NC03-WP01",
@@ -12,16 +12,14 @@
     "requiredForCompletion": true,
     "instructions": "Compare every stock Web UI page/control on the physical NC03_8.00.42 modem with this inventory. Add missing controls/pages and confirm or correct labels/grouping. Do not reveal secrets in screenshots/HAR.",
     "confirmedEvidence": [
-      "evidence/wp01-human-stock-ui-home-status-2026-09-28.json"
+      "evidence/wp01-human-stock-ui-home-status-2026-09-28.json",
+      "evidence/wp01-human-stock-ui-batch-2026-09-28-02.json"
     ],
     "remainingScope": [
-      "Mobile Network expanded submenu/pages",
-      "LAN expanded submenu/pages",
-      "Wi-Fi expanded submenu/pages",
-      "Security expanded submenu/pages",
-      "Management expanded submenu/pages",
-      "Data Usage expanded submenu/pages"
-    ]
+      "Reconcile previously supplied screenshots/HAR against submenu pages already confirmed by navigation; do not ask the user to resend duplicate evidence.",
+      "Only request new evidence for a control/page that remains genuinely unproven after reconciliation."
+    ],
+    "note": "User confirmed that additional stock Web UI screenshots had already been supplied earlier; duplicate re-requesting is prohibited."
   },
   "evidenceSources": [
     "src/modem/NC03Firmware80042Profile.js",
@@ -105,7 +103,7 @@
       "family": "mobile-network",
       "label": "Dữ liệu di động",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -125,7 +123,7 @@
       "family": "mobile-network",
       "label": "Roaming",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -145,7 +143,7 @@
       "family": "mobile-network",
       "label": "Khe SIM",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -165,7 +163,7 @@
       "family": "mobile-network",
       "label": "Bảo vệ SIM PIN",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -186,7 +184,7 @@
       "family": "mobile-network",
       "label": "Cloud SIM tự động",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -226,7 +224,7 @@
       "family": "mobile-network",
       "label": "Acquisition order",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -246,7 +244,7 @@
       "family": "mobile-network",
       "label": "Scan mode",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -266,7 +264,7 @@
       "family": "mobile-network",
       "label": "Chế độ 5G",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -286,7 +284,7 @@
       "family": "mobile-network",
       "label": "Band",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -306,7 +304,7 @@
       "family": "mobile-network",
       "label": "Band lock",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -326,7 +324,7 @@
       "family": "mobile-network",
       "label": "Tự mở khóa band",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -346,7 +344,7 @@
       "family": "mobile-network",
       "label": "APN / profile dữ liệu",
       "kind": "collection",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "INTENTIONALLY_NOT_MIRRORED",
         "source": "privacy policy",
@@ -366,7 +364,7 @@
       "family": "mobile-network",
       "label": "Thống kê dữ liệu",
       "kind": "read",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -396,7 +394,7 @@
       "family": "wifi",
       "label": "Bật/tắt Wi‑Fi tổng",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -419,7 +417,7 @@
       "family": "wifi",
       "label": "Bật/tắt AP",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -439,7 +437,7 @@
       "family": "wifi",
       "label": "Tên Wi‑Fi (SSID)",
       "kind": "text",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -459,7 +457,7 @@
       "family": "wifi",
       "label": "Mật khẩu Wi‑Fi mới",
       "kind": "password",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "INTENTIONALLY_NOT_MIRRORED",
         "source": "privacy policy",
@@ -481,7 +479,7 @@
       "family": "wifi",
       "label": "Chế độ bảo mật Wi‑Fi",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -501,7 +499,7 @@
       "family": "wifi",
       "label": "Phát SSID",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -521,7 +519,7 @@
       "family": "wifi",
       "label": "Tần số / band AP",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -541,7 +539,7 @@
       "family": "wifi",
       "label": "Kênh Wi‑Fi",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -561,7 +559,7 @@
       "family": "wifi",
       "label": "Chế độ Wi‑Fi",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -601,7 +599,7 @@
       "family": "wifi",
       "label": "Bandwidth",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -621,7 +619,7 @@
       "family": "wifi",
       "label": "Số client tối đa",
       "kind": "number",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -641,7 +639,7 @@
       "family": "wifi",
       "label": "Công suất phát",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "UNMAPPED"
       },
@@ -659,7 +657,7 @@
       "family": "wifi",
       "label": "Privacy / AP isolation",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "UNMAPPED"
       },
@@ -677,7 +675,7 @@
       "family": "lan-dhcp-routing",
       "label": "DHCP Server",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -699,7 +697,7 @@
       "family": "lan-dhcp-routing",
       "label": "Gateway LAN",
       "kind": "ipv4",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -721,7 +719,7 @@
       "family": "lan-dhcp-routing",
       "label": "Subnet mask",
       "kind": "ipv4",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -743,7 +741,7 @@
       "family": "lan-dhcp-routing",
       "label": "DHCP start",
       "kind": "ipv4",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -765,7 +763,7 @@
       "family": "lan-dhcp-routing",
       "label": "DHCP end",
       "kind": "ipv4",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -787,7 +785,7 @@
       "family": "lan-dhcp-routing",
       "label": "DHCP lease time",
       "kind": "duration",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -809,7 +807,7 @@
       "family": "lan-dhcp-routing",
       "label": "DNS proxy",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -831,7 +829,7 @@
       "family": "lan-dhcp-routing",
       "label": "DNS address",
       "kind": "text",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -853,7 +851,7 @@
       "family": "lan-dhcp-routing",
       "label": "IP/MAC binding",
       "kind": "collection",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "COUNT_ONLY",
         "source": "get_mgdb_params",
@@ -967,7 +965,7 @@
       "family": "usb-bridge-ethernet",
       "label": "USB tethering",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -989,7 +987,7 @@
       "family": "usb-bridge-ethernet",
       "label": "USB speed/type",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1011,7 +1009,7 @@
       "family": "usb-bridge-ethernet",
       "label": "Ethernet type",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1031,7 +1029,7 @@
       "family": "usb-bridge-ethernet",
       "label": "Cradle screen saver",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1051,7 +1049,7 @@
       "family": "power-battery-display",
       "label": "Safe Charge",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1073,7 +1071,7 @@
       "family": "power-battery-display",
       "label": "Long Life Charging",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1096,7 +1094,7 @@
       "family": "power-battery-display",
       "label": "Power saving mode",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1118,7 +1116,7 @@
       "family": "power-battery-display",
       "label": "Auto sleep",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1140,7 +1138,7 @@
       "family": "power-battery-display",
       "label": "Auto sleep timer",
       "kind": "duration",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1162,7 +1160,7 @@
       "family": "power-battery-display",
       "label": "AC auto-start",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1184,7 +1182,7 @@
       "family": "power-battery-display",
       "label": "Tắt LCD sau",
       "kind": "duration",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1206,7 +1204,7 @@
       "family": "power-battery-display",
       "label": "Eco display",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1228,7 +1226,7 @@
       "family": "power-battery-display",
       "label": "Pseudo enable",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1248,7 +1246,7 @@
       "family": "security-wps-firewall-dmz",
       "label": "WPS",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1270,7 +1268,7 @@
       "family": "security-wps-firewall-dmz",
       "label": "WPS mode",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1292,7 +1290,7 @@
       "family": "security-wps-firewall-dmz",
       "label": "Wi‑Fi MAC filter",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1314,7 +1312,7 @@
       "family": "security-wps-firewall-dmz",
       "label": "Security protection",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1336,7 +1334,7 @@
       "family": "security-wps-firewall-dmz",
       "label": "MAC filter type",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1356,7 +1354,7 @@
       "family": "security-wps-firewall-dmz",
       "label": "IP filter type",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1376,7 +1374,7 @@
       "family": "security-wps-firewall-dmz",
       "label": "DMZ",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1396,7 +1394,7 @@
       "family": "security-wps-firewall-dmz",
       "label": "DMZ target IP",
       "kind": "ipv4",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "INTENTIONALLY_NOT_MIRRORED",
         "source": "privacy policy",
@@ -1416,7 +1414,7 @@
       "family": "system-time-firmware-admin",
       "label": "NTP",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1456,7 +1454,7 @@
       "family": "system-time-firmware-admin",
       "label": "Timezone",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1476,7 +1474,7 @@
       "family": "system-time-firmware-admin",
       "label": "Định dạng thời gian",
       "kind": "select",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1496,7 +1494,7 @@
       "family": "system-time-firmware-admin",
       "label": "Daylight saving",
       "kind": "toggle",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_HUMAN_SCREENSHOT",
       "readEvidence": {
         "state": "READ_VERIFIED",
         "source": "get_mgdb_params",
@@ -1516,7 +1514,7 @@
       "family": "system-time-firmware-admin",
       "label": "Khởi động lại modem",
       "kind": "dangerous-action",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "NOT_APPLICABLE"
       },
@@ -1534,7 +1532,7 @@
       "family": "system-time-firmware-admin",
       "label": "Đổi mật khẩu quản trị",
       "kind": "password-action",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "SOURCE_OBSERVED",
         "source": "systemadmin.js password codec evidence"
@@ -1576,7 +1574,7 @@
       "family": "system-time-firmware-admin",
       "label": "Khôi phục cài đặt gốc",
       "kind": "dangerous-action",
-      "stockUiPresence": "PENDING_HUMAN_CONFIRMATION",
+      "stockUiPresence": "CONFIRMED_NAVIGATION_SCREENSHOT",
       "readEvidence": {
         "state": "UNMAPPED"
       },
