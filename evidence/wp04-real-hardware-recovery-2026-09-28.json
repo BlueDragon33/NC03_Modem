@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "wp04-real-hardware-recovery-2026-09-28",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP04",
+  "referenceFirmware": "NC03_8.00.42",
+  "evidenceType": "HUMAN_REAL_HARDWARE_RECOVERY",
+  "result": "PASS",
+  "observations": [
+    "Local Bridge interruption was detected by the UI and did not preserve a fabricated authenticated state.",
+    "The restarted Local Bridge health endpoint returned ok=true on port 3006 with version 0.8.3 and runtime protocol nc03-local-runtime/v5.",
+    "A browser transport regression was discovered during the recovery drill: browser-native fetch had been moved behind NC03ControlClient without preserving its receiver; this was fixed at the application boundary rather than patched in the Login screen.",
+    "After the transport fix and cache rotation, the user returned to the live Home dashboard and real modem telemetry resumed.",
+    "Live post-recovery Home evidence showed battery, connection state, signal quality, mobile network and device count updating from the modem."
+  ],
+  "privacy": {
+    "passwordRecorded": false,
+    "sessionCookieRecorded": false,
+    "tokenRecorded": false
+  },
+  "relatedRegressionFix": {
+    "applicationClient": "src/application/NC03ControlClient.js",
+    "pwaCache": "sw.js",
+    "tests": [
+      "tests/application-boundary.test.mjs",
+      "tests/live-telemetry.test.mjs"
+    ],
+    "exactHeadCi": "NC03 CI #609 PASS",
+    "constitution": "Universal Constitution Compliance #60 PASS"
+  }
+}
