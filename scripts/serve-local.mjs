@@ -681,6 +681,19 @@ async function modemDoctor(req, res) {
   }
 }
 
+async function clearLocalModemSession(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl || DEFAULT_MODEM_BASE_URL);
+    const session = modemSessions.get(baseUrl);
+    if (session?.jar) session.jar.clear();
+    json(res, 200, { ok:true, payload:{ cleared:true, vendorLogoutAttempted:false } });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "SESSION_CLEAR_FAILED";
+    json(res, 502, { ok:false, code:/^[A-Z0-9_]+$/.test(code) ? code : "SESSION_CLEAR_FAILED" });
+  }
+}
+
 async function modemRead(req, res, operation) {
   try {
     const body = await readJsonBody(req);
@@ -763,6 +776,15 @@ const server = createServer(async (req, res) => {
       return;
     }
     await writeLongLifeCharging(req, res);
+    return;
+  }
+
+  if (pathname === "/api/nc03/session/clear") {
+    if (req.method !== "POST") {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await clearLocalModemSession(req, res);
     return;
   }
 
