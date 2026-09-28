@@ -59,7 +59,9 @@ export class NC03ControlClient {
       || payload?.authLoginProtocol !== protocol.authLoginProtocol
       || payload?.writeReadinessProtocol !== protocol.writeReadinessProtocol
       || payload?.settingsWriteProtocol !== protocol.settingsWriteProtocol
-      || payload?.stockUiAuditSchema !== protocol.stockUiAuditSchema) {
+      || payload?.stockUiAuditSchema !== protocol.stockUiAuditSchema
+      || payload?.readModelSchema !== protocol.readModelSchema
+      || payload?.guardedWriteProtocol !== protocol.guardedWriteProtocol) {
       throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
     }
   }
