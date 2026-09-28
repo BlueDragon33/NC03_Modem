@@ -971,7 +971,7 @@ async function writeLongLifeCharging(enabled) {
 
   try {
     await controlClient.health();
-    state.settingsWriteResult = await controlClient.setLongLifeCharging(state.baseUrl, enabled);
+    state.settingsWriteResult = await controlClient.setLongLifeCharging(state.baseUrl, enabled, { confirmed:true });
     await refreshDetails({ render:false });
     await refreshLive({ render:false });
   } catch (error) {

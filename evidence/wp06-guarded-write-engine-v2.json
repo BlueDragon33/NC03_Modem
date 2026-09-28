@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "reportId": "wp06-guarded-write-engine-v2",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP06",
+  "status": "AUTOMATED_GATES_PENDING_CI_AND_HARDWARE_ACCEPTANCE",
+  "protocol": "nc03-guarded-write/v2",
+  "engine": "src/modem/NC03GuardedWriteEngine.js",
+  "firstOperation": "power.long-life",
+  "acceptanceEndpoint": "/api/nc03/write-acceptance/long-life-charging",
+  "sourceTransport": "shared-in-memory-authenticated-session",
+  "preflightFailure": "privacy-safe-machine-readable-stage-and-source-counts",
+  "original409Body": "NOT_CAPTURED",
+  "hardwareAcceptance": "PENDING_RETEST",
+  "persistentWriteStillLocked": true
+}

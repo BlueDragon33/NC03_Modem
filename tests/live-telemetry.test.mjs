@@ -11,6 +11,7 @@ import {
 const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const applicationClient = fs.readFileSync(new URL("../src/application/NC03ControlClient.js", import.meta.url), "utf8");
 const server = fs.readFileSync(new URL("../scripts/serve-local.mjs", import.meta.url), "utf8");
+const sourceReader = fs.readFileSync(new URL("../src/modem/NC03WriteSourceCollection.js", import.meta.url), "utf8");
 const sw = fs.readFileSync(new URL("../sw.js", import.meta.url), "utf8");
 
 test("live battery, connection and signal poll every 10 seconds", () => {
@@ -193,8 +194,8 @@ test("AUTH probe exposes bridge failures and per-path diagnostics instead of a g
   assert.match(app, /PROBE DIAGNOSTICS/);
   assert.match(server, /diagnostics:\{/);
   assert.match(server, /Promise\.all\(paths\.map/);
-  assert.match(server, /TIMEOUT/);
-  assert.match(server, /REDIRECT/);
+  assert.match(sourceReader, /TIMEOUT/);
+  assert.match(sourceReader, /REDIRECT/);
 });
 
 
@@ -383,15 +384,16 @@ test("real login and post-login verification share one in-memory modem session t
 });
 
 
-test("Long Life guarded runtime remains implemented but UI authority is fail-closed by canonical registry", () => {
+test("Long Life write path is owned by the generic guarded engine while Registry remains fail-closed", () => {
   assert.match(app, /canWriteSetting\("power\.long-life"\)/);
   assert.match(app, /Capability power\.long-life chưa WRITE VERIFIED/);
   assert.match(app, /toggleLongLifeChargingSwitch/);
-  assert.match(server, /async function writeLongLifeCharging/);
-  assert.match(server, /verifyPowerReadback/);
-  assert.match(server, /executeRollback/);
-  assert.match(server, /WRITE_POSTCONDITION_FAILED/);
-  assert.match(server, /settingsWriteProtocol:NC03_RUNTIME_PROTOCOL\.settingsWriteProtocol/);
+  assert.match(server, /executeGuardedWriteTransaction/);
+  assert.match(server, /runLongLifeTransaction/);
+  assert.match(server, /acceptLongLifeChargingWrite/);
+  assert.match(server, /write-acceptance\/long-life-charging/);
+  assert.match(server, /alwaysRollback:true/);
+  assert.match(server, /guardedWriteProtocol:NC03_RUNTIME_PROTOCOL\.guardedWriteProtocol/);
 });
 
 

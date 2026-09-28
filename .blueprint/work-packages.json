@@ -173,7 +173,24 @@
         "NC03-WP05"
       ],
       "purpose": "Build the generic preflight/write/readback/rollback transaction engine used by all settings.",
-      "prompt": "prompts/06-wp06.md"
+      "prompt": "prompts/06-wp06.md",
+      "progress": "AUTOMATED_IMPLEMENTATION_PENDING_CI_AND_REAL_HARDWARE_REVERSIBLE_ACCEPTANCE",
+      "progressEvidence": [
+        "src/modem/NC03GuardedWriteEngine.js",
+        "docs/NC03-GUARDED-WRITE-ENGINE-V2.md",
+        "evidence/wp06-guarded-write-engine-v2.json",
+        "tests/guarded-write-engine.test.mjs",
+        "tests/application-boundary.test.mjs",
+        "tests/live-telemetry.test.mjs"
+      ],
+      "blockers": [
+        {
+          "id": "wp06-real-hardware-reversible-write",
+          "type": "REAL_HARDWARE_ACCEPTANCE",
+          "status": "OPEN",
+          "requirement": "Run the reversible Long Life acceptance operation on real NC03_8.00.42 and require desired readback plus verified restoration of original state."
+        }
+      ]
     },
     {
       "id": "NC03-WP07",

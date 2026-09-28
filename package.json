@@ -1,6 +1,6 @@
 {
   "name": "nc03-control-center",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,12 +8,12 @@
     "check": "node scripts/check.mjs",
     "typecheck": "node scripts/typecheck.mjs",
     "lint": "node scripts/lint.mjs",
-    "unit": "node --test tests/read-model.test.mjs tests/auth-session-state-machine.test.mjs tests/application-boundary.test.mjs tests/settings-registry.test.mjs tests/capability.test.mjs tests/auth-source-discovery.test.mjs tests/connection-doctor.test.mjs tests/credential-vault.test.mjs tests/diagnostic-report.test.mjs tests/firmware-80042.test.mjs tests/har-discovery.test.mjs tests/live-telemetry.test.mjs tests/local-bridge-policy.test.mjs tests/nc03-login-runtime.test.mjs tests/write-readiness.test.mjs tests/stock-webui-audit.test.mjs tests/module-skeleton.test.mjs tests/application-management-contract.test.mjs && node -e \"console.log('UNIT PASS')\"",
+    "unit": "node --test tests/write-source-session.test.mjs tests/guarded-write-engine.test.mjs tests/read-model.test.mjs tests/auth-session-state-machine.test.mjs tests/application-boundary.test.mjs tests/settings-registry.test.mjs tests/capability.test.mjs tests/auth-source-discovery.test.mjs tests/connection-doctor.test.mjs tests/credential-vault.test.mjs tests/diagnostic-report.test.mjs tests/firmware-80042.test.mjs tests/har-discovery.test.mjs tests/live-telemetry.test.mjs tests/local-bridge-policy.test.mjs tests/nc03-login-runtime.test.mjs tests/write-readiness.test.mjs tests/stock-webui-audit.test.mjs tests/module-skeleton.test.mjs tests/application-management-contract.test.mjs && node -e \"console.log('UNIT PASS')\"",
     "integration": "node --test tests/integration.test.mjs && node -e \"console.log('INTEGRATION PASS')\"",
     "ux": "node scripts/ux.mjs",
     "security": "node scripts/security.mjs",
     "test": "npm run unit && npm run integration",
-    "verify": "npm run blueprint:check && npm run wp01:check && npm run wp02:check && npm run wp03:check && npm run wp04:check && npm run wp05:check && npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run offline && npm run security",
+    "verify": "npm run blueprint:check && npm run wp01:check && npm run wp02:check && npm run wp03:check && npm run wp04:check && npm run wp05:check && npm run wp06:check && npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run offline && npm run security",
     "offline": "node scripts/offline.mjs",
     "serve:local": "node scripts/serve-local.mjs",
     "analyze:har": "node scripts/analyze-har.mjs",
@@ -22,6 +22,7 @@
     "wp02:check": "node --test tests/settings-registry.test.mjs",
     "wp03:check": "node --test tests/application-boundary.test.mjs",
     "wp04:check": "node --test tests/auth-session-state-machine.test.mjs tests/nc03-login-runtime.test.mjs tests/credential-vault.test.mjs",
-    "wp05:check": "node --test tests/read-model.test.mjs tests/application-boundary.test.mjs tests/diagnostic-report.test.mjs"
+    "wp05:check": "node --test tests/read-model.test.mjs tests/application-boundary.test.mjs tests/diagnostic-report.test.mjs",
+    "wp06:check": "node --test tests/write-source-session.test.mjs tests/guarded-write-engine.test.mjs tests/application-boundary.test.mjs tests/live-telemetry.test.mjs"
   }
 }

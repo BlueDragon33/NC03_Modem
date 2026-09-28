@@ -6,5 +6,6 @@ export const NC03_RUNTIME_PROTOCOL = Object.freeze({
   writeReadinessProtocol:"nc03-write-readiness/v1",
   settingsWriteProtocol:"nc03-settings-write/v1",
   stockUiAuditSchema:"nc03-stock-webui-audit/v2",
-  readModelSchema:"nc03-read-model/v1"
+  readModelSchema:"nc03-read-model/v1",
+  guardedWriteProtocol:"nc03-guarded-write/v2"
 });

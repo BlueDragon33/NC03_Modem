@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.8.4"
+    "version": "0.8.5"
   },
   "capabilities": {
     "webLaunch": true,
@@ -99,7 +99,11 @@
     "deterministicAuthSessionStateMachine": true,
     "localSessionInvalidation": true,
     "versionedNormalizedReadModel": true,
-    "vendorFieldIsolationAtBridge": true
+    "vendorFieldIsolationAtBridge": true,
+    "guardedWriteEngineV2": true,
+    "reversibleWriteAcceptance": true,
+    "writeConcurrencyGuard": true,
+    "explicitUnknownFinalState": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -112,7 +116,8 @@
     "writeReadiness": "/api/nc03/write-readiness",
     "longLifeCharging": "/api/nc03/settings/long-life-charging",
     "stockWebUiAudit": "/api/nc03/stock-ui-audit",
-    "sessionClear": "/api/nc03/session/clear"
+    "sessionClear": "/api/nc03/session/clear",
+    "longLifeWriteAcceptance": "/api/nc03/write-acceptance/long-life-charging"
   },
   "policy": {
     "remoteAdminReady": false,
@@ -242,7 +247,12 @@
     "readModelVersion": "1.0.0",
     "productUiConsumesVendorFields": false,
     "unknownBooleanReadValueBecomesNull": true,
-    "readFreshnessExplicit": true
+    "readFreshnessExplicit": true,
+    "guardedWriteProtocol": "nc03-guarded-write/v2",
+    "writeRequiresExplicitConfirmation": true,
+    "failedPostconditionCannotReportSuccess": true,
+    "rollbackOutcomeExplicit": true,
+    "acceptanceModeAlwaysRestoresOriginal": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,

@@ -9,7 +9,10 @@ import { NC03_RUNTIME_PROTOCOL } from "../src/runtime/RuntimeProtocol.js";
 import { discoverNc03LoginRecipe, discoverSaveAjaxTransport, executeNc03Login } from "../src/modem/NC03LoginRuntime.js";
 import { createCookieAwareFetch } from "../src/modem/NC03LocalCookieJar.js";
 import { buildWriteReadinessEvidence } from "../src/modem/WriteSourceDiscovery.js";
+import { fetchStaticSource, collectWriteSourceEvidence } from "../src/modem/NC03WriteSourceCollection.js";
 import { buildReversibleTogglePlan, executeJsonToggleWrite, executeRollback, readbackMatches } from "../src/modem/NC03SafeWriteRuntime.js";
+import { executeGuardedWriteTransaction } from "../src/modem/NC03GuardedWriteEngine.js";
+import { settingDefinition } from "../src/domain/NC03SettingsRegistry.js";
 import { buildStockWebUiAudit, stockUiAuditDiscoveryPaths } from "../src/modem/StockWebUiAudit.js";
 import { normalizeAdvancedSnapshot, normalizeLiveSnapshot } from "../src/domain/NC03ReadModel.js";
 
@@ -147,48 +150,6 @@ const STOCK_UI_SOURCE_SEEDS = Object.freeze([
   "/js/common.js",
   "/js/tools.js"
 ]);
-
-async function fetchStaticSource(baseUrl, path, { fetchImpl = fetch } = {}) {
-  const url = new URL(path, baseUrl);
-  const startedAt = Date.now();
-  try {
-    const response = await fetchImpl(url, {
-      method:"GET",
-      redirect:"manual",
-      signal:AbortSignal.timeout(2200),
-      headers:{ Accept:"text/html,application/javascript,text/javascript,*/*;q=0.5" }
-    });
-    const contentType = String(response.headers.get("content-type") || "");
-    const diagnostic = {
-      path:url.pathname,
-      status:response.ok ? "HTTP_OK" : response.status >= 300 && response.status < 400 ? "REDIRECT" : "HTTP_ERROR",
-      httpStatus:response.status,
-      contentType:contentType.split(";")[0] || null,
-      durationMs:Date.now() - startedAt
-    };
-    if (!response.ok) return { item:null, diagnostic };
-    if (!/javascript|text\/(?:html|plain)|application\/x-javascript/i.test(contentType)) {
-      return { item:null, diagnostic:{ ...diagnostic, status:"UNSUPPORTED_CONTENT" } };
-    }
-    const text = await response.text();
-    return {
-      item:{ path:url.pathname, source:text.slice(0, 524288) },
-      diagnostic:{ ...diagnostic, bytes:Buffer.byteLength(text) }
-    };
-  } catch (error) {
-    const name = String(error?.name || "");
-    return {
-      item:null,
-      diagnostic:{
-        path:url.pathname,
-        status:name === "TimeoutError" || name === "AbortError" ? "TIMEOUT" : "NETWORK_ERROR",
-        httpStatus:null,
-        contentType:null,
-        durationMs:Date.now() - startedAt
-      }
-    };
-  }
-}
 
 async function authProbeBaseUrl(req) {
   if (req.method === "GET") {
@@ -465,25 +426,21 @@ async function writeReadiness(req, res) {
       return;
     }
 
-    const [power, sourceResults] = await Promise.all([
+    const session = modemSessionTransport(baseUrl);
+    const [power, collection] = await Promise.all([
       adapter.getPowerSettings(),
-      Promise.all(WRITE_SOURCE_SEEDS.map((path) => fetchStaticSource(baseUrl, path)))
+      collectWriteSourceEvidence({ baseUrl, paths:WRITE_SOURCE_SEEDS, fetchImpl:session.fetchImpl })
     ]);
-    const sources = sourceResults.map((result) => result.item).filter(Boolean);
-    const diagnostics = sourceResults.map((result) => result.diagnostic);
-    const evidence = buildWriteReadinessEvidence(sources, { targetId, currentState:power });
+    const evidence = buildWriteReadinessEvidence(collection.sources, { targetId, currentState:power });
 
     json(res, 200, {
       ok:true,
       payload:{
         evidence,
         diagnostics:{
-          sourceCount:sources.length,
-          items:diagnostics,
-          summary:diagnostics.reduce((acc, item) => {
-            acc[item.status] = (acc[item.status] || 0) + 1;
-            return acc;
-          }, {})
+          sourceCount:collection.sources.length,
+          items:collection.diagnostics,
+          summary:collection.summary
         }
       }
     });
@@ -508,6 +465,76 @@ async function verifyPowerReadback(adapter, key, enabled) {
   return { ok:false, power:await adapter.getPowerSettings().catch(() => ({})) };
 }
 
+async function buildLongLifeWriteContext(baseUrl, desiredEnabled) {
+  const adapter = modemAdapter(baseUrl);
+  const session = modemSessionTransport(baseUrl);
+  const [currentPower, collection] = await Promise.all([
+    adapter.getPowerSettings(),
+    collectWriteSourceEvidence({ baseUrl, paths:WRITE_SOURCE_SEEDS, fetchImpl:session.fetchImpl })
+  ]);
+  const evidence = buildWriteReadinessEvidence(collection.sources, {
+    targetId:"long-life-charging",
+    currentState:currentPower
+  });
+  const plan = buildReversibleTogglePlan({
+    evidence,
+    currentState:currentPower,
+    desiredEnabled
+  });
+  const transport = discoverSaveAjaxTransport(collection.sources);
+  return { adapter, currentPower, evidence, plan, transport, session };
+}
+
+function guardedWriteStatus(result) {
+  if (result?.ok) return 200;
+  if (["BLOCKED","CONCURRENCY_CONFLICT"].includes(result?.state)) return 409;
+  return 502;
+}
+
+async function runLongLifeTransaction({
+  baseUrl,
+  desiredEnabled,
+  confirmed,
+  acceptanceMode = false,
+  alwaysRollback = false
+} = {}) {
+  const context = await buildLongLifeWriteContext(baseUrl, desiredEnabled);
+  const setting = settingDefinition("power.long-life");
+  const result = await executeGuardedWriteTransaction({
+    operationId:"power.long-life",
+    desiredValue:desiredEnabled,
+    plan:context.plan,
+    policy:{
+      writable:Boolean(setting?.capability?.writable),
+      acceptanceMode,
+      requiresConfirmation:true,
+      confirmed:Boolean(confirmed),
+      dangerClass:setting?.safety?.danger ?? "MEDIUM"
+    },
+    alwaysRollback,
+    readCurrent:()=>context.adapter.getPowerSettings(),
+    executeWrite:(plan)=>executeJsonToggleWrite({
+      baseUrl,
+      plan,
+      transport:context.transport,
+      fetchImpl:context.session.fetchImpl
+    }),
+    verifyDesired:(plan, desired)=>verifyPowerReadback(context.adapter, plan.readbackKey, desired),
+    executeRollback:(plan)=>executeRollback({
+      baseUrl,
+      plan,
+      transport:context.transport,
+      fetchImpl:context.session.fetchImpl
+    }),
+    verifyOriginal:(plan)=>verifyPowerReadback(context.adapter, plan.readbackKey, plan.originalEnabled)
+  });
+  return {
+    ...result,
+    target:"long-life-charging",
+    enabled:desiredEnabled
+  };
+}
+
 async function writeLongLifeCharging(req, res) {
   try {
     const body = await readJsonBody(req);
@@ -525,111 +552,85 @@ async function writeLongLifeCharging(req, res) {
       return;
     }
 
-    const [currentPower, sourceResults] = await Promise.all([
-      adapter.getPowerSettings(),
-      Promise.all(WRITE_SOURCE_SEEDS.map((path) => fetchStaticSource(baseUrl, path)))
-    ]);
-    const sources = sourceResults.map((result) => result.item).filter(Boolean);
-    const evidence = buildWriteReadinessEvidence(sources, {
+    const result = await runLongLifeTransaction({
+      baseUrl,
+      desiredEnabled:enabled,
+      confirmed:body.confirmed === true
+    });
+
+    json(res, guardedWriteStatus(result), result.ok
+      ? { ok:true, payload:result }
+      : { ok:false, code:result.code || result.state || "SETTINGS_WRITE_FAILED", payload:result });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "SETTINGS_WRITE_FAILED";
+    json(res, 502, { ok:false, code:/^[A-Z0-9_]+$/.test(code) ? code : "SETTINGS_WRITE_FAILED" });
+  }
+}
+
+async function acceptLongLifeChargingWrite(req, res) {
+  try {
+    const body = await readJsonBody(req);
+    const baseUrl = normalizeModemBaseUrl(body.baseUrl || DEFAULT_MODEM_BASE_URL);
+    if (body.confirmed !== true) {
+      json(res, 409, { ok:false, code:"WRITE_CONFIRMATION_REQUIRED" });
+      return;
+    }
+
+    const adapter = modemAdapter(baseUrl);
+    const login = await adapter.connect();
+    if (!login.authenticated) {
+      json(res, 401, { ok:false, code:"AUTHENTICATION_REQUIRED" });
+      return;
+    }
+
+    const currentPower = await adapter.getPowerSettings();
+    const session = modemSessionTransport(baseUrl);
+    const collection = await collectWriteSourceEvidence({ baseUrl, paths:WRITE_SOURCE_SEEDS, fetchImpl:session.fetchImpl });
+    const evidence = buildWriteReadinessEvidence(collection.sources, {
       targetId:"long-life-charging",
       currentState:currentPower
     });
-    const plan = buildReversibleTogglePlan({
+    const probePlan = buildReversibleTogglePlan({
       evidence,
       currentState:currentPower,
-      desiredEnabled:enabled
+      desiredEnabled:true
     });
-
-    if (!plan.ready) {
+    if (!probePlan.ready) {
       json(res, 409, {
         ok:false,
-        code:plan.code || "WRITE_MAPPING_INCOMPLETE",
+        code:probePlan.code || "WRITE_MAPPING_INCOMPLETE",
         payload:{
-          target:"long-life-charging",
-          mapping:{
+          stage:"MAPPING_PREFLIGHT",
+          diagnostics:{
+            sourceCount:collection.sources.length,
+            sourceSummary:collection.summary,
+            sessionTransport:true,
             endpointMapped:evidence.endpointMapped,
             requestShapeMapped:evidence.requestShapeMapped,
             transportMapped:evidence.transportMapped,
-            currentReadbackPresent:evidence.currentReadbackPresent,
-            fieldCandidates:evidence.fieldCandidates
+            readbackPresent:evidence.currentReadbackPresent,
+            fieldCandidateCount:evidence.fieldCandidates.length
           }
         }
       });
       return;
     }
 
-    if (plan.originalEnabled === enabled) {
-      json(res, 200, {
-        ok:true,
-        payload:{
-          target:"long-life-charging",
-          changed:false,
-          enabled,
-          verified:true,
-          rollbackUsed:false,
-          message:"ALREADY_IN_REQUESTED_STATE"
-        }
-      });
-      return;
-    }
-
-    const transport = discoverSaveAjaxTransport(sources);
-    if (!transport.ready || !evidence.transportHelpers.includes("saveAjaxJsonData")) {
-      json(res, 409, { ok:false, code:"WRITE_TRANSPORT_UNRESOLVED" });
-      return;
-    }
-
-    const session = modemSessionTransport(baseUrl);
-    const result = await executeJsonToggleWrite({
+    const desiredEnabled = !probePlan.originalEnabled;
+    const result = await runLongLifeTransaction({
       baseUrl,
-      plan,
-      transport,
-      fetchImpl:session.fetchImpl
+      desiredEnabled,
+      confirmed:true,
+      acceptanceMode:true,
+      alwaysRollback:true
     });
-    if (!result.ok) {
-      json(res, 502, { ok:false, code:result.code, retcode:result.retcode ?? null });
-      return;
-    }
 
-    const post = await verifyPowerReadback(adapter, plan.readbackKey, enabled);
-    if (post.ok) {
-      json(res, 200, {
-        ok:true,
-        payload:{
-          target:"long-life-charging",
-          changed:true,
-          enabled,
-          verified:true,
-          rollbackUsed:false,
-          readbackKey:plan.readbackKey
-        }
-      });
-      return;
-    }
-
-    const rollback = await executeRollback({
-      baseUrl,
-      plan,
-      transport,
-      fetchImpl:session.fetchImpl
-    });
-    const rollbackVerify = rollback.ok
-      ? await verifyPowerReadback(adapter, plan.readbackKey, plan.originalEnabled)
-      : { ok:false };
-
-    json(res, 502, {
-      ok:false,
-      code:"WRITE_POSTCONDITION_FAILED",
-      payload:{
-        target:"long-life-charging",
-        rollbackAttempted:true,
-        rollbackAccepted:Boolean(rollback.ok),
-        rollbackVerified:Boolean(rollbackVerify.ok)
-      }
-    });
+    json(res, guardedWriteStatus(result), result.ok
+      ? { ok:true, payload:{ ...result, acceptanceTest:true, originalRestored:result.finalState === "ORIGINAL_VERIFIED" } }
+      : { ok:false, code:result.code || result.state || "WRITE_ACCEPTANCE_FAILED", payload:{ ...result, acceptanceTest:true } });
   } catch (error) {
-    const code = error instanceof Error ? error.message : "SETTINGS_WRITE_FAILED";
-    json(res, 502, { ok:false, code:/^[A-Z0-9_]+$/.test(code) ? code : "SETTINGS_WRITE_FAILED" });
+    const code = error instanceof Error ? error.message : "WRITE_ACCEPTANCE_FAILED";
+    json(res, 502, { ok:false, code:/^[A-Z0-9_]+$/.test(code) ? code : "WRITE_ACCEPTANCE_FAILED" });
   }
 }
 
@@ -774,6 +775,15 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === "/api/nc03/write-acceptance/long-life-charging") {
+    if (req.method !== "POST") {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await acceptLongLifeChargingWrite(req, res);
+    return;
+  }
+
   if (pathname === "/api/nc03/settings/long-life-charging") {
     if (req.method !== "POST") {
       json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
@@ -831,6 +841,7 @@ const server = createServer(async (req, res) => {
       settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
       stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema,
       readModelSchema:NC03_RUNTIME_PROTOCOL.readModelSchema,
+      guardedWriteProtocol:NC03_RUNTIME_PROTOCOL.guardedWriteProtocol,
       bootedAt:runtimeBootedAt,
       assetRoot:usingDist ? "dist" : "source",
       contractEndpoint:"/api/application-management/contract"
