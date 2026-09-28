@@ -455,3 +455,11 @@ test("Product UI delegates Local Bridge transport to the application boundary", 
   assert.match(applicationClient, /getDetails\(baseUrl\)/);
   assert.match(applicationClient, /login\(baseUrl, password\)/);
 });
+
+
+test("WP04 PWA cache includes application-layer runtime modules", () => {
+  assert.match(sw, /nc03-control-center-v39-auth-session-v083/);
+  assert.match(sw, /src\/application\/NC03ControlClient\.js/);
+  assert.match(sw, /src\/application\/NC03AuthSessionStateMachine\.js/);
+  assert.match(sw, /src\/domain\/NC03SettingsRegistry\.js/);
+});
