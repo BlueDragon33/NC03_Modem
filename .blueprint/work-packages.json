@@ -105,7 +105,24 @@
         "NC03-WP03"
       ],
       "purpose": "Stabilize real login/session/re-auth/credential ownership and recovery.",
-      "prompt": "prompts/04-wp04.md"
+      "prompt": "prompts/04-wp04.md",
+      "progress": "AUTOMATED_GATES_READY_HARDWARE_RECOVERY_PENDING",
+      "progressEvidence": [
+        "src/application/NC03AuthSessionStateMachine.js",
+        "src/application/NC03ControlClient.js",
+        "docs/NC03-AUTH-SESSION-LIFECYCLE.md",
+        "evidence/wp04-auth-session-lifecycle.v1.json",
+        "tests/auth-session-state-machine.test.mjs",
+        "/api/nc03/session/clear"
+      ],
+      "blockers": [
+        {
+          "id": "wp04-real-hardware-expiry-restart-recovery",
+          "type": "REAL_HARDWARE_ACCEPTANCE",
+          "status": "OPEN",
+          "requirement": "On real NC03: login, invalidate/restart Local Bridge in-memory session, confirm protected read forces re-authentication, then re-login successfully without sharing password/session values."
+        }
+      ]
     },
     {
       "id": "NC03-WP05",
