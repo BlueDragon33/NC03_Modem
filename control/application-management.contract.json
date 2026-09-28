@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.8.0"
+    "version": "0.8.1"
   },
   "capabilities": {
     "webLaunch": true,
@@ -77,7 +77,7 @@
     "authReadinessEvidence": true,
     "localModemSessionCookies": true,
     "guardedSettingsWrite": true,
-    "longLifeChargingWrite": true,
+    "longLifeChargingWrite": false,
     "reversibleWriteRollback": true,
     "webUiStyleSettingsCenter": true,
     "settingsCategoryNavigation": true,
@@ -87,7 +87,11 @@
     "strictSerialWorkPackages": true,
     "constitutionBoundDevelopment": true,
     "stockWebUiStructureAudit": true,
-    "stockWebUiAuditExport": true
+    "stockWebUiAuditExport": true,
+    "canonicalSettingsRegistry": true,
+    "settingsRegistryDrivenUi": true,
+    "vendorRoutesExcludedFromCanonicalIdentity": true,
+    "longLifeChargingWriteCandidate": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -203,7 +207,15 @@
     "stockWebUiAuditNeverReturnsControlValues": true,
     "stockWebUiAuditDoesNotReplaceHumanReview": true,
     "stockWebUiAuditUsesAuthenticatedSession": true,
-    "stockWebUiAuditReportsCoverageGaps": true
+    "stockWebUiAuditReportsCoverageGaps": true,
+    "settingsRegistrySchema": "nc03-settings-registry/v1",
+    "settingsRegistryVersion": "1.0.0",
+    "settingsRegistryEntries": 77,
+    "writeAuthorityFromSettingsRegistry": true,
+    "vendorRoutesAreEvidenceNotIdentity": true,
+    "internalFirmwareStateNotPromotedToStockControl": true,
+    "longLifeChargingWriteAuthorized": false,
+    "longLifeChargingLifecycle": "WRITE_CANDIDATE"
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
