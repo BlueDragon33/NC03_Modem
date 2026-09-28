@@ -24,6 +24,14 @@
   "pendingHardwareEvidence": [],
   "hardwareAcceptance": {
     "result": "PASS",
-    "evidence": "evidence/wp05-real-hardware-read-parity-2026-09-28.json"
+    "confirmedByUser": true,
+    "scope": [
+      "Home",
+      "Network",
+      "Wi-Fi",
+      "Devices",
+      "Settings"
+    ],
+    "note": "User confirmed post-refactor read behavior remains correct on real NC03 hardware."
   }
 }
