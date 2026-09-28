@@ -9,6 +9,7 @@ import {
 } from "../src/modem/NC03Har2Profile.js";
 
 const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+const applicationClient = fs.readFileSync(new URL("../src/application/NC03ControlClient.js", import.meta.url), "utf8");
 const server = fs.readFileSync(new URL("../scripts/serve-local.mjs", import.meta.url), "utf8");
 
 test("live battery, connection and signal poll every 10 seconds", () => {
@@ -158,9 +159,9 @@ test("AUTH Source Probe is local-only evidence tooling and does not enable login
 });
 
 
-test("local helper rejects malformed success envelopes instead of silently returning undefined", () => {
-  assert.match(app, /MALFORMED_LOCAL_RESPONSE/);
-  assert.match(app, /hasOwnProperty\.call\(payload, "payload"\)/);
+test("application client rejects malformed success envelopes instead of silently returning undefined", () => {
+  assert.match(applicationClient, /MALFORMED_LOCAL_RESPONSE/);
+  assert.match(applicationClient, /hasOwnProperty\.call\(json, "payload"\)/);
 });
 
 test("AUTH Source Probe and Connection Doctor use the standard local API payload envelope", () => {
@@ -187,7 +188,7 @@ test("AUTH source UI distinguishes login submit candidates from passive auth end
 
 test("AUTH probe exposes bridge failures and per-path diagnostics instead of a generic silent error", () => {
   assert.match(app, /LOCAL_BRIDGE_UNREACHABLE/);
-  assert.match(app, /localHealth\(\)/);
+  assert.match(app, /controlClient\.health\(\)/);
   assert.match(app, /PROBE DIAGNOSTICS/);
   assert.match(server, /diagnostics:\{/);
   assert.match(server, /Promise\.all\(paths\.map/);
@@ -437,4 +438,15 @@ test("Settings UI consumes canonical registry metadata and contains no vendor wr
   const settingsBlock=app.slice(start,end);
   assert.doesNotMatch(settingsBlock,/\/action\//);
   assert.doesNotMatch(settingsBlock,/\/goform\//);
+});
+
+
+test("Product UI delegates Local Bridge transport to the application boundary", () => {
+  assert.doesNotMatch(app, /\bfetch\s*\(/);
+  assert.doesNotMatch(app, /\/api\/nc03\//);
+  assert.match(app, /new NC03ControlClient\(\)/);
+  assert.match(applicationClient, /async health\(\)/);
+  assert.match(applicationClient, /getSnapshot\(baseUrl\)/);
+  assert.match(applicationClient, /getDetails\(baseUrl\)/);
+  assert.match(applicationClient, /login\(baseUrl, password\)/);
 });
