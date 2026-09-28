@@ -402,3 +402,16 @@ test("Settings Center mirrors stock Web UI groups while locked controls stay non
   assert.match(app, /toggleLongLifeChargingSwitch/);
   assert.match(app, /data-settings-ap/);
 });
+
+
+test("WP01 stock Web UI audit remains local, read-only and structure-only", () => {
+  assert.match(server, /\/api\/nc03\/stock-ui-audit/);
+  assert.match(server, /buildStockWebUiAudit/);
+  assert.match(server, /stockUiAuditDiscoveryPaths/);
+  assert.match(app, /STOCK WEB UI AUDIT · WP01/);
+  assert.match(app, /Quét Web UI gốc/);
+  assert.match(app, /STRUCTURE ONLY/);
+  assert.match(app, /downloadStockUiAudit/);
+  assert.match(app, /stockUiAuditSchema/);
+  assert.doesNotMatch(server, /stockUiAudit[\s\S]{0,500}executeJsonToggleWrite/);
+});
