@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.8.4"
+    "version": "0.8.5"
   },
   "capabilities": {
     "webLaunch": true,
@@ -99,7 +99,11 @@
     "deterministicAuthSessionStateMachine": true,
     "localSessionInvalidation": true,
     "versionedNormalizedReadModel": true,
-    "vendorFieldIsolationAtBridge": true
+    "vendorFieldIsolationAtBridge": true,
+    "guardedWriteEngineV2": true,
+    "reversibleWriteAcceptance": true,
+    "writeConcurrencyGuard": true,
+    "explicitUnknownFinalState": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -242,7 +246,8 @@
     "readModelVersion": "1.0.0",
     "productUiConsumesVendorFields": false,
     "unknownBooleanReadValueBecomesNull": true,
-    "readFreshnessExplicit": true
+    "readFreshnessExplicit": true,
+    "guardedWriteProtocol": "nc03-guarded-write/v2"
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,
