@@ -1,0 +1,78 @@
+{
+  "schema": "nc03-architecture-boundaries/v1",
+  "version": "1.0.0",
+  "projectId": "project:nc03-modem",
+  "layers": [
+    {
+      "id": "product-ui",
+      "owner": "app.js + src/ui/*",
+      "may": [
+        "render domain/application state",
+        "capture user intent",
+        "invoke named application client/use-cases"
+      ],
+      "mustNot": [
+        "call fetch/XMLHttpRequest directly",
+        "contain /api/nc03 transport routes as authority",
+        "contain /action or /goform modem routes as product logic"
+      ]
+    },
+    {
+      "id": "application",
+      "owner": "src/application/*",
+      "may": [
+        "call same-origin Local Bridge endpoints",
+        "validate Local Bridge/runtime envelopes",
+        "expose named use-case methods"
+      ],
+      "mustNot": [
+        "call physical modem origins directly",
+        "own firmware field/endpoint semantics"
+      ]
+    },
+    {
+      "id": "domain",
+      "owner": "src/domain/NC03SettingsRegistry.js",
+      "may": [
+        "own stable setting/action IDs",
+        "own capability lifecycle",
+        "own safety/privacy/UI metadata"
+      ],
+      "mustNot": [
+        "use vendor routes/field keys as canonical identity"
+      ]
+    },
+    {
+      "id": "firmware-adapter-profile",
+      "owner": "src/modem/NC03Firmware80042Profile.js + src/modem/NC03Firmware80042Adapter.js + discovery/mapping modules",
+      "may": [
+        "map vendor routes/fields/codecs",
+        "normalize firmware behavior"
+      ],
+      "mustNot": [
+        "own product navigation or credential persistence"
+      ]
+    },
+    {
+      "id": "local-bridge",
+      "owner": "scripts/serve-local.mjs + Local Bridge transport/session modules",
+      "may": [
+        "own modem network transport",
+        "own in-memory modem cookie/session continuity",
+        "enforce RFC1918 modem origin policy"
+      ],
+      "mustNot": [
+        "persist modem session cookies",
+        "delegate modem command authority to cloud"
+      ]
+    }
+  ],
+  "ownership": {
+    "runtimeCompatibility": "src/runtime/RuntimeProtocol.js + src/application/NC03ControlClient.js",
+    "modemSession": "Local Bridge in-memory session transport",
+    "rememberedCredential": "src/modem/SecureCredentialVault.js",
+    "capabilityAuthority": "src/domain/NC03SettingsRegistry.js",
+    "firmwareMapping": "firmware profile/adapter/discovery modules",
+    "applicationManagement": "metadata/control-plane only; no modem credential/session/command authority"
+  }
+}

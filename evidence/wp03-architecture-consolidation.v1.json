@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "reportId": "wp03-architecture-consolidation",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP03",
+  "boundaries": "control/nc03-architecture-boundaries.v1.json",
+  "ownershipLedger": "docs/NC03-ARCHITECTURE-CONSOLIDATION.md",
+  "changes": {
+    "retired": [
+      "app.js direct fetch() transport",
+      "app.js localHealth() transport helper",
+      "app.js localRead() transport helper",
+      "UI-side runtime protocol/schema validation",
+      "UI merge of NC03_80042_CAPABILITIES and HAR2_CAPABILITY_OVERRIDES"
+    ],
+    "moved": [
+      "Local Bridge route selection → src/application/NC03ControlClient.js",
+      "Local response envelope validation → src/application/NC03ControlClient.js",
+      "Runtime compatibility validation → src/application/NC03ControlClient.js"
+    ],
+    "kept": [
+      "SecureCredentialVault credential persistence boundary",
+      "Local Bridge in-memory modem session ownership",
+      "Canonical Settings Registry capability authority",
+      "Firmware profile/adapter vendor mapping",
+      "Existing verified login/read behavior"
+    ],
+    "deferred": [
+      "Auth state-machine normalization to WP04",
+      "Read contract normalization to WP05",
+      "Generic write transaction engine to WP06"
+    ]
+  },
+  "acceptance": {
+    "productUiDirectFetchCount": 0,
+    "productUiLocalApiRouteLiteralCount": 0,
+    "applicationBoundaryTest": "tests/application-boundary.test.mjs",
+    "exactRevisionCiRequired": true,
+    "runtimeCompatibilityOwner": "src/application/NC03ControlClient.js + src/runtime/RuntimeProtocol.js",
+    "sessionOwner": "Local Bridge in-memory session transport",
+    "credentialOwner": "SecureCredentialVault",
+    "capabilityOwner": "src/domain/NC03SettingsRegistry.js",
+    "exactRevisionCi": "NC03 CI #600 PASS",
+    "universalConstitution": "#51 PASS"
+  },
+  "status": "PASS"
+}

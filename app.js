@@ -1,14 +1,13 @@
 import { MockNC03Adapter } from "./src/modem/MockNC03Adapter.js";
-import { NC03_80042_CAPABILITIES } from "./src/modem/NC03Firmware80042Profile.js";
-import { HAR2_CAPABILITY_OVERRIDES } from "./src/modem/NC03Har2Profile.js";
 import { buildHarEvidenceReport, parseHar, summarizeCandidates } from "./src/modem/HarDiscovery.js";
 import { loadPreferences, savePreferences, SECURITY_NOTE } from "./src/modem/LocalPreferences.js";
 import { CONNECTION_STATE, connectionStateLabel } from "./src/modem/ConnectionState.js";
 import { PRIMARY_NAV, UI_MODE } from "./src/ui/NavigationModel.js";
 import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
 import { buildDiagnosticReport } from "./src/ui/DiagnosticReport.js";
-import { NC03_RUNTIME_PROTOCOL } from "./src/runtime/RuntimeProtocol.js";
 import { SecureCredentialVault } from "./src/modem/SecureCredentialVault.js";
+import { NC03ControlClient } from "./src/application/NC03ControlClient.js";
+import { DEFAULT_CAPABILITIES } from "./src/modem/CapabilityRegistry.js";
 import { NC03_SETTINGS_REGISTRY, canWriteSetting, lifecycleForSetting, settingDefinition } from "./src/domain/NC03SettingsRegistry.js";
 
 const app = document.querySelector("#app");
@@ -17,6 +16,7 @@ const LIVE_REFRESH_MS = 10_000;
 let liveTimer = null;
 let liveRefreshInFlight = false;
 const credentialVault = new SecureCredentialVault();
+const controlClient = new NC03ControlClient();
 let vaultCredential = null;
 let vaultHydrated = false;
 
@@ -415,9 +415,7 @@ function renderDevices() {
 }
 
 function capabilityRows() {
-  const merged = new Map(NC03_80042_CAPABILITIES.map((row) => [row.module, row]));
-  for (const row of HAR2_CAPABILITY_OVERRIDES) merged.set(row.module, row);
-  return [...merged.values()].map(row => `<tr><td>${esc(row.module)}</td><td>${row.read ? "✓" : "—"}</td><td>${row.write ? "✓" : "—"}</td><td><code>${esc(row.endpoint)}</code></td><td>${esc(row.method)}</td><td>${esc(row.auth)}</td><td><span class="table-status">${esc(row.status)}</span></td></tr>`).join("");
+  return DEFAULT_CAPABILITIES.map((row) => `<tr><td>${esc(row.module)}</td><td>${row.read ? "✓" : "—"}</td><td>${row.write ? "✓" : "—"}</td><td><code>canonical registry</code></td><td>—</td><td>local</td><td><span class="table-status">${esc(row.status)}</span></td></tr>`).join("");
 }
 
 function renderEvidenceList(items, emptyText, tone = "muted") {
@@ -954,54 +952,6 @@ function codedError(code, message = code) {
   return error;
 }
 
-async function localHealth() {
-  try {
-    const response = await fetch("/_local/health", {
-      cache:"no-store",
-      signal:AbortSignal.timeout(2500)
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || payload.ok !== true || payload.app !== "nc03-control-center") {
-      throw codedError("LOCAL_BRIDGE_HEALTH_FAILED");
-    }
-    if (payload.runtimeProtocol !== NC03_RUNTIME_PROTOCOL.id
-      || payload.authEvidenceSchema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema
-      || payload.authLoginProtocol !== NC03_RUNTIME_PROTOCOL.authLoginProtocol
-      || payload.writeReadinessProtocol !== NC03_RUNTIME_PROTOCOL.writeReadinessProtocol
-      || payload.settingsWriteProtocol !== NC03_RUNTIME_PROTOCOL.settingsWriteProtocol
-      || payload.stockUiAuditSchema !== NC03_RUNTIME_PROTOCOL.stockUiAuditSchema) {
-      throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
-    }
-    return payload;
-  } catch (error) {
-    if (error?.code) throw error;
-    throw codedError("LOCAL_BRIDGE_UNREACHABLE");
-  }
-}
-
-async function localRead(path) {
-  let response;
-  try {
-    response = await fetch(path, {
-      method: "POST",
-      cache: "no-store",
-      headers: { "content-type":"application/json" },
-      body: JSON.stringify({ baseUrl: state.baseUrl }),
-      signal:AbortSignal.timeout(12000)
-    });
-  } catch {
-    throw codedError("LOCAL_BRIDGE_UNREACHABLE");
-  }
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload.ok !== true) {
-    throw codedError(payload.code || `HTTP_${response.status}`);
-  }
-  if (!Object.prototype.hasOwnProperty.call(payload, "payload")) {
-    throw codedError("MALFORMED_LOCAL_RESPONSE");
-  }
-  return payload.payload;
-}
-
 async function writeLongLifeCharging(enabled) {
   if (!canWriteSetting("power.long-life")) {
     state.settingsWriteError = "Capability power.long-life chưa WRITE VERIFIED trong Canonical Settings Registry.";
@@ -1018,22 +968,8 @@ async function writeLongLifeCharging(enabled) {
   page();
 
   try {
-    await localHealth();
-    const response = await fetch("/api/nc03/settings/long-life-charging", {
-      method:"POST",
-      cache:"no-store",
-      headers:{ "content-type":"application/json" },
-      body:JSON.stringify({ baseUrl:state.baseUrl, enabled }),
-      signal:AbortSignal.timeout(20000)
-    });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok || body.ok !== true) {
-      const error = codedError(body.code || `HTTP_${response.status}`);
-      error.payload = body.payload;
-      throw error;
-    }
-
-    state.settingsWriteResult = body.payload ?? { enabled, verified:true };
+    await controlClient.health();
+    state.settingsWriteResult = await controlClient.setLongLifeCharging(state.baseUrl, enabled);
     await refreshDetails({ render:false });
     await refreshLive({ render:false });
   } catch (error) {
@@ -1059,8 +995,8 @@ async function writeLongLifeCharging(enabled) {
 async function refreshAuthReadiness({ render = true } = {}) {
   if (state.demoMode) return;
   try {
-    await localHealth();
-    state.authReadiness = await localRead("/api/nc03/auth-readiness");
+    await controlClient.health();
+    state.authReadiness = await controlClient.getAuthReadiness(state.baseUrl);
     state.authReadinessError = "";
     if (state.authReadiness?.ready && state.rememberPassword && !vaultHydrated) {
       vaultHydrated = true;
@@ -1113,17 +1049,7 @@ async function submitLogin() {
       }
     }
 
-    const response = await fetch("/api/nc03/login", {
-      method:"POST",
-      cache:"no-store",
-      headers:{ "content-type":"application/json" },
-      body:JSON.stringify({ baseUrl:state.baseUrl, password }),
-      signal:AbortSignal.timeout(12000)
-    });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok || body.ok !== true || body.payload?.authenticated !== true) {
-      throw codedError(body.code || `HTTP_${response.status}`);
-    }
+    await controlClient.login(state.baseUrl, password);
 
     if (state.rememberPassword) {
       await credentialVault.save({ baseUrl:state.baseUrl, password });
@@ -1166,14 +1092,8 @@ async function runStockUiAudit() {
   state.stockUiAuditError = "";
   page();
   try {
-    await localHealth();
-    const payload = await localRead("/api/nc03/stock-ui-audit");
-    if (payload?.runtime?.protocolId !== NC03_RUNTIME_PROTOCOL.id
-      || payload?.runtime?.stockUiAuditSchema !== NC03_RUNTIME_PROTOCOL.stockUiAuditSchema
-      || payload?.audit?.schema !== NC03_RUNTIME_PROTOCOL.stockUiAuditSchema) {
-      throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
-    }
-    state.stockUiAudit = payload;
+    await controlClient.health();
+    state.stockUiAudit = await controlClient.getStockUiAudit(state.baseUrl);
   } catch (error) {
     state.stockUiAudit = null;
     const labels = {
@@ -1195,13 +1115,8 @@ async function runAuthSourceProbe() {
   state.authSourceError = "";
   page();
   try {
-    await localHealth();
-    const probe = await localRead("/api/nc03/auth-source-probe");
-    if (probe?.runtime?.protocolId !== NC03_RUNTIME_PROTOCOL.id
-      || probe?.evidence?.schema !== NC03_RUNTIME_PROTOCOL.authEvidenceSchema) {
-      throw codedError("LOCAL_BRIDGE_RESTART_REQUIRED");
-    }
-    state.authSourceEvidence = probe;
+    await controlClient.health();
+    state.authSourceEvidence = await controlClient.getAuthSourceProbe(state.baseUrl);
     state.authSourceError = "";
   } catch (error) {
     state.authSourceEvidence = null;
@@ -1227,8 +1142,8 @@ async function runWriteReadiness() {
   state.writeReadinessError = "";
   page();
   try {
-    await localHealth();
-    state.writeReadiness = await localRead("/api/nc03/write-readiness");
+    await controlClient.health();
+    state.writeReadiness = await controlClient.getWriteReadiness(state.baseUrl);
     state.writeReadinessError = "";
   } catch (error) {
     state.writeReadiness = null;
@@ -1260,7 +1175,7 @@ async function runConnectionDoctor() {
     return;
   }
   try {
-    state.doctor = await localRead("/api/nc03/doctor");
+    state.doctor = await controlClient.getDoctor(state.baseUrl);
     state.doctorError = "";
   } catch (error) {
     state.doctor = null;
@@ -1272,7 +1187,7 @@ async function runConnectionDoctor() {
 async function refreshLive({ render = true } = {}) {
   if (state.demoMode) return;
   try {
-    state.live = await localRead("/api/nc03/snapshot");
+    state.live = await controlClient.getSnapshot(state.baseUrl);
     state.liveStale = false;
     state.lastLiveSuccessAt = state.live?.refreshedAt ?? new Date().toISOString();
     state.connectionState = CONNECTION_STATE.CONNECTED;
@@ -1304,7 +1219,7 @@ async function refreshLive({ render = true } = {}) {
 async function refreshDetails({ render = true } = {}) {
   if (state.demoMode) return;
   try {
-    state.details = await localRead("/api/nc03/details");
+    state.details = await controlClient.getDetails(state.baseUrl);
     state.detailsStale = false;
     state.lastDetailsSuccessAt = state.details?.refreshedAt ?? new Date().toISOString();
     state.detailsError = "";

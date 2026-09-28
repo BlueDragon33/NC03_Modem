@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.8.1"
+    "version": "0.8.2"
   },
   "capabilities": {
     "webLaunch": true,
@@ -91,7 +91,11 @@
     "canonicalSettingsRegistry": true,
     "settingsRegistryDrivenUi": true,
     "vendorRoutesExcludedFromCanonicalIdentity": true,
-    "longLifeChargingWriteCandidate": true
+    "longLifeChargingWriteCandidate": true,
+    "applicationBoundaryClient": true,
+    "uiDirectTransport": false,
+    "centralRuntimeCompatibilityGate": true,
+    "architectureBoundaryContract": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -215,7 +219,15 @@
     "vendorRoutesAreEvidenceNotIdentity": true,
     "internalFirmwareStateNotPromotedToStockControl": true,
     "longLifeChargingWriteAuthorized": false,
-    "longLifeChargingLifecycle": "WRITE_CANDIDATE"
+    "longLifeChargingLifecycle": "WRITE_CANDIDATE",
+    "architectureBoundarySchema": "nc03-architecture-boundaries/v1",
+    "productUiMayCallFetchDirectly": false,
+    "productUiMayOwnLocalApiRoutes": false,
+    "applicationClientOwnsLocalBridgeTransport": true,
+    "runtimeCompatibilityOwnedByApplicationClient": true,
+    "capabilityAuthority": "src/domain/NC03SettingsRegistry.js",
+    "modemSessionAuthority": "Local Bridge in-memory session",
+    "rememberedCredentialAuthority": "src/modem/SecureCredentialVault.js"
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,

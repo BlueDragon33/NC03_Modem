@@ -9,6 +9,7 @@ import {
 } from "../src/modem/NC03Har2Profile.js";
 
 const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+const applicationClient = fs.readFileSync(new URL("../src/application/NC03ControlClient.js", import.meta.url), "utf8");
 const server = fs.readFileSync(new URL("../scripts/serve-local.mjs", import.meta.url), "utf8");
 
 test("live battery, connection and signal poll every 10 seconds", () => {
@@ -158,9 +159,9 @@ test("AUTH Source Probe is local-only evidence tooling and does not enable login
 });
 
 
-test("local helper rejects malformed success envelopes instead of silently returning undefined", () => {
-  assert.match(app, /MALFORMED_LOCAL_RESPONSE/);
-  assert.match(app, /hasOwnProperty\.call\(payload, "payload"\)/);
+test("application client rejects malformed success envelopes instead of silently returning undefined", () => {
+  assert.match(applicationClient, /MALFORMED_LOCAL_RESPONSE/);
+  assert.match(applicationClient, /hasOwnProperty\.call\(json, "payload"\)/);
 });
 
 test("AUTH Source Probe and Connection Doctor use the standard local API payload envelope", () => {
@@ -187,7 +188,7 @@ test("AUTH source UI distinguishes login submit candidates from passive auth end
 
 test("AUTH probe exposes bridge failures and per-path diagnostics instead of a generic silent error", () => {
   assert.match(app, /LOCAL_BRIDGE_UNREACHABLE/);
-  assert.match(app, /localHealth\(\)/);
+  assert.match(app, /controlClient\.health\(\)/);
   assert.match(app, /PROBE DIAGNOSTICS/);
   assert.match(server, /diagnostics:\{/);
   assert.match(server, /Promise\.all\(paths\.map/);
@@ -229,13 +230,14 @@ test("AUTH lab exposes full-file payload origin and alias traces", () => {
 });
 
 
-test("AUTH Source Probe remains compatible with stale GET clients while current UI uses POST", () => {
-  assert.match(app, /method: "POST"/);
+test("AUTH Source Probe keeps stale GET compatibility while the application client owns current POST transport", () => {
+  assert.match(applicationClient, /getAuthSourceProbe\(baseUrl\)/);
+  assert.match(applicationClient, /#postModem\("\/api\/nc03\/auth-source-probe"/);
   assert.match(server, /async function authProbeBaseUrl/);
   assert.match(server, /req\.method === "GET"/);
   assert.match(server, /DEFAULT_MODEM_BASE_URL = "http:\/\/192\.168\.0\.1"/);
   assert.match(server, /\["GET","POST"\]\.includes\(req\.method \|\| "GET"\)/);
-  assert.match(app, /METHOD_NOT_ALLOWED — frontend và Local Bridge đang lệch phiên bản/);
+  assert.doesNotMatch(app, /\/api\/nc03\/auth-source-probe/);
 });
 
 
@@ -263,27 +265,28 @@ test("AUTH lab shows password dataflow and recipe status", () => {
 });
 
 
-test("frontend refuses AUTH probe when Local Bridge runtime protocol/schema is stale", () => {
+test("application boundary refuses AUTH probe when Local Bridge runtime protocol/schema is stale", () => {
   assert.match(server, /NC03_RUNTIME_PROTOCOL/);
   assert.match(server, /runtimeProtocol:NC03_RUNTIME_PROTOCOL\.id/);
   assert.match(server, /authEvidenceSchema:NC03_RUNTIME_PROTOCOL\.authEvidenceSchema/);
   assert.match(server, /bootedAt:runtimeBootedAt/);
   assert.match(app, /LOCAL_BRIDGE_RESTART_REQUIRED/);
-  assert.match(app, /payload\.runtimeProtocol !== NC03_RUNTIME_PROTOCOL\.id/);
-  assert.match(app, /probe\?\.evidence\?\.schema !== NC03_RUNTIME_PROTOCOL\.authEvidenceSchema/);
+  assert.match(applicationClient, /#assertRuntime\(payload\)/);
+  assert.match(applicationClient, /payload\?\.evidence\?\.schema !== this\.runtimeProtocol\.authEvidenceSchema/);
 });
 
 
 test("real login submit preflights runtime AUTH readiness without locking password entry", () => {
   assert.match(app, /authReadiness/);
-  assert.match(app, /\/api\/nc03\/auth-readiness/);
-  assert.match(app, /\/api\/nc03\/login/);
+  assert.match(app, /controlClient\.getAuthReadiness\(state\.baseUrl\)/);
+  assert.match(app, /controlClient\.login\(state\.baseUrl, password\)/);
   assert.match(app, /id="loginPassword"/);
   assert.match(app, /CƠ CHẾ ĐĂNG NHẬP SẴN SÀNG/);
   assert.match(app, /if \(!state\.authReadiness\?\.ready\) \{/);
   assert.match(app, /await refreshAuthReadiness\(\{ render:false \}\)/);
   assert.match(app, /credentialVault\.save/);
-  assert.match(app, /body:JSON\.stringify\(\{ baseUrl:state\.baseUrl, password \}\)/);
+  assert.match(applicationClient, /"\/api\/nc03\/auth-readiness"/);
+  assert.match(applicationClient, /"\/api\/nc03\/login"/);
   assert.match(server, /async function authReadiness/);
   assert.match(server, /async function modemLogin/);
   assert.match(server, /AUTH_VERIFICATION_FAILED/);
@@ -319,7 +322,8 @@ test("session expiry takes priority over stale-data reconnect and rerenders logi
 test("Write Readiness Lab remains read-only and prepares a reversible safe-charge capture", () => {
   assert.match(app, /WRITE READINESS LAB/);
   assert.match(app, /Long Life Charging · reversible write plan/);
-  assert.match(app, /\/api\/nc03\/write-readiness/);
+  assert.match(app, /controlClient\.getWriteReadiness\(state\.baseUrl\)/);
+  assert.match(applicationClient, /"\/api\/nc03\/write-readiness"/);
   assert.match(app, /writeEnabled=false/);
   assert.match(app, /READY FOR REVERSIBLE HAR CAPTURE/);
   assert.match(server, /async function writeReadiness/);
@@ -329,8 +333,8 @@ test("Write Readiness Lab remains read-only and prepares a reversible safe-charg
 });
 
 
-test("WRITE readiness is runtime-gated and read-only GET/POST compatible", () => {
-  assert.match(app, /payload\.writeReadinessProtocol !== NC03_RUNTIME_PROTOCOL\.writeReadinessProtocol/);
+test("WRITE readiness is runtime-gated centrally and read-only GET/POST compatible", () => {
+  assert.match(applicationClient, /writeReadinessProtocol !== protocol\.writeReadinessProtocol/);
   assert.match(app, /WRITE readiness endpoint không khớp runtime hiện tại/);
   assert.match(server, /writeReadinessProtocol:NC03_RUNTIME_PROTOCOL\.writeReadinessProtocol/);
   assert.match(server, /pathname === "\/api\/nc03\/write-readiness"/);
@@ -412,7 +416,8 @@ test("WP01 stock Web UI audit remains local, read-only and structure-only", () =
   assert.match(app, /Quét Web UI gốc/);
   assert.match(app, /STRUCTURE ONLY/);
   assert.match(app, /downloadStockUiAudit/);
-  assert.match(app, /stockUiAuditSchema/);
+  assert.match(applicationClient, /stockUiAuditSchema/);
+  assert.doesNotMatch(app, /\/api\/nc03\/stock-ui-audit/);
   assert.doesNotMatch(server, /stockUiAudit[\s\S]{0,500}executeJsonToggleWrite/);
 });
 
@@ -437,4 +442,15 @@ test("Settings UI consumes canonical registry metadata and contains no vendor wr
   const settingsBlock=app.slice(start,end);
   assert.doesNotMatch(settingsBlock,/\/action\//);
   assert.doesNotMatch(settingsBlock,/\/goform\//);
+});
+
+
+test("Product UI delegates Local Bridge transport to the application boundary", () => {
+  assert.doesNotMatch(app, /\bfetch\s*\(/);
+  assert.doesNotMatch(app, /\/api\/nc03\//);
+  assert.match(app, /new NC03ControlClient\(\)/);
+  assert.match(applicationClient, /async health\(\)/);
+  assert.match(applicationClient, /getSnapshot\(baseUrl\)/);
+  assert.match(applicationClient, /getDetails\(baseUrl\)/);
+  assert.match(applicationClient, /login\(baseUrl, password\)/);
 });
