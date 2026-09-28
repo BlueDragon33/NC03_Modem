@@ -415,3 +415,13 @@ test("WP01 stock Web UI audit remains local, read-only and structure-only", () =
   assert.match(app, /stockUiAuditSchema/);
   assert.doesNotMatch(server, /stockUiAudit[\s\S]{0,500}executeJsonToggleWrite/);
 });
+
+
+test("WP01 stock Web UI audit reuses authenticated modem session transport for protected stock UI pages", () => {
+  assert.match(server, /const session = modemSessionTransport\(baseUrl\)/);
+  assert.match(server, /fetchStaticSource\(baseUrl, path, \{ fetchImpl:session\.fetchImpl \}\)/);
+  assert.match(server, /AUTHENTICATED_SURFACE_CAPTURED/);
+  assert.match(server, /missingPagePaths/);
+  assert.match(app, /AUTHENTICATED COVERAGE/);
+  assert.match(app, /protected pages/);
+});
