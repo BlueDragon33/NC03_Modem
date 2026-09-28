@@ -171,3 +171,15 @@ test("contract publishes consolidated architecture ownership boundaries", () => 
   assert.equal(contract.policy.modemSessionAuthority, "Local Bridge in-memory session");
   assert.equal(contract.policy.rememberedCredentialAuthority, "src/modem/SecureCredentialVault.js");
 });
+
+
+test("contract publishes deterministic auth session lifecycle", () => {
+  assert.equal(contract.application.version, "0.8.3");
+  assert.equal(contract.capabilities.deterministicAuthSessionStateMachine, true);
+  assert.equal(contract.capabilities.localSessionInvalidation, true);
+  assert.equal(contract.endpoints.sessionClear, "/api/nc03/session/clear");
+  assert.equal(contract.policy.sessionCookiesMemoryOnly, true);
+  assert.equal(contract.policy.sessionClearVendorLogoutAttempted, false);
+  assert.equal(contract.policy.rememberedCredentialEncryptedLocalOnly, true);
+  assert.equal(contract.policy.authSecretsExcludedFromStateMachine, true);
+});
