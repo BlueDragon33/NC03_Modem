@@ -1,6 +1,6 @@
 const SAFE_PATH = /^\/[A-Za-z0-9_./-]+(?:\.html|\.js)?$/i;
 const ACTION_ROUTE = /\/(?:action|goform)\/[A-Za-z0-9_./-]+/g;
-const HTML_REF = /\b(?:href|src)\s*=\s*["']([^"'#?]+(?:\.html)?(?:#[^"']*)?)["']/gi;
+const HTML_REF = /\b(?:href|src)\s*=\s*["']([^"']+)["']/gi;
 const SCRIPT_REF = /\b(?:src|href)\s*=\s*["']([^"'#?]+\.js(?:\?[^"']*)?)["']/gi;
 const CONTROL_TAG = /<(input|select|textarea|button)\b([^>]*)>/gi;
 const NAV_ANCHOR = /<a\b([^>]*)\bhref\s*=\s*["']([^"']+\.html(?:#[^"']*)?)["']([^>]*)>([\s\S]*?)<\/a>/gi;
