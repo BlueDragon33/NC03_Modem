@@ -80,18 +80,27 @@
       "id": "NC03-WP03",
       "sequence": 3,
       "title": "Architecture consolidation",
-      "status": "ACTIVE",
+      "status": "COMPLETE",
       "dependsOn": [
         "NC03-WP02"
       ],
       "purpose": "Refactor v0.7.x behavior into stable UI/application/domain/adapter/transport boundaries and retire patch paths.",
-      "prompt": "prompts/03-wp03.md"
+      "prompt": "prompts/03-wp03.md",
+      "completionEvidence": [
+        "src/application/NC03ControlClient.js",
+        "control/nc03-architecture-boundaries.v1.json",
+        "docs/NC03-ARCHITECTURE-CONSOLIDATION.md",
+        "evidence/wp03-architecture-consolidation.v1.json",
+        "tests/application-boundary.test.mjs",
+        "NC03 CI #600",
+        "Universal Constitution Compliance #51"
+      ]
     },
     {
       "id": "NC03-WP04",
       "sequence": 4,
       "title": "Authentication, session and credential lifecycle",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "dependsOn": [
         "NC03-WP03"
       ],
