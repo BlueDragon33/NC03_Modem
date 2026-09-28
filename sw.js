@@ -1,4 +1,4 @@
-const CACHE = "nc03-control-center-v38-webui-settings-v0730";
+const CACHE = "nc03-control-center-v39-auth-session-v083";
 const ASSETS = [
   "./",
   "./index.html",
@@ -15,6 +15,9 @@ const ASSETS = [
   "./src/modem/CapabilityRegistry.js",
   "./src/modem/NC03Capabilities.js",
   "./src/modem/NC03Auth.js",
+  "./src/application/NC03ControlClient.js",
+  "./src/application/NC03AuthSessionStateMachine.js",
+  "./src/domain/NC03SettingsRegistry.js",
   "./src/modem/SecureCredentialVault.js",
   "./src/modem/WriteSourceDiscovery.js",
   "./src/modem/NC03Api.js",
