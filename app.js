@@ -355,7 +355,7 @@ function renderHome() {
   const signal = t?.signal?.level ?? t?.status?.signalLevel;
   const network = t?.signal?.systemMode ?? t?.status?.network;
   const clientCount = state.demoMode ? details?.wifi?.clients : details?.clients?.length;
-  const dataUsed = state.demoMode ? details?.data?.current : formatBytes(details?.dataUsage?.statistics_data_used);
+  const dataUsed = state.demoMode ? details?.data?.current : formatBytes(details?.dataUsage?.totalBytes);
   return `${renderTopbar("Tổng quan", "Pin, kết nối và sóng luôn hiển thị; dữ liệu live tự cập nhật mỗi 10 giây.")}
   ${renderAuthNotice()}
   ${renderDetailsNotice()}
@@ -376,7 +376,7 @@ function renderHome() {
 
 function renderNetwork() {
   const t = currentTelemetry();
-  const n = state.details?.networkSettings ?? {};
+  const n = state.details?.mobile ?? {};
   const signal = t?.signal?.level ?? t?.status?.signalLevel;
   return `${renderTopbar("Mạng", "HAR mới xác minh trạng thái 4G/5G, nhà mạng, sóng định tính, SIM và cấu hình network mode.")}
   ${renderAuthNotice()}
@@ -389,8 +389,8 @@ function renderNetwork() {
       <div><span>WAN</span><strong>${esc(t?.status?.wanState ?? t?.status?.internet ?? "—")}</strong></div>
       <div><span>Internet mode</span><strong>${esc(t?.status?.internetMode ?? "—")}</strong></div>
       <div><span>Roaming</span><strong>${esc(t?.status?.roaming ?? "—")}</strong></div>
-      <div><span>Acquisition</span><strong>${esc(n.mnet_acqorder ?? "—")}</strong></div>
-      <div><span>5G config</span><strong>${esc(n.mnet_nr5g_config_mode ?? "—")}</strong></div>
+      <div><span>Acquisition</span><strong>${esc(n.acquisitionOrder ?? "—")}</strong></div>
+      <div><span>5G config</span><strong>${esc(n.nr5gMode ?? "—")}</strong></div>
     </div>
     <div class="advanced-note"><strong>Không bịa RSRP / RSRQ / SINR</strong><span>HAR mới chỉ xác nhận <code>mnet_sig_level</code> dạng định tính. App hiển thị đúng dữ liệu modem cung cấp thay vì dựng số dBm giả.</span></div>
   </section>`;
@@ -710,23 +710,22 @@ function renderConnectionDoctor() {
 }
 
 function renderSettingsMobile(d) {
-  const mobile = d.mobileService ?? {};
-  const network = d.networkSettings ?? {};
+  const mobile = d.mobile ?? {};
   const ids=["mobile.data","mobile.roaming","mobile.sim-pin-protect","mobile.cloud-sim-auto","mobile.sim-slot","mobile.acquisition-order","mobile.nr5g-mode","mobile.band","mobile.band-lock"];
   return `<section class="webui-settings-card">
     ${webuiSectionHeader("MOBILE NETWORK", "Mạng di động", "Các control stock-facing lấy tên và capability từ Canonical Settings Registry.", "REGISTRY DRIVEN", "ok")}
     <div class="webui-toggle-list">
-      ${registryLockedToggle("mobile.data", mobile.mobileData)}
-      ${registryLockedToggle("mobile.roaming", network.dialup_roamswitch)}
-      ${registryLockedToggle("mobile.sim-pin-protect", mobile.pinProtection)}
-      ${registryLockedToggle("mobile.cloud-sim-auto", mobile.cloudSimAutoSwitch)}
+      ${registryLockedToggle("mobile.data", mobile.dataEnabled)}
+      ${registryLockedToggle("mobile.roaming", mobile.roamingEnabled)}
+      ${registryLockedToggle("mobile.sim-pin-protect", mobile.pinProtectionEnabled)}
+      ${registryLockedToggle("mobile.cloud-sim-auto", mobile.cloudSimAutoSwitchEnabled)}
     </div>
     <div class="webui-form-grid">
       ${registryLockedSelect("mobile.sim-slot", mobile.simSlot)}
-      ${registryLockedSelect("mobile.acquisition-order", network.mnet_acqorder)}
-      ${registryLockedSelect("mobile.nr5g-mode", network.mnet_nr5g_config_mode)}
-      ${registryLockedSelect("mobile.band", network.mnet_band)}
-      ${registryLockedSelect("mobile.band-lock", network.mnet_band_lock_type)}
+      ${registryLockedSelect("mobile.acquisition-order", mobile.acquisitionOrder)}
+      ${registryLockedSelect("mobile.nr5g-mode", mobile.nr5gMode)}
+      ${registryLockedSelect("mobile.band", mobile.band)}
+      ${registryLockedSelect("mobile.band-lock", mobile.band_lock_type)}
     </div>
     ${registryCapabilityNote(ids)}
   </section>`;
@@ -765,42 +764,42 @@ function renderSettingsWifi(d) {
 }
 
 function renderSettingsLan(d) {
-  const dhcp = d.dhcp ?? {};
-  const rules = d.ruleInventory ?? {};
+  const dhcp = d.lan ?? {};
+  const rules = d.rules ?? {};
   const ids=["lan.dhcp-enable","lan.gateway","lan.subnet-mask","lan.dhcp-start","lan.dhcp-end","lan.lease-time","lan.dns-address","lan.ip-mac-bindings","lan.port-forwarding","lan.ipv4-filters","lan.ipv6-filters"];
   return `<section class="webui-settings-card">
     ${webuiSectionHeader("LAN / DHCP", "LAN & DHCP", "Các setting chính lấy metadata/capability từ Registry; rule collections chỉ hiển thị inventory an toàn.", "REGISTRY DRIVEN", "ok")}
-    <div class="webui-toggle-list">${registryLockedToggle("lan.dhcp-enable", dhcp.rt_dhcp_v4_switch)}</div>
+    <div class="webui-toggle-list">${registryLockedToggle("lan.dhcp-enable", dhcp.dhcpEnabled)}</div>
     <div class="webui-form-grid">
-      ${registryLockedText("lan.gateway", dhcp.rt_dhcp_v4_gw)}
-      ${registryLockedText("lan.subnet-mask", dhcp.rt_dhcp_v4_mask)}
-      ${registryLockedText("lan.dhcp-start", dhcp.rt_dhcp_v4_start)}
-      ${registryLockedText("lan.dhcp-end", dhcp.rt_dhcp_v4_end)}
-      ${registryLockedText("lan.lease-time", dhcp.rt_dhcp_lease_time)}
-      ${registryLockedText("lan.dns-address", dhcp.rt_dhcp_dns_addr)}
+      ${registryLockedText("lan.gateway", dhcp.gateway)}
+      ${registryLockedText("lan.subnet-mask", dhcp.subnetMask)}
+      ${registryLockedText("lan.dhcp-start", dhcp.dhcpStart)}
+      ${registryLockedText("lan.dhcp-end", dhcp.dhcpEnd)}
+      ${registryLockedText("lan.lease-time", dhcp.leaseSeconds)}
+      ${registryLockedText("lan.dns-address", dhcp.dnsAddress)}
     </div>
     <div class="webui-mini-stats">
       ${settingCard(settingLabel("lan.ip-mac-bindings"), rules.dhcpReservations)}
-      ${settingCard(settingLabel("lan.port-forwarding"), rules.portForwardingRules)}
-      ${settingCard(settingLabel("lan.ipv4-filters"), rules.ipv4PacketFilterRules)}
-      ${settingCard(settingLabel("lan.ipv6-filters"), rules.ipv6PacketFilterRules)}
+      ${settingCard(settingLabel("lan.port-forwarding"), rules.portForwarding)}
+      ${settingCard(settingLabel("lan.ipv4-filters"), rules.ipv4PacketFilters)}
+      ${settingCard(settingLabel("lan.ipv6-filters"), rules.ipv6PacketFilters)}
     </div>
     ${registryCapabilityNote(ids)}
   </section>`;
 }
 
 function renderSettingsConnectivity(d) {
-  const usb = d.usb ?? {};
+  const usb = d.connectivity ?? {};
   const ids=["connectivity.bridge-enable","connectivity.bridge-lan-type","connectivity.usb-tether","connectivity.usb-speed","connectivity.ethernet-type","connectivity.cradle-screen-saver"];
   return `<section class="webui-settings-card">
     ${webuiSectionHeader("CONNECTIVITY", "USB / Bridge / Ethernet", "Capability state đến từ Registry; UI không suy luận endpoint từ tên setting.", "REGISTRY DRIVEN", "ok")}
     <div class="webui-toggle-list">
-      ${registryLockedToggle("connectivity.bridge-enable", usb.bridgeState)}
-      ${registryLockedToggle("connectivity.usb-tether", usb.tethering)}
+      ${registryLockedToggle("connectivity.bridge-enable", usb.bridgeEnabled)}
+      ${registryLockedToggle("connectivity.usb-tether", usb.usbTethering)}
     </div>
     <div class="webui-form-grid">
       ${registryLockedSelect("connectivity.bridge-lan-type", usb.bridgeLanType)}
-      ${registryLockedSelect("connectivity.usb-speed", usb.speed)}
+      ${registryLockedSelect("connectivity.usb-speed", usb.usbSpeed)}
       ${registryLockedSelect("connectivity.ethernet-type", usb.ethernetType)}
       ${registryLockedSelect("connectivity.cradle-screen-saver", usb.cradleScreenSaver)}
     </div>
@@ -810,21 +809,21 @@ function renderSettingsConnectivity(d) {
 
 function renderSettingsPower(d) {
   const power = d.power ?? {};
-  const longLife = toggleBoolean(power.device_charge_long_life);
+  const longLife = power.longLifeCharging;
   const longLifeWritable = canWriteSetting("power.long-life");
   const ids=["power.long-life","power.safe-charge","power.ac-autostart","power.eco-display","power.mode","power.auto-sleep-timer","power.lcd-timeout"];
   return `<section class="webui-settings-card power-settings-panel">
     ${webuiSectionHeader("POWER", "Pin / nguồn / màn hình", "WRITE authority đến từ Canonical Settings Registry. Guarded runtime không tự động đồng nghĩa WRITE VERIFIED.", longLifeWritable ? "WRITE VERIFIED" : "WRITE LOCKED", longLifeWritable ? "ok" : "warn")}
     <div class="webui-toggle-list">
       <div class="webui-toggle-row" data-write="${longLifeWritable ? "verified" : "locked"}"><div><strong>${esc(settingLabel("power.long-life"))}</strong><span>Capability: ${esc(settingLifecycleText("power.long-life"))}. Chỉ mở thao tác khi Registry cho phép WRITE.</span></div><label class="switch-control ${longLifeWritable ? "guarded" : ""}"><input id="toggleLongLifeChargingSwitch" type="checkbox" ${longLife === true ? "checked" : ""} ${state.settingsWriteLoading || longLife === null || !longLifeWritable ? "disabled" : ""}/><i></i></label></div>
-      ${registryLockedToggle("power.safe-charge", power.device_bat_safe_charge_switch)}
-      ${registryLockedToggle("power.ac-autostart", power.device_ac_autostart)}
-      ${registryLockedToggle("power.eco-display", power.lcd_eco_display_time_state)}
+      ${registryLockedToggle("power.safe-charge", power.safeChargeEnabled)}
+      ${registryLockedToggle("power.ac-autostart", power.acAutoStartEnabled)}
+      ${registryLockedToggle("power.eco-display", power.ecoDisplayEnabled)}
     </div>
     <div class="webui-form-grid">
-      ${registryLockedSelect("power.mode", power.device_power_saving_mode)}
-      ${registryLockedText("power.auto-sleep-timer", power.device_as_timer)}
-      ${registryLockedText("power.lcd-timeout", power.device_turnoff_lcd_time)}
+      ${registryLockedSelect("power.mode", power.mode)}
+      ${registryLockedText("power.auto-sleep-timer", power.autoSleepTimer)}
+      ${registryLockedText("power.lcd-timeout", power.lcdTimeout)}
     </div>
     ${state.settingsWriteError ? `<div class="inline-error">${esc(state.settingsWriteError)}</div>` : ""}
     ${state.settingsWriteResult ? `<div class="write-success"><strong>Đã xác minh trên modem</strong><span>${state.settingsWriteResult.changed === false ? "Trạng thái đã đúng từ trước." : "Modem đã nhận lệnh và readback khớp."}</span></div>` : ""}
@@ -838,22 +837,22 @@ function renderSettingsSecurity(d) {
   return `<section class="webui-settings-card">
     ${webuiSectionHeader("SECURITY", "Bảo mật / WPS / Firewall", "Danger/privacy/capability lifecycle lấy từ Registry; tất cả write chưa verified đều fail-closed.", "REGISTRY DRIVEN", "ok")}
     <div class="webui-toggle-list">
-      ${registryLockedToggle("security.wps-enable", security.wifi_wps_enable_state)}
-      ${registryLockedToggle("security.protection", security.rt_security_protection_switch)}
-      ${registryLockedToggle("security.dmz-enable", security.rt_dmz_switch)}
+      ${registryLockedToggle("security.wps-enable", security.wpsEnabled)}
+      ${registryLockedToggle("security.protection", security.protectionEnabled)}
+      ${registryLockedToggle("security.dmz-enable", security.dmzEnabled)}
     </div>
     <div class="webui-form-grid">
-      ${registryLockedSelect("security.wps-mode", security.wifi_wps_mode)}
-      ${registryLockedSelect("security.wifi-mac-filter-mode", security.wifi_macfilter_mode)}
-      ${registryLockedSelect("security.mac-filter-type", security.rt_macfilter_type)}
-      ${registryLockedSelect("security.ip-filter-type", security.rt_ipfilter_type)}
+      ${registryLockedSelect("security.wps-mode", security.wpsMode)}
+      ${registryLockedSelect("security.wifi-mac-filter-mode", security.wifiMacFilterMode)}
+      ${registryLockedSelect("security.mac-filter-type", security.macFilterType)}
+      ${registryLockedSelect("security.ip-filter-type", security.ipFilterType)}
     </div>
     ${registryCapabilityNote(ids)}
   </section>`;
 }
 
 function renderSettingsSystem(d) {
-  const time = d.time ?? {};
+  const time = d.system ?? {};
   const firmware = d.firmware ?? {};
   const ids=["system.ntp-enable","system.timezone","system.time-format","system.daylight","system.firmware-status","system.admin-password","system.reboot","system.factory-reset"];
   const developerPanel = `<div class="webui-subcard">
@@ -865,10 +864,10 @@ function renderSettingsSystem(d) {
   return `<section class="webui-settings-card">
     ${webuiSectionHeader("SYSTEM", "Hệ thống / Thời gian / Firmware", "Các control stock-facing dùng Registry; internal state không được tự động nâng thành setting.", "REGISTRY DRIVEN", "ok")}
     <div class="webui-form-grid">
-      ${registryLockedSelect("system.ntp-enable", time.ntp_enable_state)}
-      ${registryLockedText("system.timezone", time.ntp_timezone)}
-      ${registryLockedSelect("system.time-format", time.ntp_format)}
-      ${registryLockedToggle("system.daylight", time.ntp_daylight_state)}
+      ${registryLockedSelect("system.ntp-enable", time.ntpEnabled)}
+      ${registryLockedText("system.timezone", time.timezone)}
+      ${registryLockedSelect("system.time-format", time.timeFormat)}
+      ${registryLockedToggle("system.daylight", time.daylightEnabled)}
       ${registryLockedText("system.firmware-status", firmware.firmware, "Thông tin firmware đọc được từ modem.")}
       ${registryLockedText("system.firmware-status", firmware.fotaStatus, "Trạng thái FOTA thuộc cùng capability firmware-status ở WP02.")}
     </div>
@@ -1232,7 +1231,7 @@ async function refreshDetails({ render = true } = {}) {
   try {
     state.details = await controlClient.getDetails(state.baseUrl);
     state.detailsStale = false;
-    state.lastDetailsSuccessAt = state.details?.refreshedAt ?? new Date().toISOString();
+    state.lastDetailsSuccessAt = state.details?.meta?.capturedAt ?? new Date().toISOString();
     state.detailsError = "";
   } catch (error) {
     state.detailsStale = Boolean(state.details);
@@ -1289,8 +1288,8 @@ function openDiagnosticReport() {
     wifi: state.demo?.wifi ?? null,
     clients: state.demo?.clients ?? [],
     dataUsage: {
-      statistics_data_used: state.demo?.data?.current ?? null,
-      statistics_day_data_used: state.demo?.data?.today ?? null
+      totalBytes: state.demo?.data?.current ?? null,
+      dailyBytes: state.demo?.data?.today ?? null
     }
   } : state.details;
 
