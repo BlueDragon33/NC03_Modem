@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "wp01-live-stock-ui-audit-2026-09-28",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP01",
+  "referenceFirmware": "NC03_8.00.42",
+  "auditSchema": "nc03-stock-webui-audit/v2",
+  "capturedAt": "2026-09-28T02:13:06.663Z",
+  "privacy": "STRUCTURE_ONLY_NO_CONTROL_VALUES",
+  "observed": {
+    "sourceCount": 13,
+    "pageCount": 2,
+    "scriptCount": 11,
+    "actionRouteCount": 15,
+    "controlCount": 3,
+    "uniqueControlKeyCount": 3,
+    "sensitiveControlCount": 1,
+    "sessionTransport": true,
+    "protectedPageCount": 1,
+    "redirectCount": 2,
+    "missingPagePaths": [],
+    "pagePaths": [
+      "/common/login.html",
+      "/html/settings.html"
+    ]
+  },
+  "conclusion": {
+    "authenticatedShellReached": true,
+    "staticStructureCoverage": "PARTIAL",
+    "reason": "Authenticated settings shell was reached, but no stock navigation entries were extracted and only one protected control (language selector) was visible in static HTML. The settings UI is therefore not fully provable from static source audit alone.",
+    "humanReviewRequired": true,
+    "humanReviewScope": [
+      "main stock navigation/sidebar",
+      "mobile-network/SIM/APN/band",
+      "Wi-Fi/AP settings",
+      "LAN/DHCP/routing",
+      "USB/Bridge/Ethernet",
+      "power/battery/display",
+      "security/WPS/firewall/DMZ",
+      "system/time/firmware/admin",
+      "connected devices/client administration",
+      "any additional stock page not represented above"
+    ]
+  },
+  "sourceArtifact": "user-provided nc03-stock-ui-audit(1).json; structure-only content reviewed in ChatGPT conversation"
+}
