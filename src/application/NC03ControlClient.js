@@ -18,7 +18,11 @@ function codedError(code, options) {
 export class NC03ControlClient {
   constructor({ fetchImpl = globalThis.fetch, runtimeProtocol = NC03_RUNTIME_PROTOCOL } = {}) {
     if (typeof fetchImpl !== "function") throw codedError("LOCAL_BRIDGE_UNAVAILABLE");
-    this.fetchImpl = fetchImpl;
+    // Browser-native fetch is a Web API method and must not inherit the
+    // NC03ControlClient instance as its receiver. Always invoke the injected
+    // transport with globalThis as the receiver so moving fetch behind the
+    // application boundary cannot produce Chromium "Illegal invocation".
+    this.fetchImpl = (...args) => Reflect.apply(fetchImpl, globalThis, args);
     this.runtimeProtocol = runtimeProtocol;
   }
 
