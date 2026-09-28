@@ -24,13 +24,13 @@
       "id": "NC03-WP01",
       "sequence": 1,
       "title": "Stock Web UI parity inventory",
-      "status": "ACTIVE",
+      "status": "COMPLETE",
       "dependsOn": [
         "NC03-WP00"
       ],
       "purpose": "Inventory every stock Web UI job, control, action, readback and dangerous operation with evidence.",
       "prompt": "prompts/01-wp01.md",
-      "progress": "HUMAN_REVIEW_RECONCILING_PRIOR_EVIDENCE",
+      "progress": "COMPLETE",
       "progressEvidence": [
         "evidence/stock-webui-parity.v1.json",
         "evidence/wp01-live-stock-ui-audit-2026-09-28.json",
@@ -41,20 +41,27 @@
         "evidence/wp01-human-stock-ui-home-status-2026-09-28.json",
         "evidence/wp01-human-stock-ui-batch-2026-09-28-02.json"
       ],
-      "blockers": [
-        {
-          "id": "wp01-prior-evidence-reconciliation",
-          "type": "EVIDENCE_RECONCILIATION",
-          "status": "ACTIVE",
-          "requirement": "Reconcile previously supplied screenshots and HAR evidence before requesting anything again from the user. Ask only for truly missing evidence after deduplication."
-        }
+      "blockers": [],
+      "completionEvidence": [
+        "evidence/stock-webui-parity.v1.json",
+        "evidence/wp01-live-stock-ui-audit-2026-09-28.json",
+        "docs/NC03-STOCK-WEBUI-PARITY.md",
+        "scripts/check-stock-webui-parity.mjs",
+        "src/modem/StockWebUiAudit.js",
+        "/api/nc03/stock-ui-audit",
+        "evidence/wp01-human-stock-ui-home-status-2026-09-28.json",
+        "evidence/wp01-human-stock-ui-batch-2026-09-28-02.json",
+        "evidence/wp01-prior-evidence-reconciliation-2026-09-28.json",
+        "evidence/stock-webui-parity.v1.json v1.0.0",
+        "exact-head CI",
+        "Universal Constitution Compliance"
       ]
     },
     {
       "id": "NC03-WP02",
       "sequence": 2,
       "title": "Canonical settings and capability registry",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "dependsOn": [
         "NC03-WP01"
       ],
