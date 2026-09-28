@@ -155,11 +155,11 @@
         "src/domain/NC03ReadModel.js",
         "docs/NC03-READ-PLANE-NORMALIZATION.md",
         "evidence/wp05-read-plane-normalization.v1.json",
-        "evidence/wp05-real-hardware-read-parity-2026-09-28.json",
         "tests/read-model.test.mjs",
         "tests/application-boundary.test.mjs",
         "tests/diagnostic-report.test.mjs",
         "tests/live-telemetry.test.mjs",
+        "Real NC03 hardware parity confirmed by user",
         "NC03 CI #618",
         "Universal Constitution Compliance #69"
       ]
