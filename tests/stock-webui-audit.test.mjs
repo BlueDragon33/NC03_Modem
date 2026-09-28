@@ -20,7 +20,7 @@ test("stock Web UI audit extracts structure without retaining control values", (
     }
   ]);
 
-  assert.equal(audit.schema,"nc03-stock-webui-audit/v1");
+  assert.equal(audit.schema,"nc03-stock-webui-audit/v2");
   assert.equal(audit.privacy,"STRUCTURE_ONLY_NO_CONTROL_VALUES");
   assert.ok(audit.pagePaths.includes("/common/settings.html"));
   assert.ok(audit.scriptPaths.includes("/js/settings.js"));
