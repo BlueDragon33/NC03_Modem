@@ -30,11 +30,13 @@
       ],
       "purpose": "Inventory every stock Web UI job, control, action, readback and dangerous operation with evidence.",
       "prompt": "prompts/01-wp01.md",
-      "progress": "AUTOMATED_EVIDENCE_MAPPED",
+      "progress": "AUTOMATED_EVIDENCE_AND_LOCAL_AUDITOR_READY",
       "progressEvidence": [
         "evidence/stock-webui-parity.v1.json",
         "docs/NC03-STOCK-WEBUI-PARITY.md",
-        "scripts/check-stock-webui-parity.mjs"
+        "scripts/check-stock-webui-parity.mjs",
+        "src/modem/StockWebUiAudit.js",
+        "/api/nc03/stock-ui-audit"
       ],
       "blockers": [
         {
