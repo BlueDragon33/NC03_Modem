@@ -139,7 +139,25 @@
         "NC03-WP04"
       ],
       "purpose": "Normalize modem reads into versioned domain contracts with freshness/privacy semantics.",
-      "prompt": "prompts/05-wp05.md"
+      "prompt": "prompts/05-wp05.md",
+      "progress": "AUTOMATED_GATES_READY_HARDWARE_PARITY_PENDING",
+      "progressEvidence": [
+        "src/domain/NC03ReadModel.js",
+        "docs/NC03-READ-PLANE-NORMALIZATION.md",
+        "evidence/wp05-read-plane-normalization.v1.json",
+        "tests/read-model.test.mjs",
+        "tests/application-boundary.test.mjs",
+        "tests/diagnostic-report.test.mjs",
+        "tests/live-telemetry.test.mjs"
+      ],
+      "blockers": [
+        {
+          "id": "wp05-real-hardware-read-parity",
+          "type": "REAL_HARDWARE_ACCEPTANCE",
+          "status": "OPEN",
+          "requirement": "Run the WP05 branch on the real NC03 and confirm Home, Network, Wi-Fi, Devices and Settings still display the same real read data after normalization."
+        }
+      ]
     },
     {
       "id": "NC03-WP06",
