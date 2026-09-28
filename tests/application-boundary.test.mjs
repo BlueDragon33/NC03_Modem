@@ -113,6 +113,7 @@ test("Application client invokes injected fetch with global receiver", async () 
 });
 
 test("Application client transport wrapper prevents client-instance receiver leakage", () => {
-  assert.match(clientSource, /Reflect\.apply\(fetchImpl, globalThis, args\)/);
-  assert.doesNotMatch(clientSource, /this\.fetchImpl = fetchImpl;/);
+  const source=fs.readFileSync("src/application/NC03ControlClient.js","utf8");
+  assert.match(source, /Reflect\.apply\(fetchImpl, globalThis, args\)/);
+  assert.doesNotMatch(source, /this\.fetchImpl = fetchImpl;/);
 });
