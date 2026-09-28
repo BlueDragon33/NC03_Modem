@@ -17,7 +17,7 @@ const allowedWrite=new Set([
 ]);
 const allowedDanger=new Set(["LOW","MEDIUM","HIGH","CRITICAL"]);
 const allowedPrivacy=new Set(["NORMAL","LOCAL_SENSITIVE","SECRET"]);
-const allowedStockPresence=new Set(["PENDING_HUMAN_CONFIRMATION","CONFIRMED_HUMAN_SCREENSHOT"]);
+const allowedStockPresence=new Set(["PENDING_HUMAN_CONFIRMATION","CONFIRMED_NAVIGATION_SCREENSHOT","CONFIRMED_HUMAN_SCREENSHOT"]);
 
 assert.equal(inv.schemaVersion,"1.0.0");
 assert.equal(inv.inventoryId,"nc03-stock-webui-parity");
