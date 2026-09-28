@@ -22,6 +22,19 @@ A row being present here does **not** mean its stock-Web-UI placement has been h
 - **INTENTIONALLY_NOT_MIRRORED** — sensitive values are deliberately excluded.
 - **UNMAPPED** — no claim is made.
 
+## Local structure audit helper
+
+WP01 now includes a privacy-safe helper inside **HAR Evidence Lab**:
+
+- endpoint: `/api/nc03/stock-ui-audit`;
+- reads only local static HTML/JS from the configured NC03 origin;
+- recursively follows safe internal `.html` / `.js` references;
+- extracts page paths, navigation candidates, control IDs/names and `/action` / `/goform` routes;
+- never returns input values, password, PSK, cookie or session values;
+- can export `nc03-stock-ui-audit.json` for review.
+
+This reduces manual screenshot work, but it **does not replace Human Review** because runtime-generated/dynamic pages and user-visible grouping still need confirmation on the physical modem.
+
 ## Human review required before WP01 can PASS
 
 On the real stock Web UI, review each page from top to bottom and confirm:
