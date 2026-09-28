@@ -32,6 +32,7 @@ test("Application client is the single same-origin Local Bridge transport owner"
     "/api/nc03/snapshot",
     "/api/nc03/details",
     "/api/nc03/session/clear",
+    "/api/nc03/write-acceptance/long-life-charging",
     "/api/nc03/settings/long-life-charging"
   ]) assert.ok(source.includes(path),path);
   assert.doesNotMatch(source,/http:\/\/192\.168\./);
@@ -49,7 +50,8 @@ test("Application client rejects stale runtime protocol centrally", async () => 
     writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
     settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
     stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema,
-    readModelSchema:NC03_RUNTIME_PROTOCOL.readModelSchema
+    readModelSchema:NC03_RUNTIME_PROTOCOL.readModelSchema,
+    guardedWriteProtocol:NC03_RUNTIME_PROTOCOL.guardedWriteProtocol
   });
   const client=new NC03ControlClient({fetchImpl});
   await assert.rejects(()=>client.health(),(error)=>error instanceof NC03ControlClientError && error.code==="LOCAL_BRIDGE_RESTART_REQUIRED");
@@ -132,4 +134,23 @@ test("Application client accepts versioned normalized read payloads", async () =
   })});
   const payload=await client.getSnapshot("http://192.168.0.1");
   assert.equal(payload.kind,"LIVE");
+});
+
+
+test("Application client exposes reversible Long Life write acceptance with explicit confirmation", async () => {
+  const calls=[];
+  const client=new NC03ControlClient({fetchImpl:async(path,init)=>{
+    calls.push({path,body:JSON.parse(init.body)});
+    return response({ok:true,payload:{
+      schema:"nc03-guarded-write/v2",
+      state:"ACCEPTANCE_ROLLBACK_VERIFIED",
+      verified:true,
+      finalState:"ORIGINAL_VERIFIED",
+      originalRestored:true
+    }});
+  }});
+  const result=await client.runLongLifeWriteAcceptance("http://192.168.0.1",{confirmed:true});
+  assert.equal(result.originalRestored,true);
+  assert.equal(calls[0].path,"/api/nc03/write-acceptance/long-life-charging");
+  assert.equal(calls[0].body.confirmed,true);
 });
