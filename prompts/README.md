@@ -11,8 +11,8 @@ There are exactly **18** prompt projections in the current strict-serial plan.
 | 02 | NC03-WP02 | [Canonical settings and capability registry](./02-wp02.md) | COMPLETE |
 | 03 | NC03-WP03 | [Architecture consolidation](./03-wp03.md) | COMPLETE |
 | 04 | NC03-WP04 | [Authentication, session and credential lifecycle](./04-wp04.md) | COMPLETE |
-| 05 | NC03-WP05 | [Read plane normalization](./05-wp05.md) | ACTIVE |
-| 06 | NC03-WP06 | [Guarded write engine v2](./06-wp06.md) | PLANNED |
+| 05 | NC03-WP05 | [Read plane normalization](./05-wp05.md) | COMPLETE |
+| 06 | NC03-WP06 | [Guarded write engine v2](./06-wp06.md) | ACTIVE |
 | 07 | NC03-WP07 | [Wi-Fi settings parity](./07-wp07.md) | PLANNED |
 | 08 | NC03-WP08 | [LAN, DHCP and routing settings parity](./08-wp08.md) | PLANNED |
 | 09 | NC03-WP09 | [USB, Bridge and Ethernet settings parity](./09-wp09.md) | PLANNED |
