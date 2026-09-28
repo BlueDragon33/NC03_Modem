@@ -11,6 +11,7 @@ import {
 const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const applicationClient = fs.readFileSync(new URL("../src/application/NC03ControlClient.js", import.meta.url), "utf8");
 const server = fs.readFileSync(new URL("../scripts/serve-local.mjs", import.meta.url), "utf8");
+const sw = fs.readFileSync(new URL("../sw.js", import.meta.url), "utf8");
 
 test("live battery, connection and signal poll every 10 seconds", () => {
   assert.match(app, /const LIVE_REFRESH_MS = 10_000/);
