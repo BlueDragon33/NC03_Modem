@@ -383,15 +383,16 @@ test("real login and post-login verification share one in-memory modem session t
 });
 
 
-test("Long Life guarded runtime remains implemented but UI authority is fail-closed by canonical registry", () => {
+test("Long Life write path is owned by the generic guarded engine while Registry remains fail-closed", () => {
   assert.match(app, /canWriteSetting\("power\.long-life"\)/);
   assert.match(app, /Capability power\.long-life chưa WRITE VERIFIED/);
   assert.match(app, /toggleLongLifeChargingSwitch/);
-  assert.match(server, /async function writeLongLifeCharging/);
-  assert.match(server, /verifyPowerReadback/);
-  assert.match(server, /executeRollback/);
-  assert.match(server, /WRITE_POSTCONDITION_FAILED/);
-  assert.match(server, /settingsWriteProtocol:NC03_RUNTIME_PROTOCOL\.settingsWriteProtocol/);
+  assert.match(server, /executeGuardedWriteTransaction/);
+  assert.match(server, /runLongLifeTransaction/);
+  assert.match(server, /acceptLongLifeChargingWrite/);
+  assert.match(server, /write-acceptance\/long-life-charging/);
+  assert.match(server, /alwaysRollback:true/);
+  assert.match(server, /guardedWriteProtocol:NC03_RUNTIME_PROTOCOL\.guardedWriteProtocol/);
 });
 
 
