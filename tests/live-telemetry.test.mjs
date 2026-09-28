@@ -11,6 +11,7 @@ import {
 const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const applicationClient = fs.readFileSync(new URL("../src/application/NC03ControlClient.js", import.meta.url), "utf8");
 const server = fs.readFileSync(new URL("../scripts/serve-local.mjs", import.meta.url), "utf8");
+const sw = fs.readFileSync(new URL("../sw.js", import.meta.url), "utf8");
 
 test("live battery, connection and signal poll every 10 seconds", () => {
   assert.match(app, /const LIVE_REFRESH_MS = 10_000/);
@@ -311,7 +312,8 @@ test("startup always renders Login first and never restores Demo automatically",
 
 test("session expiry takes priority over stale-data reconnect and rerenders login immediately", () => {
   assert.match(app, /CONNECTION_STATE\.SESSION_EXPIRED/);
-  assert.match(app, /const hadVerifiedSession = state\.connectionState === CONNECTION_STATE\.CONNECTED \|\| Boolean\(state\.lastLiveSuccessAt\)/);
+  assert.match(app, /const hadVerifiedSession = Boolean\(state\.authSession\?\.hadAuthenticatedSession \|\| state\.lastLiveSuccessAt\)/);
+  assert.match(app, /authSessionMachine\.protectedRequestFailed\(error\?\.code \|\| "NC03_READ_FAILED"\)/);
   assert.match(app, /const previousView = state\.view/);
   assert.match(app, /const previousConnectionState = state\.connectionState/);
   assert.match(app, /authNavigationChanged/);
@@ -453,4 +455,12 @@ test("Product UI delegates Local Bridge transport to the application boundary", 
   assert.match(applicationClient, /getSnapshot\(baseUrl\)/);
   assert.match(applicationClient, /getDetails\(baseUrl\)/);
   assert.match(applicationClient, /login\(baseUrl, password\)/);
+});
+
+
+test("WP04 PWA cache includes application-layer runtime modules", () => {
+  assert.match(sw, /nc03-control-center-v39-auth-session-v083/);
+  assert.match(sw, /src\/application\/NC03ControlClient\.js/);
+  assert.match(sw, /src\/application\/NC03AuthSessionStateMachine\.js/);
+  assert.match(sw, /src\/domain\/NC03SettingsRegistry\.js/);
 });

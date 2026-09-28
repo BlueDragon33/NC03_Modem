@@ -7,7 +7,7 @@
     "shortName": "NC03 Modem",
     "category": "Kỹ thuật",
     "repository": "BlueDragon33/NC03_Modem",
-    "version": "0.8.2"
+    "version": "0.8.3"
   },
   "capabilities": {
     "webLaunch": true,
@@ -95,7 +95,9 @@
     "applicationBoundaryClient": true,
     "uiDirectTransport": false,
     "centralRuntimeCompatibilityGate": true,
-    "architectureBoundaryContract": true
+    "architectureBoundaryContract": true,
+    "deterministicAuthSessionStateMachine": true,
+    "localSessionInvalidation": true
   },
   "endpoints": {
     "status": "/api/control/status",
@@ -107,7 +109,8 @@
     "login": "/api/nc03/login",
     "writeReadiness": "/api/nc03/write-readiness",
     "longLifeCharging": "/api/nc03/settings/long-life-charging",
-    "stockWebUiAudit": "/api/nc03/stock-ui-audit"
+    "stockWebUiAudit": "/api/nc03/stock-ui-audit",
+    "sessionClear": "/api/nc03/session/clear"
   },
   "policy": {
     "remoteAdminReady": false,
@@ -227,7 +230,12 @@
     "runtimeCompatibilityOwnedByApplicationClient": true,
     "capabilityAuthority": "src/domain/NC03SettingsRegistry.js",
     "modemSessionAuthority": "Local Bridge in-memory session",
-    "rememberedCredentialAuthority": "src/modem/SecureCredentialVault.js"
+    "rememberedCredentialAuthority": "src/modem/SecureCredentialVault.js",
+    "authSessionStateMachine": "src/application/NC03AuthSessionStateMachine.js",
+    "sessionCookiesMemoryOnly": true,
+    "sessionClearVendorLogoutAttempted": false,
+    "rememberedCredentialEncryptedLocalOnly": true,
+    "authSecretsExcludedFromStateMachine": true
   },
   "boundary": {
     "applicationManagementOwnsModemCredentials": false,

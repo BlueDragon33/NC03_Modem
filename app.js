@@ -7,6 +7,7 @@ import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
 import { buildDiagnosticReport } from "./src/ui/DiagnosticReport.js";
 import { SecureCredentialVault } from "./src/modem/SecureCredentialVault.js";
 import { NC03ControlClient } from "./src/application/NC03ControlClient.js";
+import { NC03AuthSessionStateMachine } from "./src/application/NC03AuthSessionStateMachine.js";
 import { DEFAULT_CAPABILITIES } from "./src/modem/CapabilityRegistry.js";
 import { NC03_SETTINGS_REGISTRY, canWriteSetting, lifecycleForSetting, settingDefinition } from "./src/domain/NC03SettingsRegistry.js";
 
@@ -17,6 +18,7 @@ let liveTimer = null;
 let liveRefreshInFlight = false;
 const credentialVault = new SecureCredentialVault();
 const controlClient = new NC03ControlClient();
+const authSessionMachine = new NC03AuthSessionStateMachine();
 let vaultCredential = null;
 let vaultHydrated = false;
 
@@ -60,6 +62,7 @@ let state = {
   settingsApIndex: 0,
   authReadiness: null,
   authReadinessError: "",
+  authSession: authSessionMachine.snapshot(),
   loginLoading: false,
   loginError: "",
   demo: null
@@ -973,6 +976,7 @@ async function writeLongLifeCharging(enabled) {
     await refreshDetails({ render:false });
     await refreshLive({ render:false });
   } catch (error) {
+    state.authSession = authSessionMachine.loginFailed(error?.code || "LOGIN_FAILED");
     const labels = {
       WRITE_MAPPING_INCOMPLETE:"Firmware hiện tại chưa map đủ request để ghi an toàn.",
       WRITE_READBACK_UNMAPPED:"Không xác định được trạng thái gốc để tạo rollback.",
@@ -998,6 +1002,9 @@ async function refreshAuthReadiness({ render = true } = {}) {
     await controlClient.health();
     state.authReadiness = await controlClient.getAuthReadiness(state.baseUrl);
     state.authReadinessError = "";
+    state.authSession = state.authReadiness?.ready
+      ? authSessionMachine.readinessReady()
+      : authSessionMachine.readinessFailed(state.authReadiness?.code || "AUTH_NOT_READY");
     if (state.authReadiness?.ready && state.rememberPassword && !vaultHydrated) {
       vaultHydrated = true;
       vaultCredential = await credentialVault.load().catch(() => null);
@@ -1006,6 +1013,7 @@ async function refreshAuthReadiness({ render = true } = {}) {
   } catch (error) {
     state.authReadiness = null;
     state.authReadinessError = error?.code || "AUTH_READINESS_FAILED";
+    state.authSession = authSessionMachine.readinessFailed(state.authReadinessError);
   }
   if (render) page();
 }
@@ -1035,6 +1043,7 @@ async function submitLogin() {
 
   state.loginLoading = true;
   state.loginError = "";
+  state.authSession = authSessionMachine.beginLogin();
   const submitButton = document.querySelector("#loginSubmit");
   if (submitButton) {
     submitButton.disabled = true;
@@ -1050,6 +1059,7 @@ async function submitLogin() {
     }
 
     await controlClient.login(state.baseUrl, password);
+    state.authSession = authSessionMachine.loginSucceeded();
 
     if (state.rememberPassword) {
       await credentialVault.save({ baseUrl:state.baseUrl, password });
@@ -1194,7 +1204,8 @@ async function refreshLive({ render = true } = {}) {
     state.liveError = "";
   } catch (error) {
     const authRequired = error?.code === "AUTHENTICATION_REQUIRED";
-    const hadVerifiedSession = state.connectionState === CONNECTION_STATE.CONNECTED || Boolean(state.lastLiveSuccessAt);
+    const hadVerifiedSession = Boolean(state.authSession?.hadAuthenticatedSession || state.lastLiveSuccessAt);
+    state.authSession = authSessionMachine.protectedRequestFailed(error?.code || "NC03_READ_FAILED");
     state.liveStale = Boolean(state.live);
     state.liveError = authRequired
       ? hadVerifiedSession
@@ -1226,6 +1237,11 @@ async function refreshDetails({ render = true } = {}) {
   } catch (error) {
     state.detailsStale = Boolean(state.details);
     state.detailsError = error?.code || "NC03_DETAILS_UNAVAILABLE";
+    state.authSession = authSessionMachine.protectedRequestFailed(error?.code || "NC03_DETAILS_UNAVAILABLE");
+    if (error?.code === "AUTHENTICATION_REQUIRED") {
+      state.view = "login";
+      await refreshAuthReadiness({ render:false });
+    }
   }
   if (render) page();
 }
@@ -1511,6 +1527,7 @@ function bind() {
 }
 
 async function bootstrapRuntime() {
+  state.authSession = authSessionMachine.beginBootstrap();
   // Login-first UX: every fresh launch starts at the NC03 login screen.
   // A previously persisted Developer Demo must never bypass modem authentication.
   state.view = "login";

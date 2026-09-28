@@ -100,18 +100,41 @@
       "id": "NC03-WP04",
       "sequence": 4,
       "title": "Authentication, session and credential lifecycle",
-      "status": "ACTIVE",
+      "status": "COMPLETE",
       "dependsOn": [
         "NC03-WP03"
       ],
       "purpose": "Stabilize real login/session/re-auth/credential ownership and recovery.",
-      "prompt": "prompts/04-wp04.md"
+      "prompt": "prompts/04-wp04.md",
+      "progress": "COMPLETE",
+      "progressEvidence": [
+        "src/application/NC03AuthSessionStateMachine.js",
+        "src/application/NC03ControlClient.js",
+        "docs/NC03-AUTH-SESSION-LIFECYCLE.md",
+        "evidence/wp04-auth-session-lifecycle.v1.json",
+        "tests/auth-session-state-machine.test.mjs",
+        "/api/nc03/session/clear"
+      ],
+      "blockers": [],
+      "completionEvidence": [
+        "src/application/NC03AuthSessionStateMachine.js",
+        "src/application/NC03ControlClient.js",
+        "src/modem/NC03LocalCookieJar.js",
+        "src/modem/SecureCredentialVault.js",
+        "docs/NC03-AUTH-SESSION-LIFECYCLE.md",
+        "evidence/wp04-auth-session-lifecycle.v1.json",
+        "evidence/wp04-real-hardware-recovery-2026-09-28.json",
+        "tests/auth-session-state-machine.test.mjs",
+        "tests/application-boundary.test.mjs",
+        "NC03 CI #609",
+        "Universal Constitution Compliance #60"
+      ]
     },
     {
       "id": "NC03-WP05",
       "sequence": 5,
       "title": "Read plane normalization",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "dependsOn": [
         "NC03-WP04"
       ],

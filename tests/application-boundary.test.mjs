@@ -31,6 +31,7 @@ test("Application client is the single same-origin Local Bridge transport owner"
     "/api/nc03/doctor",
     "/api/nc03/snapshot",
     "/api/nc03/details",
+    "/api/nc03/session/clear",
     "/api/nc03/settings/long-life-charging"
   ]) assert.ok(source.includes(path),path);
   assert.doesNotMatch(source,/http:\/\/192\.168\./);
@@ -76,4 +77,43 @@ test("Application client validates successful login semantics", async () => {
     payload:{authenticated:true}
   })});
   assert.equal((await client.login("http://192.168.0.1","local-secret")).authenticated,true);
+});
+
+
+test("Application client exposes explicit local session invalidation without vendor logout inference", async () => {
+  const calls=[];
+  const client=new NC03ControlClient({fetchImpl:async (path,init)=>{
+    calls.push({path,body:init?.body});
+    return response({ok:true,payload:{cleared:true,vendorLogoutAttempted:false}});
+  }});
+  const result=await client.clearSession("http://192.168.0.1");
+  assert.deepEqual(result,{cleared:true,vendorLogoutAttempted:false});
+  assert.equal(calls[0].path,"/api/nc03/session/clear");
+});
+
+
+test("Application client invokes injected fetch with global receiver", async () => {
+  let observedThis=null;
+  function receiverSensitiveFetch() {
+    observedThis=this;
+    return Promise.resolve(response({
+      ok:true,
+      app:"nc03-control-center",
+      runtimeProtocol:NC03_RUNTIME_PROTOCOL.id,
+      authEvidenceSchema:NC03_RUNTIME_PROTOCOL.authEvidenceSchema,
+      authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
+      writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
+      settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
+      stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema
+    }));
+  }
+  const client=new NC03ControlClient({fetchImpl:receiverSensitiveFetch});
+  await client.health();
+  assert.equal(observedThis,globalThis);
+});
+
+test("Application client transport wrapper prevents client-instance receiver leakage", () => {
+  const source=fs.readFileSync("src/application/NC03ControlClient.js","utf8");
+  assert.match(source, /Reflect\.apply\(fetchImpl, globalThis, args\)/);
+  assert.doesNotMatch(source, /this\.fetchImpl = fetchImpl;/);
 });
