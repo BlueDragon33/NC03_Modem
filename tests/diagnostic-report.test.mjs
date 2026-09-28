@@ -14,12 +14,12 @@ test("diagnostic report exposes only selected safe fields", () => {
     details:{
       wifi:{ enabled:true, workBand:"dual", aps:[{ssid:"Home"}], xmg_wifi_psk_0:"SECRET-PSK" },
       clients:[{name:"Phone",mac:"AA:BB"}],
-      dataUsage:{statistics_data_used:1024,statistics_day_data_used:2048},
+      dataUsage:{totalBytes:1024,dailyBytes:2048},
       firmware:{model:"NC03",firmware:"NC03_8.00.42",hardware:"HW",manufacturer:"Vendor",fotaStatus:"idle",device_imei:"SECRET-IMEI"},
-      security:{wifi_wps_enable_state:"disable",wifi_macfilter_mode:"disable",rt_ipfilter_type:"disable",rt_dmz_switch:"disable",rt_dmz_ip:"192.168.0.9"},
-      ruleInventory:{dhcpReservations:1,portForwardingRules:2,ipv4PacketFilterRules:3,ipv6PacketFilterRules:4},
-      power:{device_charge_long_life:"enable",device_bat_safe_charge_switch:"enable",device_power_saving_mode:"normal"},
-      usb:{bridgeState:"disable",tethering:"disable",speed:"usb3",ethernetType:"none"},
+      security:{wpsEnabled:false,wifiMacFilterMode:"disable",ipFilterType:"disable",dmzEnabled:false,rt_dmz_ip:"192.168.0.9"},
+      rules:{dhcpReservations:1,portForwarding:2,ipv4PacketFilters:3,ipv6PacketFilters:4},
+      power:{longLifeCharging:true,safeChargeEnabled:true,mode:"normal"},
+      connectivity:{bridgeEnabled:false,usbTethering:"disable",usbSpeed:"usb3",ethernetType:"none"},
       token:"SECRET-TOKEN",
       password:"SECRET-PASSWORD",
       mnet_sim_iccid:"SECRET-ICCID",
@@ -103,7 +103,7 @@ test("diagnostic report never converts missing snapshot data into false zero/off
 test("diagnostic report localizes network/signal and rejects invalid report percentages", () => {
   const report = buildDiagnosticReport({
     live:{status:{connected:true},battery:{percentage:135,charging:false},signal:{level:"great",systemMode:"nsa"}},
-    details:{wifi:{aps:[]},clients:[],ruleInventory:{dhcpReservations:0,portForwardingRules:0,ipv4PacketFilterRules:0,ipv6PacketFilterRules:0}}
+    details:{wifi:{aps:[]},clients:[],rules:{dhcpReservations:0,portForwarding:0,ipv4PacketFilters:0,ipv6PacketFilters:0}}
   });
   assert.equal(report.overview.network, "5G NSA");
   assert.equal(report.overview.signal, "Rất tốt");
