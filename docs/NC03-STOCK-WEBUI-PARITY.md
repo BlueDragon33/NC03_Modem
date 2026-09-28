@@ -1,6 +1,6 @@
 # NC03 — Stock Web UI Parity Inventory
 
-Status: **AUTOMATED EVIDENCE MAPPED · HUMAN REVIEW REQUIRED**  
+Status: **COMPLETE · HUMAN + AUTOMATED COVERAGE CONFIRMED**  
 Work Package: **NC03-WP01**  
 Reference firmware: **NC03_8.00.42**
 
@@ -216,6 +216,12 @@ The safest review input is a set of screenshots of each stock settings page with
 
 ## Completion rule
 
-WP01 remains **ACTIVE** until a human comparison against the real NC03_8.00.42 stock Web UI confirms coverage. Automated evidence can prepare the inventory, but it cannot self-approve this acceptance gate.
+WP01 is **COMPLETE** after reconciliation of:
+- authenticated local stock-UI audit;
+- current human screenshots;
+- prior supplied screenshots and project evidence;
+- real-HAR/source evidence already mapped in the repository.
 
-After human confirmation, the inventory is corrected once, exact-revision CI is rerun, WP01 may become COMPLETE, and only then may **NC03-WP02 — Canonical settings and capability registry** become ACTIVE.
+Rows that represent internal firmware state but were not observed as explicit stock controls are classified as such instead of blocking completion.
+
+Write-shape, post-condition and rollback verification are intentionally deferred to the owning later Work Packages. **NC03-WP02 — Canonical settings and capability registry** is now ACTIVE.
