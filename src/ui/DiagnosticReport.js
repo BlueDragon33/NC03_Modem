@@ -91,10 +91,10 @@ export function buildDiagnosticReport({
   const signal = live?.signal ?? {};
   const wifi = details?.wifi ?? {};
   const power = details?.power ?? {};
-  const usb = details?.usb ?? {};
+  const connectivity = details?.connectivity ?? {};
   const security = details?.security ?? {};
   const firmware = details?.firmware ?? {};
-  const inventory = details?.ruleInventory ?? {};
+  const inventory = details?.rules ?? {};
   const dataUsage = details?.dataUsage ?? {};
   const liveAvailable = Boolean(live);
   const detailsAvailable = Boolean(details);
@@ -126,31 +126,31 @@ export function buildDiagnosticReport({
       workBand: text(wifi.workBand)
     }),
     usage: Object.freeze({
-      current: formatBytes(dataUsage.statistics_data_used),
-      today: formatBytes(dataUsage.statistics_day_data_used)
+      current: formatBytes(dataUsage.totalBytes),
+      today: formatBytes(dataUsage.dailyBytes)
     }),
     connectivity: Object.freeze({
-      ipPassthrough: onOff(usb.bridgeState),
-      usbTethering: onOff(usb.tethering),
-      usbSpeed: text(usb.speed),
-      ethernet: text(usb.ethernetType)
+      ipPassthrough: onOff(connectivity.bridgeEnabled),
+      usbTethering: onOff(connectivity.usbTethering),
+      usbSpeed: text(connectivity.usbSpeed),
+      ethernet: text(connectivity.ethernetType)
     }),
     power: Object.freeze({
-      longLifeCharging: onOff(power.device_charge_long_life),
-      safeCharge: onOff(power.device_bat_safe_charge_switch),
-      powerMode: text(power.device_power_saving_mode)
+      longLifeCharging: onOff(power.longLifeCharging),
+      safeCharge: onOff(power.safeChargeEnabled),
+      powerMode: text(power.mode)
     }),
     security: Object.freeze({
-      wps: onOff(security.wifi_wps_enable_state),
-      wifiMacFilter: onOff(security.wifi_macfilter_mode),
-      ipFilter: onOff(security.rt_ipfilter_type),
-      dmz: onOff(security.rt_dmz_switch)
+      wps: onOff(security.wpsEnabled),
+      wifiMacFilter: onOff(security.wifiMacFilterMode),
+      ipFilter: onOff(security.ipFilterType),
+      dmz: onOff(security.dmzEnabled)
     }),
     rules: Object.freeze({
       dhcpReservations: safeCount(inventory.dhcpReservations),
-      portForwardingRules: safeCount(inventory.portForwardingRules),
-      ipv4PacketFilterRules: safeCount(inventory.ipv4PacketFilterRules),
-      ipv6PacketFilterRules: safeCount(inventory.ipv6PacketFilterRules)
+      portForwardingRules: safeCount(inventory.portForwarding),
+      ipv4PacketFilterRules: safeCount(inventory.ipv4PacketFilters),
+      ipv6PacketFilterRules: safeCount(inventory.ipv6PacketFilters)
     }),
     firmware: Object.freeze({
       model: text(firmware.model),
