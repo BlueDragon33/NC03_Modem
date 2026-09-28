@@ -377,10 +377,10 @@ test("real login and post-login verification share one in-memory modem session t
 });
 
 
-test("settings exposes guarded Long Life Charging write with postcondition and rollback", () => {
-  assert.match(app, /toggleLongLifeCharging/);
-  assert.match(app, /\/api\/nc03\/settings\/long-life-charging/);
-  assert.match(app, /readback → rollback/);
+test("Long Life guarded runtime remains implemented but UI authority is fail-closed by canonical registry", () => {
+  assert.match(app, /canWriteSetting\("power\.long-life"\)/);
+  assert.match(app, /Capability power\.long-life chưa WRITE VERIFIED/);
+  assert.match(app, /toggleLongLifeChargingSwitch/);
   assert.match(server, /async function writeLongLifeCharging/);
   assert.match(server, /verifyPowerReadback/);
   assert.match(server, /executeRollback/);
@@ -424,4 +424,17 @@ test("WP01 stock Web UI audit reuses authenticated modem session transport for p
   assert.match(server, /missingPagePaths/);
   assert.match(app, /AUTHENTICATED COVERAGE/);
   assert.match(app, /protected pages/);
+});
+
+
+test("Settings UI consumes canonical registry metadata and contains no vendor write route authority", () => {
+  assert.match(app, /NC03_SETTINGS_REGISTRY/);
+  assert.match(app, /settingDefinition/);
+  assert.match(app, /registryLockedToggle/);
+  assert.match(app, /registryCapabilityNote/);
+  const start=app.indexOf("function renderSettingsMobile");
+  const end=app.indexOf("function renderSettings()",start);
+  const settingsBlock=app.slice(start,end);
+  assert.doesNotMatch(settingsBlock,/\/action\//);
+  assert.doesNotMatch(settingsBlock,/\/goform\//);
 });
