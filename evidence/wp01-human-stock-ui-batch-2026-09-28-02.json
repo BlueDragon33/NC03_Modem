@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "wp01-human-stock-ui-batch-2026-09-28-02",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP01",
+  "referenceFirmware": "NC03_8.00.42",
+  "evidenceType": "HUMAN_SCREENSHOT_REVIEW",
+  "privacyHandling": {
+    "valuesPersisted": false,
+    "note": "Only structure/control presence is recorded. Values from screenshots are intentionally omitted."
+  },
+  "confirmedNavigation": {
+    "Mobile Network": [
+      "Selecting SIM",
+      "Cloud SIM Auto Switch",
+      "eSIM Activation",
+      "Mobile Connection",
+      "Profile Management",
+      "Network Setting",
+      "PIN Code Manager"
+    ],
+    "LAN": [
+      "DHCP",
+      "Static DHCP",
+      "Clients",
+      "USB Mode",
+      "Cradle",
+      "Operating Mode"
+    ],
+    "Wi-Fi": [
+      "Wi-Fi Status",
+      "Wi-Fi Basic Settings",
+      "Wi-Fi Advanced Settings",
+      "WPS",
+      "Wi-Fi MAC Filter",
+      "Security Protection Function"
+    ],
+    "Security": [
+      "MAC Filter",
+      "IP Filter",
+      "Port Forwarding",
+      "DMZ Setting",
+      "IPv4 Packet Filter Settings",
+      "IPv6 Packet Filter Settings"
+    ],
+    "Management": [
+      "SNTP",
+      "Device Information",
+      "Login Account",
+      "LCD Lock",
+      "Backup & Restore",
+      "Device SW Update",
+      "Reboot & Factory Reset",
+      "Power & Battery",
+      "Fast Boot"
+    ],
+    "Data Usage": [
+      "1 Month",
+      "3 Days",
+      "Cloud SIM",
+      "Base Time"
+    ]
+  },
+  "confirmedPages": [
+    {
+      "page": "Mobile Network > Selecting SIM",
+      "controls": [
+        "Selecting SIM",
+        "SIM Card",
+        "Cloud SIM",
+        "eSIM",
+        "Apply"
+      ]
+    },
+    {
+      "page": "Mobile Network > Cloud SIM Auto Switch",
+      "controls": [
+        "Settings",
+        "Measurement Time",
+        "Switching to SIM Card/eSIM Duration"
+      ]
+    },
+    {
+      "page": "Mobile Network > eSIM Activation",
+      "controls": [
+        "Upload Image",
+        "SM-DP+ Address, Activation Code",
+        "Activate"
+      ]
+    },
+    {
+      "page": "LAN > DHCP",
+      "controls": [
+        "DHCP Server",
+        "IP Address",
+        "Subnet Mask",
+        "IP Range",
+        "Lease Time",
+        "DNS Mode",
+        "Apply"
+      ]
+    },
+    {
+      "page": "Wi-Fi > Wi-Fi Status",
+      "controls": [
+        "SSID",
+        "Hidden SSID",
+        "Security Mode",
+        "Channel",
+        "Connected User",
+        "Wi-Fi Mode"
+      ]
+    },
+    {
+      "page": "Security > MAC Filter",
+      "controls": [
+        "Status",
+        "Add",
+        "No",
+        "Hostname",
+        "MAC Address",
+        "Status",
+        "Option"
+      ]
+    },
+    {
+      "page": "Management > SNTP",
+      "controls": [
+        "Current Time",
+        "Status",
+        "Last Synchronize",
+        "Time Zone",
+        "Time Format",
+        "Auto-Sync with Network Time",
+        "Time Server 1",
+        "Time Server 2",
+        "Time Server 3",
+        "Time Server 4",
+        "Time Server 5",
+        "Daylight Saving Time",
+        "Apply"
+      ]
+    },
+    {
+      "page": "Data Usage > 1 Month",
+      "controls": [
+        "Data Usage Total",
+        "Upper Limit",
+        "Data Usage Limit Notification",
+        "Notification Amount",
+        "Measurement Start Day",
+        "Reset Data Usage",
+        "Apply"
+      ]
+    }
+  ],
+  "note": "This batch confirms all six expanded top-level submenu structures. It does not by itself prove every control inside every un-opened submenu page."
+}
