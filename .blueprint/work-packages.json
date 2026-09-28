@@ -61,18 +61,26 @@
       "id": "NC03-WP02",
       "sequence": 2,
       "title": "Canonical settings and capability registry",
-      "status": "ACTIVE",
+      "status": "COMPLETE",
       "dependsOn": [
         "NC03-WP01"
       ],
       "purpose": "Create stable setting/action IDs, schemas, capability lifecycle and UI metadata.",
-      "prompt": "prompts/02-wp02.md"
+      "prompt": "prompts/02-wp02.md",
+      "completionEvidence": [
+        "src/domain/NC03SettingsRegistry.js",
+        "control/nc03-settings-registry.schema.json",
+        "evidence/wp02-settings-registry-mapping.v1.json",
+        "tests/settings-registry.test.mjs",
+        "NC03 CI #594",
+        "Universal Constitution Compliance #45"
+      ]
     },
     {
       "id": "NC03-WP03",
       "sequence": 3,
       "title": "Architecture consolidation",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "dependsOn": [
         "NC03-WP02"
       ],
