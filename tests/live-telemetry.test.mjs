@@ -230,13 +230,14 @@ test("AUTH lab exposes full-file payload origin and alias traces", () => {
 });
 
 
-test("AUTH Source Probe remains compatible with stale GET clients while current UI uses POST", () => {
-  assert.match(app, /method: "POST"/);
+test("AUTH Source Probe keeps stale GET compatibility while the application client owns current POST transport", () => {
+  assert.match(applicationClient, /getAuthSourceProbe\(baseUrl\)/);
+  assert.match(applicationClient, /#postModem\("\/api\/nc03\/auth-source-probe"/);
   assert.match(server, /async function authProbeBaseUrl/);
   assert.match(server, /req\.method === "GET"/);
   assert.match(server, /DEFAULT_MODEM_BASE_URL = "http:\/\/192\.168\.0\.1"/);
   assert.match(server, /\["GET","POST"\]\.includes\(req\.method \|\| "GET"\)/);
-  assert.match(app, /METHOD_NOT_ALLOWED — frontend và Local Bridge đang lệch phiên bản/);
+  assert.doesNotMatch(app, /\/api\/nc03\/auth-source-probe/);
 });
 
 
@@ -415,7 +416,8 @@ test("WP01 stock Web UI audit remains local, read-only and structure-only", () =
   assert.match(app, /Quét Web UI gốc/);
   assert.match(app, /STRUCTURE ONLY/);
   assert.match(app, /downloadStockUiAudit/);
-  assert.match(app, /stockUiAuditSchema/);
+  assert.match(applicationClient, /stockUiAuditSchema/);
+  assert.doesNotMatch(app, /\/api\/nc03\/stock-ui-audit/);
   assert.doesNotMatch(server, /stockUiAudit[\s\S]{0,500}executeJsonToggleWrite/);
 });
 
