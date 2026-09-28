@@ -155,3 +155,19 @@ test("contract publishes canonical settings registry as write authority", () => 
   assert.equal(contract.policy.longLifeChargingWriteAuthorized, false);
   assert.equal(contract.policy.longLifeChargingLifecycle, "WRITE_CANDIDATE");
 });
+
+
+test("contract publishes consolidated architecture ownership boundaries", () => {
+  assert.equal(contract.capabilities.applicationBoundaryClient, true);
+  assert.equal(contract.capabilities.uiDirectTransport, false);
+  assert.equal(contract.capabilities.centralRuntimeCompatibilityGate, true);
+  assert.equal(contract.capabilities.architectureBoundaryContract, true);
+  assert.equal(contract.policy.architectureBoundarySchema, "nc03-architecture-boundaries/v1");
+  assert.equal(contract.policy.productUiMayCallFetchDirectly, false);
+  assert.equal(contract.policy.productUiMayOwnLocalApiRoutes, false);
+  assert.equal(contract.policy.applicationClientOwnsLocalBridgeTransport, true);
+  assert.equal(contract.policy.runtimeCompatibilityOwnedByApplicationClient, true);
+  assert.equal(contract.policy.capabilityAuthority, "src/domain/NC03SettingsRegistry.js");
+  assert.equal(contract.policy.modemSessionAuthority, "Local Bridge in-memory session");
+  assert.equal(contract.policy.rememberedCredentialAuthority, "src/modem/SecureCredentialVault.js");
+});
