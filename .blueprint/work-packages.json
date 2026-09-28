@@ -30,21 +30,22 @@
       ],
       "purpose": "Inventory every stock Web UI job, control, action, readback and dangerous operation with evidence.",
       "prompt": "prompts/01-wp01.md",
-      "progress": "AUTOMATED_EVIDENCE_COMPLETE_HUMAN_REVIEW_PENDING",
+      "progress": "HUMAN_REVIEW_IN_PROGRESS_HOME_STATUS_CONFIRMED",
       "progressEvidence": [
         "evidence/stock-webui-parity.v1.json",
         "evidence/wp01-live-stock-ui-audit-2026-09-28.json",
         "docs/NC03-STOCK-WEBUI-PARITY.md",
         "scripts/check-stock-webui-parity.mjs",
         "src/modem/StockWebUiAudit.js",
-        "/api/nc03/stock-ui-audit"
+        "/api/nc03/stock-ui-audit",
+        "evidence/wp01-human-stock-ui-home-status-2026-09-28.json"
       ],
       "blockers": [
         {
           "id": "wp01-human-stock-ui-review",
           "type": "HUMAN_REAL_HARDWARE_REVIEW",
-          "status": "OPEN",
-          "requirement": "Review the real NC03_8.00.42 stock Web UI navigation and settings pages against the canonical inventory. Automated static audit reached the authenticated settings shell but cannot prove dynamic navigation/control coverage."
+          "status": "IN_PROGRESS",
+          "requirement": "Home > Status and top-level navigation are confirmed. Expand and review Mobile Network, LAN, Wi-Fi, Security, Management and Data Usage pages/submenus before WP01 completion."
         }
       ]
     },
