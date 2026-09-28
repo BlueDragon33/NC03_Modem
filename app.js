@@ -445,6 +445,7 @@ function renderDiscovery() {
   const sourceEvidence = state.authSourceEvidence?.evidence ?? null;
   const sourceDiagnostics = state.authSourceEvidence?.diagnostics ?? null;
   const stockAudit = state.stockUiAudit?.audit ?? null;
+  const stockAuditCoverage = state.stockUiAudit?.coverage ?? null;
   const stockAuditDiagnostics = state.stockUiAudit?.diagnostics ?? null;
   const sourceTone = sourceEvidence?.status === "LOGIN_SOURCE_CANDIDATE_READY" ? "ok" : sourceEvidence ? "warn" : "muted";
   const writeReadiness = state.writeReadiness?.evidence ?? null;
@@ -477,7 +478,7 @@ function renderDiscovery() {
   </section>
 
   <section class="panel evidence-panel stock-ui-audit-panel">
-    <div class="panel-head"><div><span>STOCK WEB UI AUDIT · WP01</span><h2>Quét cấu trúc Web UI gốc trực tiếp từ modem</h2></div>${statusPill(stockAudit ? "STRUCTURE CAPTURED" : state.stockUiAuditLoading ? "ĐANG QUÉT" : "CHƯA CHẠY", stockAudit ? "ok" : "muted")}</div>
+    <div class="panel-head"><div><span>STOCK WEB UI AUDIT · WP01</span><h2>Quét cấu trúc Web UI gốc trực tiếp từ modem</h2></div>${statusPill(stockAuditCoverage?.status ?? (state.stockUiAuditLoading ? "ĐANG QUÉT" : "CHƯA CHẠY"), stockAuditCoverage?.status === "AUTHENTICATED_SURFACE_CAPTURED" ? "ok" : stockAudit ? "warn" : "muted")}</div>
     <p class="body-copy">Local Bridge chỉ đọc HTML/JS tĩnh của modem và trả về cấu trúc đã rút gọn: page path, script path, control id/name, navigation hint và action route. Không trả value của input, password, PSK, cookie hay session.</p>
     ${state.stockUiAuditError ? `<div class="inline-error">${esc(state.stockUiAuditError)}</div>` : ""}
     ${stockAudit ? `
@@ -486,6 +487,10 @@ function renderDiscovery() {
         <div><span>Controls</span><strong>${stockAudit.summary?.controlCount ?? 0}</strong><small>${stockAudit.summary?.uniqueControlKeyCount ?? 0} key duy nhất</small></div>
         <div><span>Action routes</span><strong>${stockAudit.summary?.actionRouteCount ?? 0}</strong><small>/action + /goform</small></div>
         <div><span>Privacy</span><strong>STRUCTURE ONLY</strong><small>No control values</small></div>
+      </div>
+      <div class="capture-quality" data-ready="${stockAuditCoverage?.status === "AUTHENTICATED_SURFACE_CAPTURED"}">
+        <div><span>AUTHENTICATED COVERAGE</span><strong>${esc(stockAuditCoverage?.status ?? "UNKNOWN")}</strong><small>Session transport: ${stockAuditCoverage?.sessionTransport ? "yes" : "no"} · protected pages: ${stockAuditCoverage?.protectedPageCount ?? 0} · redirects: ${stockAuditCoverage?.redirectCount ?? 0}</small></div>
+        ${stockAuditCoverage?.missingPagePaths?.length ? `<ol>${stockAuditCoverage.missingPagePaths.map((path)=>`<li>Chưa đọc được: ${esc(path)}</li>`).join("")}</ol>` : ""}
       </div>
       <div class="source-evidence-grid">
         <article><span>Page paths</span><code>${esc(stockAudit.pagePaths?.join("\n") || "chưa thấy")}</code></article>
@@ -1509,6 +1514,7 @@ function bind() {
       capturedAt:new Date().toISOString(),
       modemBaseUrl:state.baseUrl,
       audit:state.stockUiAudit.audit,
+      coverage:state.stockUiAudit.coverage ?? null,
       diagnostics:{
         summary:state.stockUiAudit.diagnostics?.summary ?? {},
         sourceCount:state.stockUiAudit.diagnostics?.sourceCount ?? 0
