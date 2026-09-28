@@ -125,6 +125,10 @@ export class NC03ControlClient {
     return this.#postModem("/api/nc03/details", baseUrl);
   }
 
+  clearSession(baseUrl) {
+    return this.#postModem("/api/nc03/session/clear", baseUrl);
+  }
+
   setLongLifeCharging(baseUrl, enabled) {
     return this.#postModem("/api/nc03/settings/long-life-charging", baseUrl, { enabled }, 20000);
   }
