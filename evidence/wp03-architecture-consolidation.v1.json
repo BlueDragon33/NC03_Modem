@@ -35,6 +35,13 @@
     "productUiDirectFetchCount": 0,
     "productUiLocalApiRouteLiteralCount": 0,
     "applicationBoundaryTest": "tests/application-boundary.test.mjs",
-    "exactRevisionCiRequired": true
-  }
+    "exactRevisionCiRequired": true,
+    "runtimeCompatibilityOwner": "src/application/NC03ControlClient.js + src/runtime/RuntimeProtocol.js",
+    "sessionOwner": "Local Bridge in-memory session transport",
+    "credentialOwner": "SecureCredentialVault",
+    "capabilityOwner": "src/domain/NC03SettingsRegistry.js",
+    "exactRevisionCi": "NC03 CI #600 PASS",
+    "universalConstitution": "#51 PASS"
+  },
+  "status": "PASS"
 }
