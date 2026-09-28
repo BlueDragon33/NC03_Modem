@@ -1,6 +1,6 @@
 {
   "name": "nc03-control-center",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,16 +8,17 @@
     "check": "node scripts/check.mjs",
     "typecheck": "node scripts/typecheck.mjs",
     "lint": "node scripts/lint.mjs",
-    "unit": "node --test tests/capability.test.mjs tests/auth-source-discovery.test.mjs tests/connection-doctor.test.mjs tests/credential-vault.test.mjs tests/diagnostic-report.test.mjs tests/firmware-80042.test.mjs tests/har-discovery.test.mjs tests/live-telemetry.test.mjs tests/local-bridge-policy.test.mjs tests/nc03-login-runtime.test.mjs tests/write-readiness.test.mjs tests/stock-webui-audit.test.mjs tests/module-skeleton.test.mjs tests/application-management-contract.test.mjs && node -e \"console.log('UNIT PASS')\"",
+    "unit": "node --test tests/settings-registry.test.mjs tests/capability.test.mjs tests/auth-source-discovery.test.mjs tests/connection-doctor.test.mjs tests/credential-vault.test.mjs tests/diagnostic-report.test.mjs tests/firmware-80042.test.mjs tests/har-discovery.test.mjs tests/live-telemetry.test.mjs tests/local-bridge-policy.test.mjs tests/nc03-login-runtime.test.mjs tests/write-readiness.test.mjs tests/stock-webui-audit.test.mjs tests/module-skeleton.test.mjs tests/application-management-contract.test.mjs && node -e \"console.log('UNIT PASS')\"",
     "integration": "node --test tests/integration.test.mjs && node -e \"console.log('INTEGRATION PASS')\"",
     "ux": "node scripts/ux.mjs",
     "security": "node scripts/security.mjs",
     "test": "npm run unit && npm run integration",
-    "verify": "npm run blueprint:check && npm run wp01:check && npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run offline && npm run security",
+    "verify": "npm run blueprint:check && npm run wp01:check && npm run wp02:check && npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run offline && npm run security",
     "offline": "node scripts/offline.mjs",
     "serve:local": "node scripts/serve-local.mjs",
     "analyze:har": "node scripts/analyze-har.mjs",
     "blueprint:check": "node scripts/check-blueprint-prompt-system.mjs",
-    "wp01:check": "node scripts/check-stock-webui-parity.mjs"
+    "wp01:check": "node scripts/check-stock-webui-parity.mjs",
+    "wp02:check": "node --test tests/settings-registry.test.mjs"
   }
 }

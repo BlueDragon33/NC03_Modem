@@ -8,8 +8,8 @@ There are exactly **18** prompt projections in the current strict-serial plan.
 |---:|---|---|---|
 | 00 | NC03-WP00 | [Constitutional reset and anti-patch baseline](./00-wp00.md) | COMPLETE |
 | 01 | NC03-WP01 | [Stock Web UI parity inventory](./01-wp01.md) | COMPLETE |
-| 02 | NC03-WP02 | [Canonical settings and capability registry](./02-wp02.md) | ACTIVE |
-| 03 | NC03-WP03 | [Architecture consolidation](./03-wp03.md) | PLANNED |
+| 02 | NC03-WP02 | [Canonical settings and capability registry](./02-wp02.md) | COMPLETE |
+| 03 | NC03-WP03 | [Architecture consolidation](./03-wp03.md) | ACTIVE |
 | 04 | NC03-WP04 | [Authentication, session and credential lifecycle](./04-wp04.md) | PLANNED |
 | 05 | NC03-WP05 | [Read plane normalization](./05-wp05.md) | PLANNED |
 | 06 | NC03-WP06 | [Guarded write engine v2](./06-wp06.md) | PLANNED |

@@ -61,11 +61,11 @@ test("10 second polling updates live DOM in place and pauses while hidden", () =
   assert.match(app, /visibilitychange/);
 });
 
-test("advanced UI exposes only safe mobile state and rule counts", () => {
-  for (const label of ["Mobile Data", "SIM PIN protect", "Cloud SIM auto-switch", "DHCP reservations", "Port forwarding", "IPv4 packet filters", "IPv6 packet filters"]) {
-    assert.ok(app.includes(label), label);
+test("advanced UI exposes registry-backed safe mobile state and rule counts", () => {
+  for (const id of ["mobile.data","mobile.sim-pin-protect","mobile.cloud-sim-auto","lan.ip-mac-bindings","lan.port-forwarding","lan.ipv4-filters","lan.ipv6-filters"]) {
+    assert.ok(app.includes(id), id);
   }
-  assert.ok(app.includes("Chỉ thống kê số lượng"));
+  assert.match(app, /registryCapabilityNote/);
   assert.doesNotMatch(app, /wifi_wps_pin_value/);
   assert.doesNotMatch(app, /rt_dmz_ip/);
 });
@@ -377,10 +377,10 @@ test("real login and post-login verification share one in-memory modem session t
 });
 
 
-test("settings exposes guarded Long Life Charging write with postcondition and rollback", () => {
-  assert.match(app, /toggleLongLifeCharging/);
-  assert.match(app, /\/api\/nc03\/settings\/long-life-charging/);
-  assert.match(app, /readback → rollback/);
+test("Long Life guarded runtime remains implemented but UI authority is fail-closed by canonical registry", () => {
+  assert.match(app, /canWriteSetting\("power\.long-life"\)/);
+  assert.match(app, /Capability power\.long-life chưa WRITE VERIFIED/);
+  assert.match(app, /toggleLongLifeChargingSwitch/);
   assert.match(server, /async function writeLongLifeCharging/);
   assert.match(server, /verifyPowerReadback/);
   assert.match(server, /executeRollback/);
@@ -397,7 +397,7 @@ test("Settings Center mirrors stock Web UI groups while locked controls stay non
   assert.match(app, /data-settings-section=/);
   assert.match(app, /data-write="locked"/);
   assert.match(app, /switch-control/);
-  assert.match(app, /Mật khẩu Wi-Fi/);
+  assert.match(app, /registryLockedText\("wifi\.password"/);
   assert.match(app, /Không đọc\/hiển thị PSK hiện tại/);
   assert.match(app, /toggleLongLifeChargingSwitch/);
   assert.match(app, /data-settings-ap/);
@@ -424,4 +424,17 @@ test("WP01 stock Web UI audit reuses authenticated modem session transport for p
   assert.match(server, /missingPagePaths/);
   assert.match(app, /AUTHENTICATED COVERAGE/);
   assert.match(app, /protected pages/);
+});
+
+
+test("Settings UI consumes canonical registry metadata and contains no vendor write route authority", () => {
+  assert.match(app, /NC03_SETTINGS_REGISTRY/);
+  assert.match(app, /settingDefinition/);
+  assert.match(app, /registryLockedToggle/);
+  assert.match(app, /registryCapabilityNote/);
+  const start=app.indexOf("function renderSettingsMobile");
+  const end=app.indexOf("function renderSettings()",start);
+  const settingsBlock=app.slice(start,end);
+  assert.doesNotMatch(settingsBlock,/\/action\//);
+  assert.doesNotMatch(settingsBlock,/\/goform\//);
 });

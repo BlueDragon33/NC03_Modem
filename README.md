@@ -10,7 +10,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng **loca
 - Universal Constitution: **blueprint-os:universal-century-grade@1.1.0**
 - Reference firmware: **NC03_8.00.42**
 - Execution mode: **strict serial Work Packages**
-- Active Work Package: **NC03-WP02 — Canonical settings and capability registry**
+- Active Work Package: **NC03-WP03 — Architecture consolidation**
 - Prompt projections: **18 prompts, 00–17**
 
 The previous v0.7.x line remains valuable historical evidence, but it is no longer the planning model.
@@ -59,6 +59,10 @@ Project law: `docs/NC03-PROJECT-CONSTITUTION.md`.
 - `prompts/README.md` — ordered prompt index.
 
 Prompt files are execution projections only; they never outrank `.blueprint/*`.
+
+## Canonical Settings Registry
+
+WP02 established `nc03-settings-registry/v1` with 77 stable setting/action IDs. UI capability state now comes from this registry; vendor routes/field names remain firmware evidence only. Ordinary settings are fail-closed until their lifecycle reaches `WRITE_VERIFIED`.
 
 ## Architecture direction
 

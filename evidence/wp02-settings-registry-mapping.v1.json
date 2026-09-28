@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "reportId": "wp02-canonical-settings-registry-mapping",
+  "projectId": "project:nc03-modem",
+  "workPackage": "NC03-WP02",
+  "registrySchema": "nc03-settings-registry/v1",
+  "registryVersion": "1.0.0",
+  "sourceInventory": "evidence/stock-webui-parity.v1.json",
+  "parityRows": 77,
+  "registryEntries": 77,
+  "mappingCardinality": "1:1",
+  "lifecycleCounts": {
+    "HARDWARE_ACCEPTED": 1,
+    "READ_MAPPED": 33,
+    "WRITE_CANDIDATE": 41,
+    "WRITE_VERIFIED": 0,
+    "UNMAPPED": 2
+  },
+  "exposureCounts": {
+    "STOCK_UI": 74,
+    "INTERNAL_STATE": 3
+  },
+  "dangerCounts": {
+    "LOW": 14,
+    "MEDIUM": 21,
+    "HIGH": 27,
+    "CRITICAL": 15
+  },
+  "writableIds": [
+    "auth.login"
+  ],
+  "policyFindings": [
+    "No modem vendor route or raw vendor field key is used as canonical setting identity.",
+    "Long Life Charging remains WRITE_CANDIDATE because guarded runtime implementation is not hardware acceptance.",
+    "Internal firmware state that was not observed as a stock control remains INTERNAL_STATE.",
+    "Legacy module capability matrix is now a derived compatibility view of the canonical registry."
+  ]
+}

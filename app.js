@@ -9,6 +9,7 @@ import { normalizeModemAddress } from "./src/modem/LoginPolicy.js";
 import { buildDiagnosticReport } from "./src/ui/DiagnosticReport.js";
 import { NC03_RUNTIME_PROTOCOL } from "./src/runtime/RuntimeProtocol.js";
 import { SecureCredentialVault } from "./src/modem/SecureCredentialVault.js";
+import { NC03_SETTINGS_REGISTRY, canWriteSetting, lifecycleForSetting, settingDefinition } from "./src/domain/NC03SettingsRegistry.js";
 
 const app = document.querySelector("#app");
 const prefs = loadPreferences();
@@ -650,6 +651,32 @@ function settingCard(label, value) {
   return `<div><span>${esc(label)}</span><strong>${esc(value ?? "—")}</strong></div>`;
 }
 
+function settingLabel(id) {
+  return settingDefinition(id)?.ui?.label ?? id;
+}
+
+function settingLifecycleText(id) {
+  return lifecycleForSetting(id).replaceAll("_", " ");
+}
+
+function registryCapabilityNote(ids) {
+  const rows=ids.map((id)=>settingDefinition(id)).filter(Boolean);
+  const summary=rows.map((entry)=>`${entry.ui.label}: ${settingLifecycleText(entry.id)}`).join(" · ");
+  return `<div class="webui-route-note canonical-registry-note"><strong>Canonical capability registry</strong><span>${esc(summary || "Chưa có setting canonical trong nhóm này.")}</span></div>`;
+}
+
+function registryLockedText(id, value, note = "") {
+  return lockedTextSetting(settingLabel(id), value, note || `Capability: ${settingLifecycleText(id)}`);
+}
+
+function registryLockedSelect(id, value, options = [], note = "") {
+  return lockedSelectSetting(settingLabel(id), value, options, note || `Capability: ${settingLifecycleText(id)}`);
+}
+
+function registryLockedToggle(id, value, note = "") {
+  return lockedToggleSetting(settingLabel(id), value, note || `Capability: ${settingLifecycleText(id)}`);
+}
+
 function lockedTextSetting(label, value, note = "Chưa mở WRITE cho mục này") {
   return `<label class="webui-field" data-write="locked"><span>${esc(label)}</span><input value="${esc(value ?? "")}" disabled /><small>${esc(note)}</small></label>`;
 }
@@ -684,23 +711,23 @@ function renderConnectionDoctor() {
 function renderSettingsMobile(d) {
   const mobile = d.mobileService ?? {};
   const network = d.networkSettings ?? {};
+  const ids=["mobile.data","mobile.roaming","mobile.sim-pin-protect","mobile.cloud-sim-auto","mobile.sim-slot","mobile.acquisition-order","mobile.nr5g-mode","mobile.band","mobile.band-lock"];
   return `<section class="webui-settings-card">
-    ${webuiSectionHeader("MOBILE NETWORK", "Mạng di động", "Bố cục theo Web UI gốc: dữ liệu di động, SIM, roaming và chế độ mạng.", "READ + MAP WRITE", "warn")}
+    ${webuiSectionHeader("MOBILE NETWORK", "Mạng di động", "Các control stock-facing lấy tên và capability từ Canonical Settings Registry.", "REGISTRY DRIVEN", "ok")}
     <div class="webui-toggle-list">
-      ${lockedToggleSetting("Mobile Data · Dữ liệu di động", mobile.mobileData, "Candidate write chưa được post-condition xác minh")}
-      ${lockedToggleSetting("Roaming", network.dialup_roamswitch, "Sẽ mở sau khi map route + rollback")}
-      ${lockedToggleSetting("SIM PIN protect", mobile.pinProtection, "Hiện chỉ đọc trạng thái bảo vệ PIN")}
-      ${lockedToggleSetting("Cloud SIM auto-switch", mobile.cloudSimAutoSwitch)}
-      ${lockedToggleSetting("Thông báo Cloud SIM", mobile.cloudSimNotification)}
+      ${registryLockedToggle("mobile.data", mobile.mobileData)}
+      ${registryLockedToggle("mobile.roaming", network.dialup_roamswitch)}
+      ${registryLockedToggle("mobile.sim-pin-protect", mobile.pinProtection)}
+      ${registryLockedToggle("mobile.cloud-sim-auto", mobile.cloudSimAutoSwitch)}
     </div>
     <div class="webui-form-grid">
-      ${lockedSelectSetting("Khe SIM", mobile.simSlot)}
-      ${lockedSelectSetting("Chế độ giao tiếp", network.mnet_com_mode)}
-      ${lockedSelectSetting("Acquisition order", network.mnet_acqorder)}
-      ${lockedSelectSetting("5G config", network.mnet_nr5g_config_mode)}
-      ${lockedSelectSetting("Band", network.mnet_band)}
-      ${lockedSelectSetting("Band lock", network.mnet_band_lock_type)}
+      ${registryLockedSelect("mobile.sim-slot", mobile.simSlot)}
+      ${registryLockedSelect("mobile.acquisition-order", network.mnet_acqorder)}
+      ${registryLockedSelect("mobile.nr5g-mode", network.mnet_nr5g_config_mode)}
+      ${registryLockedSelect("mobile.band", network.mnet_band)}
+      ${registryLockedSelect("mobile.band-lock", network.mnet_band_lock_type)}
     </div>
+    ${registryCapabilityNote(ids)}
   </section>`;
 }
 
@@ -709,118 +736,125 @@ function renderSettingsWifi(d) {
   const aps = wifi.aps ?? [];
   const activeAp = aps.find((ap)=>ap.index === state.settingsApIndex) ?? aps[0] ?? null;
   if (activeAp) state.settingsApIndex = activeAp.index;
+  const ids=["wifi.global-enable","wifi.ap-enable","wifi.ssid","wifi.password","wifi.security-mode","wifi.broadcast-ssid","wifi.frequency","wifi.channel","wifi.standard","wifi.bandwidth","wifi.max-clients"];
   return `<section class="webui-settings-card">
-    ${webuiSectionHeader("WI-FI", "Wi-Fi", "Các profile AP được bố trí như trang quản trị modem: trạng thái, SSID, bảo mật, kênh và giới hạn client.", "READ + WRITE CANDIDATE", "warn")}
+    ${webuiSectionHeader("WI-FI", "Wi-Fi", "Tên control và capability lifecycle lấy từ Canonical Settings Registry; vendor route không còn là authority của UI.", "REGISTRY DRIVEN", "ok")}
     <div class="webui-toggle-list">
-      ${lockedToggleSetting("Wi-Fi tổng", wifi.workStatus ?? (wifi.enabled ? "enable" : "disable"), "/action/wifi_set_basic_params đã thấy trong firmware; chưa mở cho tới khi map rollback")}
+      ${registryLockedToggle("wifi.global-enable", wifi.workStatus ?? (wifi.enabled ? "enable" : "disable"))}
     </div>
     <div class="webui-ap-tabs">${aps.length ? aps.map((ap)=>`<button type="button" data-settings-ap="${ap.index}" data-active="${ap.index === activeAp?.index}">AP ${ap.index + 1}<small>${esc(ap.ssid || "Không tên")}</small></button>`).join("") : `<span>Chưa tải được profile AP.</span>`}</div>
     ${activeAp ? `<div class="webui-ap-panel">
       <div class="webui-form-grid">
-        ${lockedTextSetting("Tên Wi-Fi (SSID)", activeAp.ssid)}
-        ${lockedTextSetting("Mật khẩu Wi-Fi", "", "Không đọc/hiển thị PSK hiện tại; khi mở WRITE sẽ nhập mật khẩu mới")}
-        ${lockedSelectSetting("Bảo mật", activeAp.security)}
-        ${lockedSelectSetting("Tần số", activeAp.frequency)}
-        ${lockedSelectSetting("Kênh", activeAp.channel)}
-        ${lockedSelectSetting("Chuẩn 802.11", activeAp.mode)}
-        ${lockedSelectSetting("Bandwidth", activeAp.bandwidth)}
-        ${lockedTextSetting("Số thiết bị tối đa", activeAp.maxClients)}
+        ${registryLockedText("wifi.ssid", activeAp.ssid)}
+        ${registryLockedText("wifi.password", "", "Không đọc/hiển thị PSK hiện tại; chỉ nhập giá trị mới khi capability WRITE được xác minh.")}
+        ${registryLockedSelect("wifi.security-mode", activeAp.security)}
+        ${registryLockedSelect("wifi.frequency", activeAp.frequency)}
+        ${registryLockedSelect("wifi.channel", activeAp.channel)}
+        ${registryLockedSelect("wifi.standard", activeAp.mode)}
+        ${registryLockedSelect("wifi.bandwidth", activeAp.bandwidth)}
+        ${registryLockedText("wifi.max-clients", activeAp.maxClients)}
       </div>
       <div class="webui-toggle-list compact">
-        ${lockedToggleSetting("Bật AP", activeAp.state)}
-        ${lockedToggleSetting("Phát SSID", activeAp.broadcast)}
+        ${registryLockedToggle("wifi.ap-enable", activeAp.state)}
+        ${registryLockedToggle("wifi.broadcast-ssid", activeAp.broadcast)}
       </div>
     </div>` : `<div class="empty">Không có cấu hình Wi-Fi để hiển thị.</div>`}
-    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/wifi_set_ap_params · /action/wifi_set_ap_txpower · /action/wifi_set_basic_params</code><span>UI đã sẵn form, nhưng nút Apply chỉ mở khi từng request shape + readback + rollback được xác minh.</span></div>
+    ${registryCapabilityNote(ids)}
   </section>`;
 }
 
 function renderSettingsLan(d) {
   const dhcp = d.dhcp ?? {};
   const rules = d.ruleInventory ?? {};
+  const ids=["lan.dhcp-enable","lan.gateway","lan.subnet-mask","lan.dhcp-start","lan.dhcp-end","lan.lease-time","lan.dns-address","lan.ip-mac-bindings","lan.port-forwarding","lan.ipv4-filters","lan.ipv6-filters"];
   return `<section class="webui-settings-card">
-    ${webuiSectionHeader("LAN / DHCP", "LAN & DHCP", "Thông số LAN/DHCP và rule inventory được gom giống khu vực Network/LAN của Web UI gốc.", "READ + WRITE CANDIDATE", "warn")}
-    <div class="webui-toggle-list">${lockedToggleSetting("DHCP Server", dhcp.rt_dhcp_v4_switch, "/action/router_set_dhcp_params đã phát hiện; chưa VERIFY WRITE")}</div>
+    ${webuiSectionHeader("LAN / DHCP", "LAN & DHCP", "Các setting chính lấy metadata/capability từ Registry; rule collections chỉ hiển thị inventory an toàn.", "REGISTRY DRIVEN", "ok")}
+    <div class="webui-toggle-list">${registryLockedToggle("lan.dhcp-enable", dhcp.rt_dhcp_v4_switch)}</div>
     <div class="webui-form-grid">
-      ${lockedTextSetting("Gateway", dhcp.rt_dhcp_v4_gw)}
-      ${lockedTextSetting("Subnet mask", dhcp.rt_dhcp_v4_mask)}
-      ${lockedTextSetting("DHCP bắt đầu", dhcp.rt_dhcp_v4_start)}
-      ${lockedTextSetting("DHCP kết thúc", dhcp.rt_dhcp_v4_end)}
-      ${lockedTextSetting("Lease time", dhcp.rt_dhcp_lease_time)}
-      ${lockedTextSetting("DNS", dhcp.rt_dhcp_dns_addr)}
+      ${registryLockedText("lan.gateway", dhcp.rt_dhcp_v4_gw)}
+      ${registryLockedText("lan.subnet-mask", dhcp.rt_dhcp_v4_mask)}
+      ${registryLockedText("lan.dhcp-start", dhcp.rt_dhcp_v4_start)}
+      ${registryLockedText("lan.dhcp-end", dhcp.rt_dhcp_v4_end)}
+      ${registryLockedText("lan.lease-time", dhcp.rt_dhcp_lease_time)}
+      ${registryLockedText("lan.dns-address", dhcp.rt_dhcp_dns_addr)}
     </div>
     <div class="webui-mini-stats">
-      ${settingCard("DHCP reservations", rules.dhcpReservations)}
-      ${settingCard("Port forwarding", rules.portForwardingRules)}
-      ${settingCard("IPv4 packet filters", rules.ipv4PacketFilterRules)}
-      ${settingCard("IPv6 packet filters", rules.ipv6PacketFilterRules)}
+      ${settingCard(settingLabel("lan.ip-mac-bindings"), rules.dhcpReservations)}
+      ${settingCard(settingLabel("lan.port-forwarding"), rules.portForwardingRules)}
+      ${settingCard(settingLabel("lan.ipv4-filters"), rules.ipv4PacketFilterRules)}
+      ${settingCard(settingLabel("lan.ipv6-filters"), rules.ipv6PacketFilterRules)}
     </div>
-    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/router_set_dhcp_params · /action/router_set_ip_mac_bind_params</code><span>Chỉ thống kê số lượng. Rule raw không mirror sang dashboard cho tới khi editor an toàn được map.</span></div>
+    ${registryCapabilityNote(ids)}
   </section>`;
 }
 
 function renderSettingsConnectivity(d) {
   const usb = d.usb ?? {};
+  const ids=["connectivity.bridge-enable","connectivity.bridge-lan-type","connectivity.usb-tether","connectivity.usb-speed","connectivity.ethernet-type","connectivity.cradle-screen-saver"];
   return `<section class="webui-settings-card">
-    ${webuiSectionHeader("CONNECTIVITY", "USB / Bridge / Ethernet", "Các cài đặt kết nối vật lý và IP Passthrough theo nhóm của Web UI gốc.", "READ + WRITE CANDIDATE", "warn")}
+    ${webuiSectionHeader("CONNECTIVITY", "USB / Bridge / Ethernet", "Capability state đến từ Registry; UI không suy luận endpoint từ tên setting.", "REGISTRY DRIVEN", "ok")}
     <div class="webui-toggle-list">
-      ${lockedToggleSetting("IP Passthrough / Bridge", usb.bridgeState, "Write chưa xác minh")}
-      ${lockedToggleSetting("USB tethering", usb.tethering, "/action/device_set_usb_tethering đã thấy trong firmware")}
+      ${registryLockedToggle("connectivity.bridge-enable", usb.bridgeState)}
+      ${registryLockedToggle("connectivity.usb-tether", usb.tethering)}
     </div>
     <div class="webui-form-grid">
-      ${lockedSelectSetting("Bridge LAN type", usb.bridgeLanType)}
-      ${lockedSelectSetting("USB speed", usb.speed)}
-      ${lockedSelectSetting("Ethernet type", usb.ethernetType)}
-      ${lockedSelectSetting("Cradle screen saver", usb.cradleScreenSaver)}
+      ${registryLockedSelect("connectivity.bridge-lan-type", usb.bridgeLanType)}
+      ${registryLockedSelect("connectivity.usb-speed", usb.speed)}
+      ${registryLockedSelect("connectivity.ethernet-type", usb.ethernetType)}
+      ${registryLockedSelect("connectivity.cradle-screen-saver", usb.cradleScreenSaver)}
     </div>
-    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/device_set_usb_tethering · /action/device_set_usb_speed_type</code><span>Bridge write sẽ chỉ mở khi route cụ thể của firmware 8.00.42 được xác minh.</span></div>
+    ${registryCapabilityNote(ids)}
   </section>`;
 }
 
 function renderSettingsPower(d) {
   const power = d.power ?? {};
   const longLife = toggleBoolean(power.device_charge_long_life);
+  const longLifeWritable = canWriteSetting("power.long-life");
+  const ids=["power.long-life","power.safe-charge","power.ac-autostart","power.eco-display","power.mode","power.auto-sleep-timer","power.lcd-timeout"];
   return `<section class="webui-settings-card power-settings-panel">
-    ${webuiSectionHeader("POWER", "Pin / nguồn / màn hình", "Khu vực power giống Web UI gốc; Long Life là control WRITE đầu tiên đang có guarded runtime.", "1 GUARDED WRITE", "ok")}
+    ${webuiSectionHeader("POWER", "Pin / nguồn / màn hình", "WRITE authority đến từ Canonical Settings Registry. Guarded runtime không tự động đồng nghĩa WRITE VERIFIED.", longLifeWritable ? "WRITE VERIFIED" : "WRITE LOCKED", longLifeWritable ? "ok" : "warn")}
     <div class="webui-toggle-list">
-      <div class="webui-toggle-row" data-write="guarded"><div><strong>Long Life Charging</strong><span>Preflight → WRITE → readback → rollback nếu post-condition sai.</span></div><label class="switch-control guarded"><input id="toggleLongLifeChargingSwitch" type="checkbox" ${longLife === true ? "checked" : ""} ${state.settingsWriteLoading || longLife === null ? "disabled" : ""}/><i></i></label></div>
-      ${lockedToggleSetting("Safe charge", power.device_bat_safe_charge_switch, "Đọc được; route cùng family nhưng chưa tách semantics độc lập")}
-      ${lockedToggleSetting("AC auto-start", power.device_ac_autostart)}
-      ${lockedToggleSetting("Eco display", power.lcd_eco_display_time_state)}
+      <div class="webui-toggle-row" data-write="${longLifeWritable ? "verified" : "locked"}"><div><strong>${esc(settingLabel("power.long-life"))}</strong><span>Capability: ${esc(settingLifecycleText("power.long-life"))}. Chỉ mở thao tác khi Registry cho phép WRITE.</span></div><label class="switch-control ${longLifeWritable ? "guarded" : ""}"><input id="toggleLongLifeChargingSwitch" type="checkbox" ${longLife === true ? "checked" : ""} ${state.settingsWriteLoading || longLife === null || !longLifeWritable ? "disabled" : ""}/><i></i></label></div>
+      ${registryLockedToggle("power.safe-charge", power.device_bat_safe_charge_switch)}
+      ${registryLockedToggle("power.ac-autostart", power.device_ac_autostart)}
+      ${registryLockedToggle("power.eco-display", power.lcd_eco_display_time_state)}
     </div>
     <div class="webui-form-grid">
-      ${lockedSelectSetting("Power mode", power.device_power_saving_mode)}
-      ${lockedTextSetting("Auto sleep", power.device_as_timer)}
-      ${lockedTextSetting("Tắt LCD sau", power.device_turnoff_lcd_time)}
+      ${registryLockedSelect("power.mode", power.device_power_saving_mode)}
+      ${registryLockedText("power.auto-sleep-timer", power.device_as_timer)}
+      ${registryLockedText("power.lcd-timeout", power.device_turnoff_lcd_time)}
     </div>
     ${state.settingsWriteError ? `<div class="inline-error">${esc(state.settingsWriteError)}</div>` : ""}
     ${state.settingsWriteResult ? `<div class="write-success"><strong>Đã xác minh trên modem</strong><span>${state.settingsWriteResult.changed === false ? "Trạng thái đã đúng từ trước." : "Modem đã nhận lệnh và readback khớp."}</span></div>` : ""}
-    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/device_set_battery_safe_charge · /action/device_set_power_saving_mode · /action/device_set_autosleep · /action/device_set_turnoff_lcd_time · /action/device_set_ac_autostart</code><span>Mỗi setting sẽ được mở độc lập, không bật hàng loạt chỉ vì cùng module Power.</span></div>
+    ${registryCapabilityNote(ids)}
   </section>`;
 }
 
 function renderSettingsSecurity(d) {
   const security = d.security ?? {};
+  const ids=["security.wps-enable","security.wps-mode","security.wifi-mac-filter-mode","security.protection","security.mac-filter-type","security.ip-filter-type","security.dmz-enable"];
   return `<section class="webui-settings-card">
-    ${webuiSectionHeader("SECURITY", "Bảo mật / WPS / Firewall", "Các công tắc bảo mật được gom theo bố cục Web UI, nhưng vẫn fail-closed khi chưa có WRITE VERIFIED.", "READ + WRITE CANDIDATE", "warn")}
+    ${webuiSectionHeader("SECURITY", "Bảo mật / WPS / Firewall", "Danger/privacy/capability lifecycle lấy từ Registry; tất cả write chưa verified đều fail-closed.", "REGISTRY DRIVEN", "ok")}
     <div class="webui-toggle-list">
-      ${lockedToggleSetting("WPS", security.wifi_wps_enable_state, "/action/wifi_set_wps_status đã phát hiện")}
-      ${lockedToggleSetting("Security protection", security.rt_security_protection_switch, "/action/router_set_security_protection đã phát hiện")}
-      ${lockedToggleSetting("DMZ", security.rt_dmz_switch)}
+      ${registryLockedToggle("security.wps-enable", security.wifi_wps_enable_state)}
+      ${registryLockedToggle("security.protection", security.rt_security_protection_switch)}
+      ${registryLockedToggle("security.dmz-enable", security.rt_dmz_switch)}
     </div>
     <div class="webui-form-grid">
-      ${lockedSelectSetting("WPS mode", security.wifi_wps_mode)}
-      ${lockedSelectSetting("Wi-Fi MAC filter", security.wifi_macfilter_mode)}
-      ${lockedSelectSetting("MAC filter type", security.rt_macfilter_type)}
-      ${lockedSelectSetting("IP filter type", security.rt_ipfilter_type)}
+      ${registryLockedSelect("security.wps-mode", security.wifi_wps_mode)}
+      ${registryLockedSelect("security.wifi-mac-filter-mode", security.wifi_macfilter_mode)}
+      ${registryLockedSelect("security.mac-filter-type", security.rt_macfilter_type)}
+      ${registryLockedSelect("security.ip-filter-type", security.rt_ipfilter_type)}
     </div>
-    <div class="webui-route-note"><strong>Route đã phát hiện</strong><code>/action/wifi_set_wps_status · /action/wifi_set_macfilter_params · /action/router_set_security_protection · /action/router_set_privacy_separator_params</code></div>
+    ${registryCapabilityNote(ids)}
   </section>`;
 }
 
 function renderSettingsSystem(d) {
   const time = d.time ?? {};
   const firmware = d.firmware ?? {};
+  const ids=["system.ntp-enable","system.timezone","system.time-format","system.daylight","system.firmware-status","system.admin-password","system.reboot","system.factory-reset"];
   const developerPanel = `<div class="webui-subcard">
     <div class="webui-subcard-head"><div><strong>Developer Tools</strong><span>HAR Evidence Lab, AUTH/WRITE mapping và Mock Mode.</span></div>${statusPill(state.developerMode ? "ENABLED" : "OFF", state.developerMode ? "warn" : "muted")}</div>
     <label class="developer-toggle"><input id="developerToggle" type="checkbox" ${state.developerMode ? "checked" : ""}/><span><strong>Bật Advanced Developer Mode</strong><small>Chỉ dành cho reverse-engineering local.</small></span></label>
@@ -828,15 +862,16 @@ function renderSettingsSystem(d) {
   </div>`;
 
   return `<section class="webui-settings-card">
-    ${webuiSectionHeader("SYSTEM", "Hệ thống / Thời gian / Firmware", "Thông tin quản trị, NTP, firmware và công cụ local được gom về một trang như Web UI gốc.", "LOCAL ADMIN", "muted")}
+    ${webuiSectionHeader("SYSTEM", "Hệ thống / Thời gian / Firmware", "Các control stock-facing dùng Registry; internal state không được tự động nâng thành setting.", "REGISTRY DRIVEN", "ok")}
     <div class="webui-form-grid">
-      ${lockedSelectSetting("NTP", time.ntp_enable_state)}
-      ${lockedSelectSetting("NITZ", time.ntp_nitz_enable_state)}
-      ${lockedTextSetting("Timezone", time.ntp_timezone)}
-      ${lockedSelectSetting("Định dạng thời gian", time.ntp_format)}
-      ${lockedTextSetting("Firmware", firmware.firmware, "Thông tin chỉ đọc")}
-      ${lockedTextSetting("FOTA status", firmware.fotaStatus, "Thông tin chỉ đọc")}
+      ${registryLockedSelect("system.ntp-enable", time.ntp_enable_state)}
+      ${registryLockedText("system.timezone", time.ntp_timezone)}
+      ${registryLockedSelect("system.time-format", time.ntp_format)}
+      ${registryLockedToggle("system.daylight", time.ntp_daylight_state)}
+      ${registryLockedText("system.firmware-status", firmware.firmware, "Thông tin firmware đọc được từ modem.")}
+      ${registryLockedText("system.firmware-status", firmware.fotaStatus, "Trạng thái FOTA thuộc cùng capability firmware-status ở WP02.")}
     </div>
+    ${registryCapabilityNote(ids)}
     <div class="webui-subcard">
       <div class="webui-subcard-head"><div><strong>NC03 Local Bridge</strong><span>Địa chỉ modem và thao tác đồng bộ.</span></div>${statusPill("LOCAL ONLY")}</div>
       <div class="form-grid"><label>Địa chỉ modem<input id="baseUrl" value="${esc(state.baseUrl)}" inputmode="url" placeholder="192.168.0.1" /></label><label>Tự làm mới<strong>10 giây/lần</strong></label></div>
@@ -868,6 +903,7 @@ function renderSettings() {
     ["system","Hệ thống","NTP · firmware"]
   ];
   const selected = sections.some(([id])=>id === state.settingsSection) ? state.settingsSection : "wifi";
+  const verifiedSettingWrites = NC03_SETTINGS_REGISTRY.entries.filter((entry)=>entry.operationClass==="SETTING" && entry.capability.writable).length;
   const body = selected === "mobile" ? renderSettingsMobile(d)
     : selected === "wifi" ? renderSettingsWifi(d)
     : selected === "lan" ? renderSettingsLan(d)
@@ -882,7 +918,7 @@ function renderSettings() {
       <aside class="webui-settings-nav">
         <div class="webui-settings-nav-head"><span>NC03 SETTINGS</span><strong>Quản trị modem</strong><small>Firmware 8.00.42</small></div>
         <nav>${sections.map(([id,label,meta])=>`<button data-settings-section="${id}" data-active="${selected === id}"><strong>${esc(label)}</strong><span>${esc(meta)}</span></button>`).join("")}</nav>
-        <div class="webui-settings-coverage"><span>WRITE coverage</span><strong>1 guarded</strong><small>Long Life Charging</small></div>
+        <div class="webui-settings-coverage"><span>WRITE coverage</span><strong>${verifiedSettingWrites} verified</strong><small>Registry là authority</small></div>
       </aside>
       <div class="webui-settings-content">
         <div class="webui-settings-toolbar"><div><span>Trạng thái</span><strong>${state.detailsStale ? "Dữ liệu gần nhất" : state.details ? "Đồng bộ với modem" : "Đang chờ modem"}</strong></div><div><span>WRITE policy</span><strong>Fail-closed</strong></div><button id="refreshNow">↻ Đồng bộ</button><button id="openStockUi">Mở Web UI gốc</button></div>
@@ -967,6 +1003,11 @@ async function localRead(path) {
 }
 
 async function writeLongLifeCharging(enabled) {
+  if (!canWriteSetting("power.long-life")) {
+    state.settingsWriteError = "Capability power.long-life chưa WRITE VERIFIED trong Canonical Settings Registry.";
+    page();
+    return;
+  }
   if (state.demoMode || state.settingsWriteLoading || typeof enabled !== "boolean") return;
   const action = enabled ? "bật" : "tắt";
   if (!window.confirm(`Xác nhận ${action} Long Life Charging trên modem NC03? App sẽ kiểm tra readback sau lệnh và tự rollback nếu trạng thái không khớp.`)) return;
