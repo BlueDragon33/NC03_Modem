@@ -10,6 +10,7 @@ import { discoverNc03LoginRecipe, discoverSaveAjaxTransport, executeNc03Login } 
 import { createCookieAwareFetch } from "../src/modem/NC03LocalCookieJar.js";
 import { buildWriteReadinessEvidence } from "../src/modem/WriteSourceDiscovery.js";
 import { buildReversibleTogglePlan, executeJsonToggleWrite, executeRollback, readbackMatches } from "../src/modem/NC03SafeWriteRuntime.js";
+import { buildStockWebUiAudit, stockUiAuditDiscoveryPaths } from "../src/modem/StockWebUiAudit.js";
 
 const sourceRoot = resolve(process.cwd());
 const distRoot = join(sourceRoot, "dist");
@@ -137,6 +138,15 @@ const WRITE_SOURCE_SEEDS = Object.freeze([
   "/js/encryption.js"
 ]);
 
+const STOCK_UI_SOURCE_SEEDS = Object.freeze([
+  "/",
+  "/index.html",
+  "/common/login.html",
+  "/common/settings.html",
+  "/js/common.js",
+  "/js/tools.js"
+]);
+
 async function fetchStaticSource(baseUrl, path) {
   const url = new URL(path, baseUrl);
   const startedAt = Date.now();
@@ -186,6 +196,60 @@ async function authProbeBaseUrl(req) {
   }
   const body = await readJsonBody(req);
   return normalizeModemBaseUrl(body.baseUrl);
+}
+
+async function stockUiAudit(req, res) {
+  try {
+    const baseUrl = await authProbeBaseUrl(req);
+    const sources = [];
+    const diagnostics = [];
+    const collect = async (paths) => {
+      const safePaths = [...new Set(paths)]
+        .filter((path) => typeof path === "string")
+        .filter((path) => /^\/[A-Za-z0-9_./-]+(?:\.html|\.js)?$/i.test(path))
+        .filter((path) => !sources.some((item) => item.path === path));
+      if (!safePaths.length) return;
+      const results = await Promise.all(safePaths.map((path) => fetchStaticSource(baseUrl, path)));
+      for (const result of results) {
+        diagnostics.push(result.diagnostic);
+        if (result.item && !sources.some((item) => item.path === result.item.path)) sources.push(result.item);
+      }
+    };
+
+    await collect(STOCK_UI_SOURCE_SEEDS);
+    for (let pass = 0; pass < 2; pass += 1) {
+      const current = buildStockWebUiAudit(sources);
+      await collect(stockUiAuditDiscoveryPaths(current));
+    }
+
+    const audit = buildStockWebUiAudit(sources);
+    const summary = diagnostics.reduce((acc, item) => {
+      acc[item.status] = (acc[item.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    json(res, 200, {
+      ok:true,
+      payload:{
+        baseUrl,
+        audit,
+        runtime:{
+          protocolId:NC03_RUNTIME_PROTOCOL.id,
+          stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema,
+          sourceVersion,
+          bootedAt:runtimeBootedAt
+        },
+        diagnostics:{
+          summary,
+          sourceCount:sources.length,
+          items:diagnostics
+        }
+      }
+    });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "STOCK_UI_AUDIT_FAILED";
+    json(res, 502, { ok:false, code:/^[A-Z0-9_]+$/.test(code) ? code : "STOCK_UI_AUDIT_FAILED" });
+  }
 }
 
 async function authSourceProbe(req, res) {
@@ -636,6 +700,15 @@ const server = createServer(async (req, res) => {
   const headOnly = req.method === "HEAD";
   const pathname = new URL(req.url, "http://127.0.0.1").pathname;
 
+  if (pathname === "/api/nc03/stock-ui-audit") {
+    if (!["GET","POST"].includes(req.method || "GET")) {
+      json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
+      return;
+    }
+    await stockUiAudit(req, res);
+    return;
+  }
+
   if (pathname === "/api/nc03/auth-source-probe") {
     if (!["GET","POST"].includes(req.method || "GET")) {
       json(res, 405, { ok:false, code:"METHOD_NOT_ALLOWED" }, headOnly);
@@ -718,6 +791,7 @@ const server = createServer(async (req, res) => {
       authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
       writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
       settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
+      stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema,
       bootedAt:runtimeBootedAt,
       assetRoot:usingDist ? "dist" : "source",
       contractEndpoint:"/api/application-management/contract"
