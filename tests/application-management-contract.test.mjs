@@ -183,3 +183,15 @@ test("contract publishes deterministic auth session lifecycle", () => {
   assert.equal(contract.policy.rememberedCredentialEncryptedLocalOnly, true);
   assert.equal(contract.policy.authSecretsExcludedFromStateMachine, true);
 });
+
+
+test("contract publishes normalized read-plane boundary", () => {
+  assert.equal(contract.application.version, "0.8.4");
+  assert.equal(contract.capabilities.versionedNormalizedReadModel, true);
+  assert.equal(contract.capabilities.vendorFieldIsolationAtBridge, true);
+  assert.equal(contract.policy.readModelSchema, "nc03-read-model/v1");
+  assert.equal(contract.policy.readModelVersion, "1.0.0");
+  assert.equal(contract.policy.productUiConsumesVendorFields, false);
+  assert.equal(contract.policy.unknownBooleanReadValueBecomesNull, true);
+  assert.equal(contract.policy.readFreshnessExplicit, true);
+});
