@@ -35,6 +35,22 @@ WP01 now includes a privacy-safe helper inside **HAR Evidence Lab**:
 
 This reduces manual screenshot work, but it **does not replace Human Review** because runtime-generated/dynamic pages and user-visible grouping still need confirmation on the physical modem.
 
+## Live authenticated audit result — 2026-09-28
+
+The second real-modem audit successfully reused the authenticated Local Bridge session and reached `/html/settings.html`.
+
+Observed:
+- 13 static sources read successfully;
+- 2 HTML page paths discovered;
+- 11 script paths;
+- 15 action/goform routes;
+- 3 static controls total;
+- 1 authenticated/protected settings page;
+- no missing discovered page path;
+- navigation extraction remained empty.
+
+Interpretation: **automated static evidence is complete for WP01, but static source is insufficient to certify the dynamic stock settings surface**. The remaining gate is deliberately human/real-UI review; we will not keep widening the crawler merely to manufacture an automated PASS.
+
 ## Human review required before WP01 can PASS
 
 On the real stock Web UI, review each page from top to bottom and confirm:
