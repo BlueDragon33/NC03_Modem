@@ -107,7 +107,9 @@ test("Application client invokes injected fetch with global receiver", async () 
       authLoginProtocol:NC03_RUNTIME_PROTOCOL.authLoginProtocol,
       writeReadinessProtocol:NC03_RUNTIME_PROTOCOL.writeReadinessProtocol,
       settingsWriteProtocol:NC03_RUNTIME_PROTOCOL.settingsWriteProtocol,
-      stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema
+      stockUiAuditSchema:NC03_RUNTIME_PROTOCOL.stockUiAuditSchema,
+      readModelSchema:NC03_RUNTIME_PROTOCOL.readModelSchema,
+      guardedWriteProtocol:NC03_RUNTIME_PROTOCOL.guardedWriteProtocol
     }));
   }
   const client=new NC03ControlClient({fetchImpl:receiverSensitiveFetch});
