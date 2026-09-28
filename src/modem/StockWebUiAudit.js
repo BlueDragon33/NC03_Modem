@@ -141,7 +141,7 @@ export function buildStockWebUiAudit(sources = []) {
   const sensitiveControlCount = allControls.filter((item) => item.sensitive).length;
 
   return {
-    schema:"nc03-stock-webui-audit/v1",
+    schema:"nc03-stock-webui-audit/v2",
     privacy:"STRUCTURE_ONLY_NO_CONTROL_VALUES",
     sourcePaths,
     sourceRows,
