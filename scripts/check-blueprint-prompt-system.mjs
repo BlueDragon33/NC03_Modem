@@ -7,7 +7,7 @@ const blueprint=JSON.parse(fs.readFileSync(".blueprint/blueprint.json","utf8"));
 const plan=JSON.parse(fs.readFileSync(".blueprint/work-packages.json","utf8"));
 
 assert.equal(adoption.policyId,"blueprint-os:universal-century-grade");
-assert.equal(adoption.policyVersion,"1.1.0");
+assert.equal(adoption.policyVersion,"1.2.0");
 assert.equal(adoption.projectId,"project:nc03-modem");
 assert.equal(adoption.projectId,profile.projectId);
 assert.equal(adoption.blueprintLevel,"B4");
@@ -15,7 +15,8 @@ assert.equal(profile.blueprintLevel,"B4");
 assert.equal(blueprint.blueprintLevel,"B4");
 assert.deepEqual(adoption.disabledPillars,[]);
 assert.deepEqual(adoption.constitutionalWaivers,[]);
-assert.equal(adoption.inheritedPillars.length,6);
+assert.equal(adoption.inheritedPillars.length,7);
+assert.ok(adoption.inheritedPillars.includes("operational-sovereignty-dependency-minimization"));
 
 assert.equal(plan.executionMode,"strict-serial");
 assert.equal(plan.workPackages.length,18);
