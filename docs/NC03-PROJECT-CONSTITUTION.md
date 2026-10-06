@@ -2,7 +2,7 @@
 
 Status: **ENFORCED PROJECT LAW**
 
-NC03 inherits `blueprint-os:universal-century-grade@1.1.0` at **B4 PLATFORM** and strengthens it with device-control laws.
+NC03 inherits `blueprint-os:universal-century-grade@1.2.0` at **B4 PLATFORM** and strengthens it with device-control laws.
 
 ## Authority order
 
@@ -64,6 +64,15 @@ Every user surface must have calm hierarchy, one design system, deliberate respo
 Frontend shell, Local Bridge runtime protocol, settings contract, firmware profile and Application Management contract are separately versioned boundaries. Compatibility failure is diagnosed, never hidden.
 
 Firmware/profile expansion must not require rewriting canonical product meaning.
+
+## Operational sovereignty law
+
+Dependency budget: `docs/DEPENDENCY_BUDGET.json`.
+
+- Live modem command transport remains local/on-device through the Local Bridge.
+- Cloud/AI/hosting providers are optional adapters and cannot own modem credentials, sessions or command authority.
+- Google Drive/Sheets/Apps Script may only handle sanitized reports/config backups; they must never proxy modem writes or persist credential/session/token material.
+- Loss of an optional provider must not silently reroute control through a weaker cloud path.
 
 ## Security and resilience law
 
