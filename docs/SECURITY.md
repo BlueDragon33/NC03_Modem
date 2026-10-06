@@ -1,5 +1,12 @@
 # Security architecture
 
+Universal Constitution: `blueprint-os:universal-century-grade@1.2.0`
+
+Dependency budget: `docs/DEPENDENCY_BUDGET.json`
+
+Cloud-storage rule: Google Drive/Sheets/Apps Script may receive only sanitized report/config artifacts. They must never receive modem passwords, cookies, authorization/CSRF/bearer/session tokens, write secrets or act as a modem command proxy.
+
+
 - Không commit mật khẩu admin NC03.
 - Không gửi credential modem lên cloud/Application Management.
 - Không lưu mật khẩu trong `localStorage`/`sessionStorage`.
