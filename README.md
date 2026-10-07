@@ -164,3 +164,12 @@ NC03 Control Center is intentionally **local-first**. Core modem read/control mu
 - Google Drive may be used only for optional sanitized backup/report export.
 - Credentials, session cookies, raw private HAR data and modem command authority must remain local.
 - The enforced dependency budget is `control/dependency-budget.json`.
+
+
+## Operational sovereignty
+
+This repository adopts **Universal Constitution 1.2.0** at Blueprint Level **B4**.
+
+NC03 modem administration is a **LOCAL_CORE** capability: LAN control, modem credentials and session authority remain local. Application Management may observe/coordinate through narrow contracts only. Google Drive/Sheets/Apps Script may be used only for optional sanitized/encrypted reporting or backup and must never carry live modem credentials, sessions or command authority.
+
+Canonical dependency posture: `.blueprint/dependency-budget.json`.

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "policyId": "blueprint-os:universal-century-grade",
+  "policyVersion": "1.2.0",
+  "projectId": "project:nc03-modem",
+  "blueprintLevel": "B4",
+  "posture": "LOCAL_CONTROL_CORE",
+  "complianceState": "MIGRATION_REQUIRED",
+  "canonicalAuthority": {
+    "modemControl": "local-lan-runtime",
+    "credentialsAndSessions": "local-protected-state",
+    "deviceTruth": "local-modem-and-local-control-center",
+    "remoteManagement": "optional-observe-and-explicit-narrow-actions-only"
+  },
+  "dependencies": [
+    {
+      "id": "local-modem-control",
+      "class": "LOCAL_CORE",
+      "costClass": "local-free",
+      "purpose": "LAN modem status and authorized control",
+      "dataBoundary": "local network only",
+      "offlineBehavior": "Internet outage must not prevent local modem administration where LAN is reachable",
+      "exitPath": "local config/export and documented modem protocol"
+    },
+    {
+      "id": "application-management",
+      "class": "OPTIONAL_SYNC",
+      "costClass": "replaceable-external",
+      "purpose": "runtime/contract observation and optional coordination",
+      "dataBoundary": "no modem password, session cookie, private key or arbitrary command authority",
+      "offlineBehavior": "local modem control remains available",
+      "exitPath": "adapter can be disabled/replaced without affecting local authority"
+    },
+    {
+      "id": "google-drive-or-equivalent",
+      "class": "OPTIONAL_SYNC",
+      "costClass": "free-or-optional-paid",
+      "purpose": "optional sanitized/encrypted report/config backup",
+      "dataBoundary": "no live credentials, sessions, private keys or modem-control authority",
+      "offlineBehavior": "no impact on local modem operation",
+      "exitPath": "portable files/export"
+    },
+    {
+      "id": "google-sheets-or-apps-script",
+      "class": "OPTIONAL_SYNC",
+      "costClass": "free-or-optional-paid",
+      "purpose": "optional sanitized reporting/notification only",
+      "dataBoundary": "no credential/session/control-loop data",
+      "offlineBehavior": "reporting/notification unavailable only",
+      "exitPath": "replaceable projection/notification adapter"
+    }
+  ],
+  "forbidden": [
+    "drive-or-sheets-as-modem-control-authority",
+    "plaintext-modem-passwords-or-session-cookies-in-drive-or-sheets",
+    "remote-generic-shell-or-arbitrary-command-execution",
+    "cloud-required-local-lan-administration",
+    "mandatory-paid-provider-for-core-modem-control"
+  ],
+  "migrationBlockers": [
+    "Prove local LAN control path remains usable without cloud providers.",
+    "Keep remote management contract narrow, typed and auditable.",
+    "Document sanitized export/backup format before enabling any Drive sync."
+  ],
+  "productionAuthority": "separate-explicit-release-gate"
+}
