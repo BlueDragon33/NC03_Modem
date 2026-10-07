@@ -12,3 +12,34 @@ permissions:
 jobs:
   constitution:
     uses: BlueDragon33/Software-Blueprint-Hub/.github/workflows/constitution-compliance.yml@main
+
+  dependency-sovereignty:
+    name: Constitution 1.2 modem dependency sovereignty
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate project dependency budget
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          a=json.loads(Path(".blueprint/constitution-adoption.json").read_text())
+          b=json.loads(Path(".blueprint/dependency-budget.json").read_text())
+          assert a["policyVersion"]=="1.2.0"
+          assert "operational-sovereignty-dependency-minimization" in a["inheritedPillars"]
+          assert b["policyVersion"]=="1.2.0"
+          assert b["projectId"]==a["projectId"]=="project:nc03-modem"
+          assert b["posture"]=="LOCAL_CONTROL_CORE"
+          assert b["complianceState"]=="MIGRATION_REQUIRED"
+          deps={d["id"]:d for d in b["dependencies"]}
+          assert deps["local-modem-control"]["class"]=="LOCAL_CORE"
+          assert deps["application-management"]["class"]=="OPTIONAL_SYNC"
+          for d in b["dependencies"]:
+              assert d.get("offlineBehavior")
+              assert d.get("exitPath")
+          forbidden=set(b["forbidden"])
+          assert {"remote-generic-shell-or-arbitrary-command-execution","cloud-required-local-lan-administration","plaintext-modem-passwords-or-session-cookies-in-drive-or-sheets"} <= forbidden
+          assert b["productionAuthority"]=="separate-explicit-release-gate"
+          print("NC03 Constitution 1.2 dependency sovereignty: PASS")
+          PY
