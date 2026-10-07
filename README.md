@@ -7,7 +7,7 @@ Website-app/PWA quản trị modem **HYBRID Wi-Fi 5G NC03** theo hướng **loca
 - Release line: **v0.8.0**
 - Blueprint: **1.0.0**
 - Classification: **B4 PLATFORM**
-- Universal Constitution: **blueprint-os:universal-century-grade@1.1.0**
+- Universal Constitution: **blueprint-os:universal-century-grade@1.2.0**
 - Reference firmware: **NC03_8.00.42**
 - Execution mode: **strict serial Work Packages**
 - Active Work Package: **NC03-WP03 — Architecture consolidation**
@@ -153,3 +153,14 @@ Universal Constitution compliance also runs through the repository workflow back
 The detailed v0.7.x discovery/fix chronology remains in `docs/PHASE_STATUS.md` as **legacy evidence history**.
 
 Do not extend that history with new symptom-numbered phases. New work belongs to canonical Work Packages.
+
+
+## Dependency sovereignty
+
+NC03 Control Center is intentionally **local-first**. Core modem read/control must work without Cloudflare, Vercel, Google Drive, Application Management or another remote backend.
+
+- Local Bridge + physical modem are the canonical runtime path.
+- Application Management is optional lifecycle/metadata coordination.
+- Google Drive may be used only for optional sanitized backup/report export.
+- Credentials, session cookies, raw private HAR data and modem command authority must remain local.
+- The enforced dependency budget is `control/dependency-budget.json`.

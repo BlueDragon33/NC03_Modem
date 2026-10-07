@@ -13,7 +13,7 @@
     "ux": "node scripts/ux.mjs",
     "security": "node scripts/security.mjs",
     "test": "npm run unit && npm run integration",
-    "verify": "npm run blueprint:check && npm run wp01:check && npm run wp02:check && npm run wp03:check && npm run wp04:check && npm run wp05:check && npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run offline && npm run security",
+    "verify": "npm run constitution:check && npm run blueprint:check && npm run wp01:check && npm run wp02:check && npm run wp03:check && npm run wp04:check && npm run wp05:check && npm run check && npm run build && npm run typecheck && npm run lint && npm run unit && npm run integration && npm run ux && npm run offline && npm run security",
     "offline": "node scripts/offline.mjs",
     "serve:local": "node scripts/serve-local.mjs",
     "analyze:har": "node scripts/analyze-har.mjs",
@@ -22,6 +22,7 @@
     "wp02:check": "node --test tests/settings-registry.test.mjs",
     "wp03:check": "node --test tests/application-boundary.test.mjs",
     "wp04:check": "node --test tests/auth-session-state-machine.test.mjs tests/nc03-login-runtime.test.mjs tests/credential-vault.test.mjs",
-    "wp05:check": "node --test tests/read-model.test.mjs tests/application-boundary.test.mjs tests/diagnostic-report.test.mjs"
+    "wp05:check": "node --test tests/read-model.test.mjs tests/application-boundary.test.mjs tests/diagnostic-report.test.mjs",
+    "constitution:check": "node scripts/check-constitution-1.2.mjs"
   }
 }

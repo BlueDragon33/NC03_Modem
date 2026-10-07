@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "policyId": "blueprint-os:universal-century-grade",
+  "policyVersion": "1.2.0",
+  "projectId": "project:nc03-modem",
+  "posture": "LOCAL_CORE",
+  "canonicalAuthority": {
+    "runtime": "local-browser-and-local-bridge",
+    "modemControl": "local-bridge-to-private-rfc1918-modem",
+    "credentials": "local-only-encrypted-vault-when-enabled",
+    "applicationManagement": "metadata-and-lifecycle-only"
+  },
+  "dependencies": [
+    {
+      "id": "physical-nc03-modem",
+      "class": "EXTERNAL_ESSENTIAL",
+      "costClass": "user-owned-hardware",
+      "purpose": "Real modem state and command target",
+      "dataBoundary": "private LAN only",
+      "offlineBehavior": "Core app remains usable against the modem without Internet",
+      "exitPath": "Firmware adapters isolate vendor-specific transport; product meaning remains portable"
+    },
+    {
+      "id": "application-management",
+      "class": "OPTIONAL_SYNC",
+      "costClass": "replaceable-external",
+      "purpose": "Lifecycle, registration, release metadata and launch coordination",
+      "dataBoundary": "No modem password, cookies, session tokens, raw private config or command authority",
+      "offlineBehavior": "Local modem management must continue when unavailable",
+      "exitPath": "Local runtime is independently launchable and owns no remote dependency for modem control"
+    },
+    {
+      "id": "google-drive-or-equivalent",
+      "class": "OPTIONAL_SYNC",
+      "costClass": "free-or-optional-paid",
+      "purpose": "Optional sanitized backup/report archive only",
+      "dataBoundary": "No plaintext modem credentials, session cookies, command queue, raw HAR secrets, IMEI/ICCID/MSISDN or private configuration",
+      "offlineBehavior": "No impact on core modem control",
+      "exitPath": "Exportable files remain ordinary portable documents/JSON; provider can be replaced or removed"
+    }
+  ],
+  "forbidden": [
+    "cloud-required-modem-control",
+    "drive-or-sheets-as-command-authority",
+    "plaintext-modem-credentials-in-cloud",
+    "remote-generic-shell-or-command-execution",
+    "silent-provider-lock-in"
+  ],
+  "releaseGate": "Constitution 1.2 sovereignty validator plus existing NC03 verification chain must pass; production remains separate."
+}
