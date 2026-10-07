@@ -2,7 +2,7 @@
 
 Status: **ENFORCED PROJECT LAW**
 
-NC03 inherits `blueprint-os:universal-century-grade@1.1.0` at **B4 PLATFORM** and strengthens it with device-control laws.
+NC03 inherits `blueprint-os:universal-century-grade@1.2.0` at **B4 PLATFORM** and strengthens it with device-control laws.
 
 ## Authority order
 
@@ -74,3 +74,24 @@ Assume any UI surface, local process, provider or integration can fail. Minimize
 The current Blueprint defines exactly **18 prompt projections (00–17)**. One Work Package is ACTIVE at a time. Prompt N+1 starts only after Prompt N is COMPLETE with evidence.
 
 If new evidence changes architecture, update canonical blueprint/work-package state first, then update affected prompts.
+
+
+## Operational sovereignty law
+
+NC03 is a **LOCAL_CORE** device-control product.
+
+Canonical modem authority stays on the local machine and private LAN:
+
+`Browser UI → Local Bridge → Firmware Adapter → Physical NC03 modem`
+
+The Internet, Application Management, Google Drive/Sheets/Apps Script and any future cloud provider are optional integration layers only. They must not become prerequisites for reading or controlling the modem.
+
+Required rules:
+- local modem management must continue when Internet/cloud services are unavailable;
+- modem credentials, session cookies, command authority and raw private configuration stay local;
+- Application Management may coordinate metadata/lifecycle but does not own modem commands;
+- Google Drive or equivalent may store sanitized reports/backups only;
+- Google Sheets/Apps Script must not be used as modem command queues or privileged control planes;
+- any future external dependency requires an explicit dependency-budget update and exit path.
+
+Canonical dependency posture: `control/dependency-budget.json`.
