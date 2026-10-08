@@ -1,0 +1,187 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": "BlueDragon33/NC03_Modem",
+  "blueprintLevel": "B4",
+  "constitutionPolicy": "blueprint-os:universal-century-grade@1.2.0",
+  "defaultPrinciple": "LOCAL_BRIDGE_DEVICE_AUTHORITY_OFFLINE_FIRST_OPTIONAL_CLOUD",
+  "canonicalAuthorityRule": "Physical modem state is authoritative for device state; Local Bridge owns transport/session continuity; credential vault owns encrypted local credentials. No cloud provider owns modem command authority.",
+  "dependencies": [
+    {
+      "id": "physical-modem",
+      "provider": "NC03 physical modem",
+      "runtimeClass": "LOCAL_CORE",
+      "costClass": "device-owned",
+      "purpose": [
+        "actual modem state",
+        "final readback/write authority"
+      ],
+      "dataBoundary": "local RFC1918 device network",
+      "canonicalState": "final authority for real device state",
+      "degradedBehavior": "without modem the app can retain local diagnostics/config knowledge but cannot claim live device state",
+      "exportPath": [
+        "sanitized diagnostic report"
+      ],
+      "replacementPath": "future firmware/device adapter preserving canonical setting contracts"
+    },
+    {
+      "id": "local-bridge",
+      "provider": "User-device Local Bridge",
+      "runtimeClass": "LOCAL_CORE",
+      "costClass": "local-free",
+      "purpose": [
+        "RFC1918 modem transport",
+        "session continuity",
+        "request mediation"
+      ],
+      "dataBoundary": "local device only",
+      "canonicalState": "transport/session owner only; not domain truth beyond observed modem state",
+      "degradedBehavior": "browser shell/read-only cached docs remain; live modem operations unavailable",
+      "exportPath": [
+        "privacy-safe diagnostics"
+      ],
+      "replacementPath": "equivalent local companion implementing same contracts"
+    },
+    {
+      "id": "credential-vault",
+      "provider": "Browser IndexedDB + WebCrypto credential vault",
+      "runtimeClass": "LOCAL_CORE",
+      "costClass": "local-free",
+      "purpose": [
+        "optional encrypted local admin credential persistence"
+      ],
+      "dataBoundary": "user device",
+      "canonicalState": "local credential storage only",
+      "degradedBehavior": "user can enter password manually when vault unavailable",
+      "exportPath": [
+        "no raw credential export"
+      ],
+      "replacementPath": "OS keychain/keystore or another local secure store"
+    },
+    {
+      "id": "application-management",
+      "provider": "Application Management",
+      "runtimeClass": "OPTIONAL_SYNC",
+      "costClass": "local-or-user-hosted",
+      "purpose": [
+        "lifecycle/capability/readiness metadata only"
+      ],
+      "dataBoundary": "no modem credentials, modem sessions or command proxy traffic",
+      "canonicalState": "forbidden for modem command authority",
+      "degradedBehavior": "NC03 local control remains independent",
+      "exportPath": [
+        "management metadata only"
+      ],
+      "replacementPath": "standalone local operation or compatible management adapter"
+    },
+    {
+      "id": "github-pages",
+      "provider": "GitHub Pages",
+      "runtimeClass": "OPTIONAL_PUBLISH",
+      "costClass": "free-tier",
+      "purpose": [
+        "static UI hosting"
+      ],
+      "dataBoundary": "static assets only",
+      "canonicalState": "forbidden for modem/session state",
+      "degradedBehavior": "local static serve remains possible",
+      "exportPath": [
+        "git repository/static build"
+      ],
+      "replacementPath": "any static host/local server"
+    },
+    {
+      "id": "chatgpt-ai",
+      "provider": "ChatGPT / AI assistant",
+      "runtimeClass": "OPTIONAL_INTELLIGENCE",
+      "costClass": "user-selected",
+      "purpose": [
+        "analysis",
+        "documentation",
+        "troubleshooting assistance"
+      ],
+      "dataBoundary": "sanitized user-selected context only; no automatic credentials/session upload",
+      "canonicalState": "forbidden for modem state or write authority",
+      "degradedBehavior": "control center remains fully functional without AI",
+      "exportPath": [
+        "documents/source only"
+      ],
+      "replacementPath": "non-AI workflow or another optional assistant"
+    },
+    {
+      "id": "google-drive",
+      "provider": "Google Drive",
+      "runtimeClass": "OPTIONAL_SYNC",
+      "costClass": "free-tier-or-user-plan",
+      "purpose": [
+        "optional sanitized report/config backup"
+      ],
+      "dataBoundary": "no password, cookie, authorization header, CSRF token, bearer/session token, command secret, or raw sensitive modem identifiers",
+      "canonicalState": "forbidden",
+      "degradedBehavior": "local operation unaffected",
+      "exportPath": [
+        "sanitized report/config files"
+      ],
+      "replacementPath": "local file export or another storage adapter",
+      "status": "planned-optional"
+    },
+    {
+      "id": "google-sheets",
+      "provider": "Google Sheets",
+      "runtimeClass": "OPTIONAL_SYNC",
+      "costClass": "free-tier-or-user-plan",
+      "purpose": [
+        "optional sanitized inventory/report projection only"
+      ],
+      "dataBoundary": "no credential/session/token/write-authority data and no sensitive modem identifiers",
+      "canonicalState": "forbidden",
+      "degradedBehavior": "no effect on modem control",
+      "exportPath": [
+        "CSV projection"
+      ],
+      "replacementPath": "local report",
+      "status": "discouraged-for-control-data"
+    },
+    {
+      "id": "google-apps-script",
+      "provider": "Google Apps Script",
+      "runtimeClass": "OPTIONAL_SYNC",
+      "costClass": "free-tier-or-user-plan",
+      "purpose": [
+        "optional report/backup coordination only"
+      ],
+      "dataBoundary": "must never proxy modem commands or hold modem credentials/session secrets",
+      "canonicalState": "forbidden",
+      "degradedBehavior": "manual/local export remains available",
+      "exportPath": [
+        "portable report-sync protocol"
+      ],
+      "replacementPath": "manual sync or another adapter",
+      "status": "planned-optional"
+    }
+  ],
+  "forbiddenRemoteData": [
+    "NC03 admin password",
+    "modem cookies or session identifiers",
+    "authorization headers",
+    "CSRF tokens",
+    "bearer/session tokens",
+    "WPS PIN",
+    "Wi-Fi PSK",
+    "IMEI/MEID/serial",
+    "ICCID/MSISDN",
+    "eSIM EID/profile",
+    "raw forwarding/filter/MAC-binding rules",
+    "modem command authority in Drive/Sheets/Apps Script"
+  ],
+  "acceptance": {
+    "sovereigntyGateRequires": [
+      "live modem command path remains local/on-device",
+      "cloud providers are not required for modem control",
+      "credentials stay local encrypted or user-entered",
+      "provider failure cannot silently reroute commands through cloud",
+      "sanitized export/report path exists without secrets",
+      "Application Management remains metadata/control-policy coordinator only"
+    ],
+    "productionAuthority": "separate-explicit-release-gate"
+  }
+}

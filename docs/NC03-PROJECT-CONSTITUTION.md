@@ -65,6 +65,15 @@ Frontend shell, Local Bridge runtime protocol, settings contract, firmware profi
 
 Firmware/profile expansion must not require rewriting canonical product meaning.
 
+## Operational sovereignty law
+
+Dependency budget: `docs/DEPENDENCY_BUDGET.json`.
+
+- Live modem command transport remains local/on-device through the Local Bridge.
+- Cloud/AI/hosting providers are optional adapters and cannot own modem credentials, sessions or command authority.
+- Google Drive/Sheets/Apps Script may only handle sanitized reports/config backups; they must never proxy modem writes or persist credential/session/token material.
+- Loss of an optional provider must not silently reroute control through a weaker cloud path.
+
 ## Security and resilience law
 
 Assume any UI surface, local process, provider or integration can fail. Minimize credential exposure, contain compromise, protect authoritative state, make dangerous operations explicit and recover to a known state.
