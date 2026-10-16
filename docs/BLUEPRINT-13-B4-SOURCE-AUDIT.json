@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "MIGRATION_REQUIRED_SOURCE_CANDIDATE",
+  "kind": "app-source-inheritance-audit",
+  "projectId": "project:nc03-modem",
+  "blueprintLevel": "B4",
+  "baseCommit": "b4d42dc770b9643918c21471c4becb60e6930c95",
+  "policy": {
+    "source": "BlueDragon33/Software-Blueprint-Hub",
+    "version": "1.3.0",
+    "constitutionRatifiedElsewhere": true
+  },
+  "sourceFiles": [
+    ".blueprint/constitution-adoption.json",
+    ".blueprint/dependency-budget.json",
+    "control/dependency-budget.json",
+    "README.md"
+  ],
+  "core": "local-modem-control",
+  "posture": "LOCAL_CONTROL_CORE",
+  "requiredForbidden": [
+    "remote-generic-shell-or-arbitrary-command-execution",
+    "cloud-required-local-lan-administration",
+    "plaintext-modem-passwords-or-session-cookies-in-drive-or-sheets"
+  ],
+  "unresolvedRuntimeQA": [
+    "Real offline local LAN modem access/auth, cookie/session privacy and device reconnect regression",
+    "Verify bridge never exposes arbitrary inbound command/shell or modem credentials to external networks",
+    "Encrypted local configuration save/restart/restore with physical modem evidence"
+  ],
+  "truth": {
+    "migration": "MIGRATION_REQUIRED",
+    "offlineRuntime": "UNVERIFIED",
+    "productPass": false,
+    "independentReview": "PENDING",
+    "productionAuthorized": false,
+    "networkPublication": "DISABLED_BY_ECOSYSTEM_POLICY",
+    "newConstitutionRatification": false
+  }
+}
