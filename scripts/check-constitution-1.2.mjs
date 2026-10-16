@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 function fail(message) {
-  console.error("[constitution-1.2] " + message);
+  console.error("[constitution-current] " + message);
   process.exitCode = 1;
 }
 
@@ -12,11 +12,11 @@ const budget = JSON.parse(
   fs.readFileSync("control/dependency-budget.json", "utf8")
 );
 
-if (adoption.policyVersion !== "1.2.0") fail("policyVersion must be 1.2.0");
+if (adoption.policyVersion !== "1.3.0") fail("policyVersion must be 1.3.0");
 if (!adoption.inheritedPillars.includes("operational-sovereignty-dependency-minimization")) {
   fail("operational sovereignty pillar missing");
 }
-if (budget.policyVersion !== "1.2.0") fail("dependency budget policyVersion mismatch");
+if (budget.policyVersion !== "1.3.0") fail("dependency budget policyVersion mismatch");
 if (budget.projectId !== adoption.projectId) fail("dependency budget projectId mismatch");
 if (budget.posture !== "LOCAL_CORE") fail("NC03 must remain LOCAL_CORE");
 
@@ -41,5 +41,5 @@ for (const id of [
 }
 
 if (!process.exitCode) {
-  console.log("[constitution-1.2] PASS NC03 local-control sovereignty + dependency budget");
+  console.log("[constitution-current] PASS NC03 local-control sovereignty + dependency budget");
 }
