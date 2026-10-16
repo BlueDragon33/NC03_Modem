@@ -168,8 +168,13 @@ NC03 Control Center is intentionally **local-first**. Core modem read/control mu
 
 ## Operational sovereignty
 
-This repository adopts **Universal Constitution 1.2.0** at Blueprint Level **B4**.
+This repository adopts **Universal Constitution 1.3.0** at Blueprint Level **B4**.
 
 NC03 modem administration is a **LOCAL_CORE** capability: LAN control, modem credentials and session authority remain local. Application Management may observe/coordinate through narrow contracts only. Google Drive/Sheets/Apps Script may be used only for optional sanitized/encrypted reporting or backup and must never carry live modem credentials, sessions or command authority.
 
 Canonical dependency posture: `.blueprint/dependency-budget.json`.
+
+
+## Phạm vi kiểm định 1.3
+
+Hợp đồng nguồn và CI không phải nghiệm thu Product/Offline. Những migration blockers còn `MIGRATION_REQUIRED`; kiểm thử chức năng trên thiết bị thực, lưu/khôi phục và review độc lập vẫn ở trạng thái `UNVERIFIED`. Xem `docs/BLUEPRINT-13-B4-SOURCE-AUDIT.json`. Merge mã nguồn không publish online và không cấp Production.
