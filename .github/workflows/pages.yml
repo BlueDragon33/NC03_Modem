@@ -1,9 +1,13 @@
 name: Publish NC03 Control Center
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      enable_online_release:
+        type: boolean
+        default: false
+        required: true
+        description: "Owner must explicitly re-authorize NC03 online deployment (offline development default)"
 
 permissions:
   contents: read
@@ -50,17 +54,17 @@ jobs:
           fi
 
       - name: Configure Pages
-        if: steps.pages.outputs.enabled == 'true'
+        if: steps.pages.outputs.enabled == 'true' && inputs.enable_online_release == true
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        if: steps.pages.outputs.enabled == 'true'
+        if: steps.pages.outputs.enabled == 'true' && inputs.enable_online_release == true
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
   deploy:
-    if: needs.build.outputs.pages_enabled == 'true'
+    if: needs.build.outputs.pages_enabled == 'true' && inputs.enable_online_release == true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
