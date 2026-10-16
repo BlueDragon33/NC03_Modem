@@ -7,7 +7,7 @@ const blueprint=JSON.parse(fs.readFileSync(".blueprint/blueprint.json","utf8"));
 const plan=JSON.parse(fs.readFileSync(".blueprint/work-packages.json","utf8"));
 
 assert.equal(adoption.policyId,"blueprint-os:universal-century-grade");
-assert.equal(adoption.policyVersion,"1.2.0");
+assert.equal(adoption.policyVersion,"1.3.0");
 assert.equal(adoption.projectId,"project:nc03-modem");
 assert.equal(adoption.projectId,profile.projectId);
 assert.equal(adoption.blueprintLevel,"B4");
